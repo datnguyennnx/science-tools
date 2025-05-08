@@ -1,0 +1,30 @@
+# Build artifacts
+.next/
+build/
+dist/
+out/
+
+# Dependencies
+node_modules/
+
+# Misc
+.DS_Store
+*.log
+coverage/
+.cache/
+.vercel
+.env*
+!.env.example
+
+# Ignore SVG and ICO files
+**/*.svg
+**/*.ico
+
+# Other common directories
+__snapshots__/
+bun.lockb
+package.json
+
+# UI components that shouldn't be formatted
+src/components/ui/
+src/components/magicui/ 
