@@ -54,9 +54,9 @@ export const KMapGrid: React.FC<KMapGridProps> = ({
                   </div>
                 </div>
               </th>
-              {colHeaders.map((header, i) => (
+              {colHeaders.map(header => (
                 <th
-                  key={`col-${i}`}
+                  key={`col-header-${header}`}
                   className="border px-3 py-2 font-bold text-center bg-secondary text-secondary-foreground"
                 >
                   {header}
@@ -66,7 +66,7 @@ export const KMapGrid: React.FC<KMapGridProps> = ({
           </thead>
           <tbody>
             {kMapOrder.map((row, rowIndex) => (
-              <tr key={`row-${rowIndex}`}>
+              <tr key={`row-header-${rowHeaders[rowIndex]}`}>
                 <th className="border px-3 py-2 font-bold text-center bg-secondary text-secondary-foreground">
                   {rowHeaders[rowIndex]}
                 </th>

@@ -5,8 +5,8 @@
  * (true and false values).
  */
 
-import { BooleanExpression } from '../types'
-import { SimplificationRule } from '../rule-types'
+import { BooleanExpression } from '../../core'
+import { SimplificationRule } from '../../core/rule-types'
 
 /**
  * Get rules for handling constants in expressions

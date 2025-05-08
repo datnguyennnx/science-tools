@@ -229,8 +229,10 @@ export function TruthTable({ expression, variables }: TruthTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {memoizedTableData.rows.map((row, index) => (
-              <TableRow key={index}>
+            {memoizedTableData.rows.map(row => (
+              <TableRow
+                key={`row-${memoizedTableData.variablesToUse.map(v => (row.values[v] ? '1' : '0')).join('')}`}
+              >
                 {memoizedTableData.variablesToUse.map(variable => (
                   <TableCell
                     key={variable}
