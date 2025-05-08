@@ -1,11 +1,11 @@
 import { CellPosition, CellStyle, KMapGroup } from './types'
 
-// Colors for different group sizes - matching the reference images
+// Colors for different group sizes - using chart colors from globals.css
 export const GROUP_COLORS = {
-  8: '#3b82f6', // Blue for octets
-  4: '#ef4444', // Red for quads
-  2: '#10b981', // Green for pairs
-  1: '#f59e0b', // Yellow for singles
+  8: 'var(--color-chart-1)', // Octet (was blue)
+  4: 'var(--color-chart-2)', // Quad (was red)
+  2: 'var(--color-chart-3)', // Pair (was green)
+  1: 'var(--color-chart-4)', // Single (was yellow)
 }
 
 // Color names for the legend
@@ -17,7 +17,7 @@ export const GROUP_COLOR_NAMES: Record<number, string> = {
 }
 
 // Opacity values for cell backgrounds
-const CELL_BG_OPACITY = '15' // 15% opacity
+const CELL_BG_OPACITY = '25' // 25% opacity
 
 // Border styles for groups
 const BORDER_STYLE = 'dashed' // Use dashed borders for the groups

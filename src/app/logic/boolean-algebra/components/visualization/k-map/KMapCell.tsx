@@ -31,17 +31,17 @@ export const KMapCell: React.FC<KMapCellProps> = ({
 
   return (
     <td
-      className="relative border border-gray-200 w-14 h-14 text-center transition-colors"
+      className="relative border border-border w-14 h-14 text-center transition-colors"
       style={borderStyles}
     >
       {showMintermNumbers && (
-        <div className="absolute top-1 left-1 text-[0.6rem] text-gray-400">{minterm}</div>
+        <div className="absolute top-1 left-1 text-[0.6rem] text-muted-foreground">{minterm}</div>
       )}
       <div className="h-full w-full flex items-center justify-center">
         <span
           className={`
             text-lg font-semibold 
-            ${hasMinterm ? 'text-blue-700' : 'text-gray-500'}
+            ${hasMinterm ? 'text-primary' : 'text-muted-foreground'}
           `}
         >
           {cellValue}

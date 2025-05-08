@@ -25,10 +25,10 @@ export const KMapLegend: React.FC<KMapLegendProps> = ({ className = '' }) => {
             className="w-5 h-5 border-2 border-dashed"
             style={{
               borderColor: color as string,
-              backgroundColor: `${color}15`, // 15% opacity
+              backgroundColor: `${color}25`, // 25% opacity
             }}
           ></div>
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-foreground">
             {name} ({size === 1 ? '1 cell' : `${size} cells`})
           </span>
         </div>

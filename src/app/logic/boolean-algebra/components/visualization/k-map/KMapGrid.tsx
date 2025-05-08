@@ -27,37 +27,37 @@ export const KMapGrid: React.FC<KMapGridProps> = ({
         {/* Column Headers Label (CD) */}
         <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 font-bold text-sm flex items-center">
           <span className="mr-1">
-            <span className="inline-block rounded-full bg-blue-200 px-2 py-0.5 text-xs">
+            <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
               {colVarLabel}
             </span>
           </span>
-          <span className="border-t-2 border-blue-500 w-24 h-0"></span>
+          <span className="border-t-2 border-primary w-24 h-0"></span>
         </div>
 
         {/* Row Headers Label (AB) - vertical */}
         <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 flex flex-col items-center">
           <span className="mb-1">
-            <span className="inline-block rounded-full bg-blue-200 px-2 py-0.5 text-xs rotate-90">
+            <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground rotate-90">
               {rowVarLabel}
             </span>
           </span>
-          <span className="border-l-2 border-blue-500 h-24 w-0"></span>
+          <span className="border-l-2 border-primary h-24 w-0"></span>
         </div>
 
         <table className="border-collapse shadow-md rounded overflow-hidden">
           <thead>
             <tr>
-              <th className="border p-0 relative bg-gray-50 w-10 h-10">
+              <th className="border p-0 relative bg-muted w-10 h-10">
                 <div className="h-10 w-10">
                   <div className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-gray-400 rotate-45"></div>
+                    <div className="w-full h-0.5 bg-muted-foreground rotate-45"></div>
                   </div>
                 </div>
               </th>
               {colHeaders.map((header, i) => (
                 <th
                   key={`col-${i}`}
-                  className="border px-3 py-2 font-bold text-center bg-blue-50 text-blue-800"
+                  className="border px-3 py-2 font-bold text-center bg-secondary text-secondary-foreground"
                 >
                   {header}
                 </th>
@@ -67,7 +67,7 @@ export const KMapGrid: React.FC<KMapGridProps> = ({
           <tbody>
             {kMapOrder.map((row, rowIndex) => (
               <tr key={`row-${rowIndex}`}>
-                <th className="border px-3 py-2 font-bold text-center bg-blue-50 text-blue-800">
+                <th className="border px-3 py-2 font-bold text-center bg-secondary text-secondary-foreground">
                   {rowHeaders[rowIndex]}
                 </th>
                 {row.map(cell => (

@@ -9,6 +9,14 @@ import { detectGroups } from './KMapGroupDetector'
 import { KMapGrid } from './KMapGrid'
 import { KMapLegend } from './KMapLegend'
 import { toast } from 'sonner'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
 export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
   // Parse the expression and generate the K-Map data
@@ -87,78 +95,78 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
 
   if (!expression) {
     return (
-      <div className={className}>
-        <div className="p-4 text-center text-muted-foreground">Expression needed for K-Map.</div>
-      </div>
+      <Card className={className}>
+        <CardContent className="p-6 text-center text-muted-foreground">
+          Expression needed for K-Map.
+        </CardContent>
+      </Card>
     )
   }
 
   if (error) {
     return (
-      <div className={className}>
-        <div className="mt-4 p-4 border rounded border-dashed text-center text-destructive-foreground bg-destructive/10">
+      <Card className={className}>
+        <CardContent className="p-6 text-center text-destructive-foreground bg-destructive/10">
           Error generating K-Map: {error}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     )
   }
 
   if (numVars < 2 || numVars > 4) {
     return (
-      <div className={className}>
-        <div className="mt-4 p-4 border rounded border-dashed text-center text-destructive-foreground bg-destructive/10">
+      <Card className={className}>
+        <CardContent className="p-6 text-center text-destructive-foreground bg-destructive/10">
           K-Map generation currently supports 2 to 4 variables. Detected {numVars} variables (
           {variables.join(', ') || 'None'}). Please provide a valid boolean expression with 2 to 4
           unique variables (A-Z).
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className={`${className} rounded-lg border shadow-sm p-6`}>
-      <div className="space-y-4">
-        {/* Header section */}
-        <div className="space-y-2">
-          <h3 className="text-xl font-semibold text-gray-800">Karnaugh Map</h3>
-          <p className="text-sm text-gray-600">
-            Visual tool for Boolean simplification with {numVars} variables ({variables.join(', ')})
-            and {mintermSet.size} minterms
-          </p>
-        </div>
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle>Karnaugh Map</CardTitle>
+        <CardDescription>
+          Visual tool for Boolean simplification with {numVars} variables ({variables.join(', ')})
+          and {mintermSet.size} minterms
+        </CardDescription>
+      </CardHeader>
 
-        {/* Main K-Map grid */}
+      <CardContent>
         <KMapGrid
           config={kMapConfig}
           mintermSet={mintermSet}
           groups={groups}
           showMintermNumbers={true}
         />
+      </CardContent>
 
-        {/* Legend */}
-        <div className="pt-3 border-t">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Group Legend</h4>
+      <CardFooter className="flex-col items-start border-t">
+        <div className="w-full space-y-3">
+          <h4 className="text-sm font-medium text-foreground">Group Legend</h4>
           <KMapLegend />
-          <p className="text-xs text-gray-500 mt-3">
+          <p className="text-xs text-muted-foreground">
             Each group represents a term in the simplified boolean expression. Larger groups (more
             cells) result in simpler terms.
           </p>
-        </div>
 
-        {/* Info on cell count */}
-        <div className="text-center text-sm text-gray-600 mt-2">
-          <span className="font-medium">
-            2<sup>{numVars}</sup> = {Math.pow(2, numVars)} cells
-          </span>
-          {mintermSet.size > 0 && (
-            <span>
-              {' '}
-              with {mintermSet.size} minterms (
-              {((mintermSet.size / Math.pow(2, numVars)) * 100).toFixed(1)}%)
+          <div className="text-center text-sm text-muted-foreground pt-2">
+            <span className="font-medium">
+              2<sup>{numVars}</sup> = {Math.pow(2, numVars)} cells
             </span>
-          )}
+            {mintermSet.size > 0 && (
+              <span>
+                {' '}
+                with {mintermSet.size} minterms (
+                {((mintermSet.size / Math.pow(2, numVars)) * 100).toFixed(1)}%)
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   )
 }
