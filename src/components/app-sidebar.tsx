@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, Inbox } from 'lucide-react'
+import { Binary } from 'lucide-react'
 
 import {
   Sidebar,
@@ -13,17 +13,11 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-// Menu items.
-const items = [
+const logicItems = [
   {
-    title: 'Home',
-    url: '#',
-    icon: Home,
-  },
-  {
-    title: 'Inbox',
-    url: '#',
-    icon: Inbox,
+    title: 'Boolean Algebra',
+    url: '/logic/boolean-algebra',
+    icon: Binary,
   },
 ]
 
@@ -32,10 +26,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>Logic</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map(item => (
+              {logicItems.map(item => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <a href={item.url}>
