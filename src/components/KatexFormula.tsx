@@ -25,10 +25,6 @@ export function KatexFormula({ formula, block = false, className = '' }: KatexFo
         .replace(/\\text{([^}]*)}/g, '\\text{$1}') // Ensure \text is properly formatted
     }
 
-    // Log for debugging if needed
-    // console.log('Original:', formula);
-    // console.log('Sanitized:', sanitizedFormula);
-
     // Render using BlockMath or InlineMath
     return (
       <div className={className}>
