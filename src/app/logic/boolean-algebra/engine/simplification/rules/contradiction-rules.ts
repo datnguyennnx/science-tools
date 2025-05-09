@@ -6,7 +6,7 @@
  */
 
 import { BooleanExpression } from '../../core'
-import { SimplificationRule } from '../../core/rule-types'
+import { SimplificationRule } from '../../core/types/rule-types'
 
 /**
  * Helper function to deep clone expressions

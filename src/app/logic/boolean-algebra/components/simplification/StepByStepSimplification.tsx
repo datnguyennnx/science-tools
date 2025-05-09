@@ -125,7 +125,6 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                       </Badge>
                       <span className="font-medium text-xs sm:text-sm">{step.lawName}</span>
                       <div className="flex flex-wrap items-center mt-1 w-full sm:w-auto sm:mt-0 sm:ml-auto">
-                        <span className="text-xs sm:text-sm mr-1">Rule:</span>
                         <div className="overflow-x-auto max-w-full no-scrollbar">
                           <KatexFormula formula={step.lawDefinition} block={false} />
                         </div>

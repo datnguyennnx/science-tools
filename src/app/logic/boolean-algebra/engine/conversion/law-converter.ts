@@ -6,10 +6,9 @@
  */
 
 import { BooleanExpression } from '../core'
-import { SimplificationRule } from '../core/rule-types'
-import { ExpressionParser } from '../parser'
-import { booleanLaws } from '../../constants/laws'
-import { BooleanLaw, BooleanLaws } from '../../constants/types'
+import { SimplificationRule } from '../core/types/rule-types'
+import { parseExpression, expressionToBooleanString } from '../core'
+import { booleanLaws, type BooleanLaw, type BooleanLaws } from '../simplification/constants'
 
 // Type for accessing booleanLaws with string index
 type LawsRecord = BooleanLaws & {
@@ -33,7 +32,7 @@ export function convertLawsToRules(): SimplificationRule[] {
       },
       canApply: (expr: BooleanExpression): boolean => {
         // Convert the expression to a string
-        const exprString = ExpressionParser.toBooleanString(expr)
+        const exprString = expressionToBooleanString(expr)
 
         // Find the matching law in booleanLaws
         for (const category in lawsObj) {
@@ -52,7 +51,7 @@ export function convertLawsToRules(): SimplificationRule[] {
       },
       apply: (expr: BooleanExpression): BooleanExpression => {
         // Convert expression to string
-        const exprString = ExpressionParser.toBooleanString(expr)
+        const exprString = expressionToBooleanString(expr)
         let newExprString = exprString
 
         // Find the matching law in booleanLaws and apply replacement
@@ -98,7 +97,7 @@ export function convertLawsToRules(): SimplificationRule[] {
 
         // Parse the new expression string back to a tree
         if (newExprString !== exprString) {
-          return ExpressionParser.parse(newExprString)
+          return parseExpression(newExprString)
         }
 
         // Return the original expression if no change

@@ -1,6 +1,7 @@
 /**
  * Types for Karnaugh Map implementation
  */
+import { BooleanExpression } from '../../../engine/core/types'
 
 /**
  * Cell position interface for K-Map
@@ -51,3 +52,39 @@ export interface KarnaughMapProps {
   expression: string
   className?: string
 }
+
+/**
+ * KMap result type for waiting state
+ */
+export type KMapResultWaiting = {
+  status: 'waiting'
+  message: string
+}
+
+/**
+ * KMap result type for error state
+ */
+export type KMapResultError = {
+  status: 'error'
+  message: string
+  details?: string
+  variables?: string[]
+}
+
+/**
+ * KMap result type for success state
+ */
+export type KMapResultSuccess = {
+  status: 'success'
+  variables: string[]
+  expressionTree: BooleanExpression
+  mintermSet: Set<number>
+  kMapConfig: KMapConfig
+  groups: KMapGroup[]
+  numVars: number
+}
+
+/**
+ * Union type for all possible KMap result states
+ */
+export type KMapResult = KMapResultWaiting | KMapResultError | KMapResultSuccess

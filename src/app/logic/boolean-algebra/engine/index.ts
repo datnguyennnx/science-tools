@@ -10,12 +10,15 @@ import { toast } from 'sonner'
 
 // Import from core module
 import type { BooleanExpression, SimplificationStep } from './core'
+import {
+  parseExpression,
+  expressionToBooleanString,
+  expressionToLatexString,
+  getValidExpressionExamples,
+} from './core'
 
 // Import from simplification module
 import { BooleanSimplifier } from './simplification'
-
-// Import parser directly as it's still in the root
-import { ExpressionParser } from './parser'
 
 // Import from conversion module
 import { latexToBoolean } from './conversion'
@@ -31,21 +34,16 @@ import {
 // Import sanitization utility
 import { sanitizeExpression } from './utils'
 
-// Re-export public API
-export {
-  BooleanSimplifier,
-  ExpressionParser,
-  generateRandomExpression,
-  generatePatternedExpression,
-}
-
+// Re-export types
 export type { BooleanExpression, SimplificationStep, GeneratorOptions, ExpressionPattern }
 
+// Re-export generator functions
+export { generateRandomExpression, generatePatternedExpression }
+
 /**
- * Import the existing boolean laws for temporary compatibility
- * Until we fully migrate the ruleset into our engine
+ * Import the boolean laws from the simplification module
  */
-import { booleanLaws } from '../constants/laws'
+import { booleanLaws } from './simplification/constants'
 export { booleanLaws }
 
 /**
@@ -159,3 +157,14 @@ export function simplifyBooleanExpression(expression: string): LatexSimplificati
     throw new Error('Failed to simplify expression')
   }
 }
+
+// Create compatibility layer for ExpressionParser
+export const ExpressionParser = {
+  parse: parseExpression,
+  toBooleanString: expressionToBooleanString,
+  toLatexString: expressionToLatexString,
+  getValidExamples: getValidExpressionExamples,
+}
+
+// Re-export BooleanSimplifier
+export { BooleanSimplifier }

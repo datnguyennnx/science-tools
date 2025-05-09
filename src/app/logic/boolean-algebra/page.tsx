@@ -35,8 +35,16 @@ export default function BooleanAlgebraPage() {
         {/* Input Section */}
         <Card className="w-full h-fit md:col-span-1 xl:col-span-3">
           <CardHeader className="pb-2">
-            <CardTitle>Input</CardTitle>
-            <CardDescription>Enter your boolean expression</CardDescription>
+            <CardTitle>Boolean Algebra Input</CardTitle>
+            <CardDescription className="flex flex-col space-y-1">
+              <span>Supported notation formats:</span>
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs pl-1">
+                <div className="font-medium">Standard:</div>
+                <div>A+B (OR), A*B (AND), !A (NOT)</div>
+                <div className="font-medium">LaTeX:</div>
+                <div>A\lor B, A\land B, \lnot A</div>
+              </div>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ExpressionInput
@@ -95,30 +103,9 @@ export default function BooleanAlgebraPage() {
             </CardContent>
           </Card>
 
-          {/* K-Map Section - New */}
+          {/* K-Map Section */}
           <div className="w-full h-fit">
-            {isSimplified && submittedExpression.trim() ? (
-              <KarnaughMap expression={submittedExpression} />
-            ) : (
-              <div className="text-center p-4 border rounded-md bg-muted/30">
-                {!isProcessing ? (
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium">Karnaugh Map</h3>
-                    <div className="space-y-2 text-muted-foreground">
-                      <p>K-Map generation currently supports 2 to 4 variables.</p>
-                      <p className="text-xs">
-                        Enter an expression and click Simplify to visualize.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                    <span>Generating K-Map...</span>
-                  </div>
-                )}
-              </div>
-            )}
+            <KarnaughMap expression={submittedExpression} />
           </div>
         </div>
       </div>

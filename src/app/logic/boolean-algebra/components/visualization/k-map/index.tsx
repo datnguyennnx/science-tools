@@ -3,12 +3,11 @@
 import React, { useMemo } from 'react'
 import { ExpressionParser } from '../../../engine'
 import { latexToBoolean } from '@/components/KatexFormula'
-import { KarnaughMapProps } from './types'
+import { KarnaughMapProps, KMapResult } from './types'
 import { createKMapConfig, evaluateExpression, extractVariablesFromTree } from './KMapEngine'
 import { detectGroups } from './KMapGroupDetector'
 import { KMapGrid } from './KMapGrid'
 import { KMapLegend } from './KMapLegend'
-import { toast } from 'sonner'
 import {
   Card,
   CardContent,
@@ -20,12 +19,11 @@ import {
 
 export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
   // Parse the expression and generate the K-Map data
-  const kmapData = useMemo(() => {
+  const kmapResult = useMemo<KMapResult>(() => {
     if (!expression) {
       return {
-        variables: [],
-        expressionTree: null,
-        mintermSet: new Set<number>(),
+        status: 'waiting',
+        message: 'Enter an expression and click Simplify to generate a Karnaugh Map.',
       }
     }
 
@@ -38,6 +36,16 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
 
       // Extract variables from the parsed expression
       const variables = extractVariablesFromTree(expressionTree)
+
+      // Check if we have a valid number of variables
+      if (variables.length < 2 || variables.length > 4) {
+        return {
+          status: 'error',
+          variables,
+          message: `K-Map generation currently supports 2 to 4 variables. Detected ${variables.length} variables (${variables.join(', ') || 'None'}).`,
+          details: 'Please provide a valid boolean expression with 2 to 4 unique variables (A-Z).',
+        }
+      }
 
       // Evaluate all minterms
       const mintermSet = new Set<number>()
@@ -60,70 +68,87 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
             mintermSet.add(i) // Add minterm if expression evaluates to true
           }
         } catch (error) {
-          toast.error(
-            `Error evaluating expression: ${error instanceof Error ? error.message : String(error)}`
-          )
+          return {
+            status: 'error',
+            variables,
+            message: 'Error evaluating expression values.',
+            details: error instanceof Error ? error.message : String(error),
+          }
         }
       }
 
-      return { variables, expressionTree, mintermSet }
-    } catch (error) {
-      toast.error(
-        `Error parsing expression: ${error instanceof Error ? error.message : String(error)}`
-      )
+      // K-Map configuration based on the number of variables
+      const kMapConfig = createKMapConfig(variables)
+
+      // Detect groups in the K-Map
+      const groups = detectGroups(mintermSet, kMapConfig.kMapOrder, numVars)
+
       return {
-        variables: [],
-        expressionTree: null,
-        mintermSet: new Set<number>(),
-        error: error instanceof Error ? error.message : 'Unknown error',
+        status: 'success',
+        variables,
+        expressionTree,
+        mintermSet,
+        kMapConfig,
+        groups,
+        numVars,
+      }
+    } catch (error) {
+      return {
+        status: 'error',
+        message: 'Error generating Karnaugh Map.',
+        details: error instanceof Error ? error.message : 'Invalid expression format',
       }
     }
   }, [expression])
 
-  const { variables, mintermSet, error } = kmapData
-  const numVars = variables.length
-
-  // Setup K-Map configuration based on the number of variables
-  const kMapConfig = useMemo(() => {
-    return createKMapConfig(variables)
-  }, [variables])
-
-  // Detect groups in the K-Map
-  const groups = useMemo(() => {
-    return detectGroups(mintermSet, kMapConfig.kMapOrder, numVars)
-  }, [mintermSet, kMapConfig.kMapOrder, numVars])
-
-  if (!expression) {
+  // Waiting state (no expression provided)
+  if (kmapResult.status === 'waiting') {
     return (
       <Card className={className}>
-        <CardContent className="p-6 text-center text-muted-foreground">
-          Expression needed for K-Map.
+        <CardHeader>
+          <CardTitle>Karnaugh Map</CardTitle>
+          <CardDescription>Visualization limited to 2-4 variables</CardDescription>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="border border-dashed rounded-md p-6 flex items-center justify-center">
+            <div className="text-center max-w-md">
+              <p className="text-sm text-muted-foreground">
+                Enter an expression and click Simplify to generate a Karnaugh Map.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
-  if (error) {
+  // Error state
+  if (kmapResult.status === 'error') {
     return (
       <Card className={className}>
-        <CardContent className="p-6 text-center text-destructive-foreground bg-destructive/10">
-          Error generating K-Map: {error}
+        <CardHeader>
+          <CardTitle>Karnaugh Map</CardTitle>
+          <CardDescription>Visualization limited to 2-4 variables</CardDescription>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="border border-dashed rounded-md p-6 flex items-center justify-center">
+            <div className="text-center max-w-md">
+              <p className="mb-2 text-sm">{kmapResult.message}</p>
+              {kmapResult.variables && (
+                <p className="text-sm text-muted-foreground">
+                  Detected variables:{' '}
+                  <span className="font-medium">{kmapResult.variables.join(', ')}</span>
+                </p>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
     )
   }
 
-  if (numVars < 2 || numVars > 4) {
-    return (
-      <Card className={className}>
-        <CardContent className="p-6 text-center text-destructive-foreground bg-destructive/10">
-          K-Map generation currently supports 2 to 4 variables. Detected {numVars} variables (
-          {variables.join(', ') || 'None'}). Please provide a valid boolean expression with 2 to 4
-          unique variables (A-Z).
-        </CardContent>
-      </Card>
-    )
-  }
+  // Success state - we now know kmapResult is of type KMapResultSuccess due to narrowing
+  const { variables, mintermSet, kMapConfig, groups, numVars } = kmapResult
 
   return (
     <Card className={className}>

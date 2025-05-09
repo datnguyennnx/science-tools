@@ -6,10 +6,15 @@
  */
 
 /**
+ * Output format for the generated expression
+ */
+export type OutputFormat = 'standard' | 'latex'
+
+/**
  * Generate a random Boolean expression of given complexity
  * @param complexity Level of complexity (1-5)
  * @param options Configuration options for expression generation
- * @returns A random Boolean expression as LaTeX string
+ * @returns A random Boolean expression as a string using specified notation
  */
 export function generateRandomExpression(
   complexity: number = 3,
@@ -31,23 +36,23 @@ export function generateRandomExpression(
   // Helper function to get a random variable
   const getRandomVar = () => availableVars[Math.floor(Math.random() * availableVars.length)]
 
+  // Get the appropriate operators based on output format
+  const operators = getOperators(config.outputFormat)
+
   // Helper function to get a simple term (variable or negated variable)
   const getSimpleTerm = (): string => {
     const variable = getRandomVar()
     if (Math.random() < config.negationProbability) {
-      return config.useOverlineNotation ? `\\overline{${variable}}` : `\\lnot ${variable}`
+      return config.outputFormat === 'latex'
+        ? `${operators.not} ${variable}`
+        : `${operators.not}(${variable})`
     }
     return variable
   }
 
   // Helper function to get a constant term (0 or 1)
   const getConstantTerm = (): string => {
-    return Math.random() < 0.5 ? '\\text{T}' : '\\text{F}'
-  }
-
-  // Helper function to format negated expressions
-  const formatNegation = (expr: string): string => {
-    return config.useOverlineNotation ? `\\overline{${expr}}` : `\\lnot(${expr})`
+    return Math.random() < 0.5 ? '1' : '0'
   }
 
   // Random operations based on complexity
@@ -62,35 +67,73 @@ export function generateRandomExpression(
     }
 
     // Decide which operation to use
-    const operation = Math.random() < config.andProbability ? '\\land' : '\\lor'
+    const operation = Math.random() < config.andProbability ? operators.and : operators.or
 
-    // For the left term, we can have a simple term or a complex one
-    const leftTermComplex = Math.random() < config.nestedProbability && level > 1
-    const leftTerm = leftTermComplex ? generateTerm(level - 1) : getSimpleTerm()
+    // Always get at least simple terms for both left and right
+    let leftTerm = getSimpleTerm()
+    let rightTerm = getSimpleTerm()
 
-    // For the right term, similar logic
-    const rightTermComplex = Math.random() < config.nestedProbability && level > 1
-    const rightTerm = rightTermComplex ? generateTerm(level - 1) : getSimpleTerm()
+    // If we can go deeper, consider making terms more complex
+    if (level > 1) {
+      // For the left term, we can have a complex one with some probability
+      if (Math.random() < config.nestedProbability) {
+        leftTerm = generateTerm(level - 1, false)
+      }
 
-    // Check if we need parentheses
+      // For the right term, similar logic but ensure it's different
+      if (Math.random() < config.nestedProbability) {
+        rightTerm = generateTerm(level - 1, false)
+      }
+    }
+
+    // Ensure both terms are valid (not empty)
+    if (!leftTerm || leftTerm.trim() === '') leftTerm = getSimpleTerm()
+    if (!rightTerm || rightTerm.trim() === '') rightTerm = getSimpleTerm()
+
+    // Check if we need parentheses - for LaTeX, always use them for clarity
     const needsParens =
-      leftTerm.includes('\\land') ||
-      leftTerm.includes('\\lor') ||
-      rightTerm.includes('\\land') ||
-      rightTerm.includes('\\lor')
+      config.outputFormat === 'latex' ||
+      leftTerm.includes(operators.and) ||
+      leftTerm.includes(operators.or) ||
+      rightTerm.includes(operators.and) ||
+      rightTerm.includes(operators.or)
 
     const expression = needsParens
       ? `(${leftTerm} ${operation} ${rightTerm})`
       : `${leftTerm} ${operation} ${rightTerm}`
 
     // Add negation to the entire expression sometimes
-    return Math.random() < config.expressionNegationProbability
-      ? formatNegation(expression)
-      : expression
+    if (Math.random() < config.expressionNegationProbability) {
+      return config.outputFormat === 'latex'
+        ? `${operators.not} ${expression}`
+        : `${operators.not}(${expression})`
+    }
+
+    return expression
   }
 
   // Always force at least one operation in the expression
   return generateTerm(complexity, true)
+}
+
+/**
+ * Get the appropriate operators based on output format
+ */
+function getOperators(format: OutputFormat) {
+  if (format === 'latex') {
+    return {
+      and: '\\land',
+      or: '\\lor',
+      not: '\\lnot',
+    }
+  }
+
+  // Standard format
+  return {
+    and: '*',
+    or: '+',
+    not: '!',
+  }
 }
 
 /**
@@ -134,7 +177,14 @@ export interface GeneratorOptions {
   constantProbability?: number
 
   /**
-   * Use \overline{} notation for negation instead of \lnot
+   * Output format for the expression (standard or latex)
+   */
+  outputFormat?: OutputFormat
+
+  /**
+   * Legacy option - previously used LaTeX overline notation
+   * Now standardized to use ! for negation in all cases
+   * @deprecated This option no longer has an effect as all negations use ! symbols
    */
   useOverlineNotation?: boolean
 }
@@ -150,30 +200,41 @@ export const defaultGeneratorOptions: Required<GeneratorOptions> = {
   expressionNegationProbability: 0.2,
   includeConstants: false,
   constantProbability: 0.1,
+  outputFormat: 'standard',
   useOverlineNotation: false,
 }
 
 /**
- * Generate expressions specifically with \overline notation
+ * Generate expressions with standard notation
  * @param complexity Level of complexity (1-5)
  * @param options Additional configuration options
- * @returns A Boolean expression using \overline notation for negations
+ * @returns A Boolean expression using standard notation
  */
-export function generateOverlineExpression(
+export function generateStandardExpression(
   complexity: number = 3,
-  options: Omit<GeneratorOptions, 'useOverlineNotation'> = {}
+  options: Omit<GeneratorOptions, 'outputFormat'> = {}
 ): string {
-  return generateRandomExpression(complexity, {
-    ...options,
-    useOverlineNotation: true,
-  })
+  return generateRandomExpression(complexity, { ...options, outputFormat: 'standard' })
+}
+
+/**
+ * Generate expressions with LaTeX notation
+ * @param complexity Level of complexity (1-5)
+ * @param options Additional configuration options
+ * @returns A Boolean expression using LaTeX notation
+ */
+export function generateLatexExpression(
+  complexity: number = 3,
+  options: Omit<GeneratorOptions, 'outputFormat'> = {}
+): string {
+  return generateRandomExpression(complexity, { ...options, outputFormat: 'latex' })
 }
 
 /**
  * Generate an expression with a guaranteed specific form or pattern
  *
  * @param pattern The pattern type to generate
- * @returns A Boolean expression matching the specified pattern
+ * @returns A Boolean expression matching the specified pattern using standard notation
  */
 export function generatePatternedExpression(
   pattern: ExpressionPattern,
@@ -225,13 +286,16 @@ function generateDeMorganPattern(options: Required<GeneratorOptions>): string {
   const var1 = variables[Math.floor(Math.random() * variables.length)]
   const var2 = variables[(variables.indexOf(var1) + 1) % variables.length]
 
+  // Get the appropriate operators
+  const operators = getOperators(options.outputFormat)
+
   // Generate !(A + B) or !(A * B) which can be simplified using De Morgan's laws
   const useAnd = Math.random() < 0.5
-  const operation = useAnd ? '\\land' : '\\lor'
+  const operation = useAnd ? operators.and : operators.or
 
-  return options.useOverlineNotation
-    ? `\\overline{${var1} ${operation} ${var2}}`
-    : `\\lnot(${var1} ${operation} ${var2})`
+  return options.outputFormat === 'latex'
+    ? `${operators.not} (${var1} ${operation} ${var2})`
+    : `${operators.not}(${var1} ${operation} ${var2})`
 }
 
 function generateAbsorptionPattern(options: Required<GeneratorOptions>): string {
@@ -239,19 +303,29 @@ function generateAbsorptionPattern(options: Required<GeneratorOptions>): string 
   const var1 = variables[Math.floor(Math.random() * variables.length)]
   const var2 = variables[(variables.indexOf(var1) + 1) % variables.length]
 
+  // Get the appropriate operators
+  const operators = getOperators(options.outputFormat)
+
   // Generate A + (A * B) or A * (A + B) which can be simplified using absorption law
   const useOr = Math.random() < 0.5
 
-  return useOr ? `${var1} \\lor (${var1} \\land ${var2})` : `${var1} \\land (${var1} \\lor ${var2})`
+  if (useOr) {
+    return `${var1} ${operators.or} (${var1} ${operators.and} ${var2})`
+  } else {
+    return `${var1} ${operators.and} (${var1} ${operators.or} ${var2})`
+  }
 }
 
 function generateIdempotentPattern(options: Required<GeneratorOptions>): string {
   const variables = options.availableVariables.slice(0, 3)
   const var1 = variables[Math.floor(Math.random() * variables.length)]
 
+  // Get the appropriate operators
+  const operators = getOperators(options.outputFormat)
+
   // Generate A + A or A * A which can be simplified using idempotent law
   const useOr = Math.random() < 0.5
-  return useOr ? `${var1} \\lor ${var1}` : `${var1} \\land ${var1}`
+  return useOr ? `${var1} ${operators.or} ${var1}` : `${var1} ${operators.and} ${var1}`
 }
 
 function generateDistributivePattern(options: Required<GeneratorOptions>): string {
@@ -260,20 +334,41 @@ function generateDistributivePattern(options: Required<GeneratorOptions>): strin
   const var2 = variables[(variables.indexOf(var1) + 1) % variables.length]
   const var3 = variables[(variables.indexOf(var2) + 1) % variables.length]
 
+  // Get the appropriate operators
+  const operators = getOperators(options.outputFormat)
+
   // Generate A * (B + C) or A + (B * C) which demonstrates distributive law
   const useAnd = Math.random() < 0.5
-  return useAnd
-    ? `${var1} \\land (${var2} \\lor ${var3})`
-    : `${var1} \\lor (${var2} \\land ${var3})`
+
+  if (useAnd) {
+    return `${var1} ${operators.and} (${var2} ${operators.or} ${var3})`
+  } else {
+    return `${var1} ${operators.or} (${var2} ${operators.and} ${var3})`
+  }
 }
 
 function generateComplementPattern(options: Required<GeneratorOptions>): string {
   const variables = options.availableVariables.slice(0, 3)
   const var1 = variables[Math.floor(Math.random() * variables.length)]
 
+  // Get the appropriate operators
+  const operators = getOperators(options.outputFormat)
+
   // Generate A * !A or A + !A which demonstrates complement law
   const useAnd = Math.random() < 0.5
-  const negatedVar = options.useOverlineNotation ? `\\overline{${var1}}` : `\\lnot ${var1}`
 
-  return useAnd ? `${var1} \\land ${negatedVar}` : `${var1} \\lor ${negatedVar}`
+  const negatedVar =
+    options.outputFormat === 'latex' ? `${operators.not} ${var1}` : `${operators.not}(${var1})`
+
+  return useAnd ? `${var1} ${operators.and} ${negatedVar}` : `${var1} ${operators.or} ${negatedVar}`
+}
+
+/**
+ * @deprecated Use generateLatexExpression instead
+ */
+export function generateOverlineExpression(
+  complexity: number = 3,
+  options: Omit<GeneratorOptions, 'useOverlineNotation'> = {}
+): string {
+  return generateRandomExpression(complexity, options)
 }

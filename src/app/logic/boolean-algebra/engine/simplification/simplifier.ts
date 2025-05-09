@@ -1,6 +1,6 @@
 import { BooleanExpression, SimplificationResult, SimplificationStep } from '../core'
-import { ExpressionParser } from '../parser'
-import { SimplificationRule } from '../core/rule-types'
+import { parseExpression, expressionToBooleanString, expressionToLatexString } from '../core'
+import { SimplificationRule } from '../core/types/rule-types'
 import { convertLawsToRules } from '../conversion/law-converter'
 import { getBasicRules, getNegationRules, getContradictionRules, getConstantRules } from './rules'
 import { toast } from 'sonner'
@@ -27,7 +27,7 @@ export class BooleanSimplifier {
   } {
     try {
       // Parse the input expression into a tree
-      const expressionTree = ExpressionParser.parse(expression)
+      const expressionTree = parseExpression(expression)
 
       // Apply simplification
       const result = this.simplify(expressionTree)
@@ -37,10 +37,10 @@ export class BooleanSimplifier {
         steps: result.steps.map(step => ({
           ruleName: step.ruleName,
           ruleFormula: step.ruleFormula,
-          before: ExpressionParser.toBooleanString(step.expressionBefore),
-          after: ExpressionParser.toBooleanString(step.expressionAfter),
+          before: expressionToBooleanString(step.expressionBefore),
+          after: expressionToBooleanString(step.expressionAfter),
         })),
-        finalExpression: ExpressionParser.toBooleanString(result.finalExpression),
+        finalExpression: expressionToBooleanString(result.finalExpression),
       }
     } catch (error) {
       // Show toast notification with error
@@ -64,7 +64,7 @@ export class BooleanSimplifier {
   } {
     try {
       // Parse and simplify
-      const expressionTree = ExpressionParser.parse(expression)
+      const expressionTree = parseExpression(expression)
       const result = this.simplify(expressionTree)
 
       // Convert to LaTeX
@@ -72,10 +72,10 @@ export class BooleanSimplifier {
         steps: result.steps.map(step => ({
           ruleName: step.ruleName,
           ruleFormula: step.ruleFormula,
-          beforeLatex: ExpressionParser.toLatexString(step.expressionBefore),
-          afterLatex: ExpressionParser.toLatexString(step.expressionAfter),
+          beforeLatex: expressionToLatexString(step.expressionBefore),
+          afterLatex: expressionToLatexString(step.expressionAfter),
         })),
-        finalLatex: ExpressionParser.toLatexString(result.finalExpression),
+        finalLatex: expressionToLatexString(result.finalExpression),
       }
     } catch (error) {
       // Show toast notification with error
@@ -96,7 +96,7 @@ export class BooleanSimplifier {
   simplify(expression: BooleanExpression): SimplificationResult {
     const steps: SimplificationStep[] = []
     let currentExpr = this.deepClone(expression)
-    const seen = new Set<string>([ExpressionParser.toBooleanString(currentExpr)])
+    const seen = new Set<string>([expressionToBooleanString(currentExpr)])
 
     // Track rules applied to prevent cycling
     const ruleApplicationCounts: Map<string, number> = new Map()
@@ -121,7 +121,7 @@ export class BooleanSimplifier {
 
       // Apply the rule
       const newExpr = rule.apply(expr)
-      const newExprString = ExpressionParser.toBooleanString(newExpr)
+      const newExprString = expressionToBooleanString(newExpr)
 
       // If we've seen this expression before, skip
       if (seen.has(newExprString)) {

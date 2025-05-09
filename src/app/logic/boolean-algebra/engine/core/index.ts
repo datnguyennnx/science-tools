@@ -1,17 +1,31 @@
 /**
- * Core Types Module
+ * Boolean Algebra Engine Core Module
  *
- * This module exports all the core types and interfaces used throughout the engine.
+ * This module exports the core functionality of the boolean algebra engine.
  */
 
-// Export all types from the core types module
-export type {
-  ExpressionNodeType,
-  BooleanExpression,
-  SimplificationStep,
-  SimplificationResult,
-} from './types'
+// Export all types from the types module
+export * from './types'
 
-// Export all rule-related types with renamed RuleInfo to avoid conflict
-export type { SimplificationRule } from './rule-types'
-export type { RuleInfo as RuleDefinition } from './rule-types'
+// Export parsing and formatting functionality from the parser
+export {
+  // Core parsing functions
+  parseExpression, // Main entry point for parsing expressions
+  parse, // Low-level parse function
+  parseBoolean, // Parse with detailed result object
+
+  // String conversion functions
+  expressionToBooleanString, // Convert expression tree to boolean string
+  expressionToLatexString, // Convert expression tree to LaTeX string
+  toBooleanString, // Alternative name for backward compatibility
+  toLatexString, // Alternative name for backward compatibility
+
+  // Formatting function
+  formatBooleanExpression, // Format expression with specified output format
+
+  // Utility function
+  getValidExpressionExamples, // Get examples of valid expressions
+} from './parsing/parser'
+
+// Export utility functions
+export { validateBooleanExpression } from './utils'

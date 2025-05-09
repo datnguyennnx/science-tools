@@ -6,7 +6,7 @@
  */
 
 import { BooleanExpression } from '../../core'
-import { SimplificationRule } from '../../core/rule-types'
+import { SimplificationRule } from '../../core/types/rule-types'
 
 /**
  * Get rules for handling chains of negations
