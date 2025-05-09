@@ -104,7 +104,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                     </Badge>
                     <span className="font-medium text-xs sm:text-sm">Original Expression</span>
                   </div>
-                  <div className="rounded bg-muted/80 p-2">
+                  <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
                     <KatexFormula formula={expression} block={true} />
                   </div>
                 </CardContent>
@@ -131,7 +131,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                       </div>
                     </div>
 
-                    <div className="rounded bg-muted/80 p-2">
+                    <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
                       <KatexFormula formula={step.expressionBefore} block={true} />
                     </div>
 
@@ -139,7 +139,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                       <span>↓</span>
                     </div>
 
-                    <div className="rounded bg-muted/80 p-2 ">
+                    <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar ">
                       <KatexFormula formula={step.expressionAfter} block={true} />
                     </div>
                   </CardContent>
@@ -152,7 +152,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
             <Card>
               <CardHeader>Simplified Result</CardHeader>
               <CardContent className="overflow-x-auto">
-                <div className="rounded bg-muted/80 p-2 no-scrollbar">
+                <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
                   <KatexFormula formula={memoizedSimplification.finalExpression} block={true} />
                 </div>
               </CardContent>
@@ -168,7 +168,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
           {memoizedSimplification.finalExpression && (
             <div className="mt-2">
               <p className="font-medium mb-1 text-sm">Expression:</p>
-              <div className="overflow-x-auto no-scrollbar">
+              <div className="overflow-x-auto max-w-full no-scrollbar">
                 <KatexFormula formula={memoizedSimplification.finalExpression} block={true} />
               </div>
             </div>

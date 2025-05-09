@@ -31,9 +31,9 @@ export default function BooleanAlgebraPage() {
 
   return (
     <div className="w-full max-w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-4">
         {/* Input Section */}
-        <Card className="w-full h-fit md:col-span-1 xl:col-span-3">
+        <Card className="w-full h-fit col-span-1 md:col-span-6 xl:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle>Boolean Algebra Input</CardTitle>
             <CardDescription className="flex flex-col space-y-1">
@@ -59,7 +59,7 @@ export default function BooleanAlgebraPage() {
         </Card>
 
         {/* Simplification Section */}
-        <Card className="w-full h-fit md:col-span-2 xl:col-span-6">
+        <Card className="w-full h-fit col-span-1 md:col-span-6 xl:col-span-6">
           <CardHeader className="pb-2">
             <CardTitle>Simplification</CardTitle>
             <CardDescription>Step-by-step resolution</CardDescription>
@@ -83,7 +83,7 @@ export default function BooleanAlgebraPage() {
         </Card>
 
         {/* Truth Table Section & K-Map Section Group */}
-        <div className="md:col-span-2 xl:col-span-3 flex flex-col gap-4">
+        <div className="col-span-1 md:col-span-6 xl:col-span-3 flex flex-col gap-4">
           {/* Truth Table Section */}
           <Card className="w-full h-fit">
             <CardHeader className="pb-2">
