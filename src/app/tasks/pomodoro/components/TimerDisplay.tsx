@@ -12,13 +12,6 @@ interface TimerDisplayProps {
 }
 
 export function TimerDisplay({ minutes, seconds, mode, className }: TimerDisplayProps) {
-  // Restore color map for text color based on mode
-  const colorMap: Record<TimerMode, string> = {
-    focus: 'text-red-500',
-    shortBreak: 'text-green-500',
-    longBreak: 'text-blue-500',
-  }
-
   const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 
   // Get mode label for screen readers only
@@ -35,8 +28,6 @@ export function TimerDisplay({ minutes, seconds, mode, className }: TimerDisplay
     }
   }
 
-  const activeColor = colorMap[mode] || 'text-foreground'
-
   return (
     <div
       className={cn('flex flex-col items-center justify-center select-none', className)}
@@ -44,13 +35,8 @@ export function TimerDisplay({ minutes, seconds, mode, className }: TimerDisplay
       aria-live="polite"
       aria-label={`${timeString} remaining in ${getModeLabel()}`}
     >
-      {/* Reverted to simple text display */}
-      <span
-        className={cn(
-          `text-9xl font-mono font-bold tracking-tighter ${activeColor}`,
-          'transition-all duration-300' // Optional: keep transition for color changes
-        )}
-      >
+      {/* Timer display with custom font */}
+      <span className={'text-9xl font-mono font-extrabold tracking-tighter text-foreground'}>
         {timeString}
       </span>
     </div>

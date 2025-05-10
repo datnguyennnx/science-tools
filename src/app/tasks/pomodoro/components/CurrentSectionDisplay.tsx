@@ -6,8 +6,6 @@ import { motion, AnimatePresence, Variants } from 'framer-motion'
 import { PomodoroUIState, TimerMode } from '../engine/core/types'
 import { Check } from 'lucide-react'
 import { format } from 'date-fns'
-import { Badge } from '@/components/ui/badge'
-import { Card } from '@/components/ui/card'
 
 // Internal Stage representation for the timeline
 interface TimelineStage {
@@ -53,11 +51,6 @@ const itemVariants: Variants = {
 // Stage status type
 type StageStatus = 'current' | 'completed' | 'upcoming'
 
-// Helper to format duration from seconds to "MM min" string
-const formatDurationDisplay = (seconds: number): string => {
-  return `${Math.floor(seconds / 60)} min`
-}
-
 // Current time display component
 const DateTimeDisplay = memo(({ currentTime }: { currentTime: Date }) => (
   <motion.div
@@ -80,96 +73,79 @@ const DateTimeDisplay = memo(({ currentTime }: { currentTime: Date }) => (
 
 DateTimeDisplay.displayName = 'DateTimeDisplay'
 
+const getStageDisplay = (stage: TimelineStage, status: StageStatus) => {
+  if (status === 'completed') {
+    if (stage.type === 'focus') return `🏆 ${stage.label} Complete!`
+    if (stage.type === 'shortBreak') return `🎉 ${stage.label} Cleared!`
+    if (stage.type === 'longBreak') return `🥇 ${stage.label} Unlocked!`
+  }
+  if (status === 'current') {
+    if (stage.type === 'focus') return `🔥 ${stage.label} In Progress!`
+    if (stage.type === 'shortBreak') return `⏳ ${stage.label} In Progress!`
+    if (stage.type === 'longBreak') return `🎯 ${stage.label} In Progress!`
+  }
+  // upcoming
+  return `🎯 ${stage.label}`
+}
+
 // Create a memoized stage component to prevent unnecessary re-renders
 const StageItem = memo(
   ({
     stage,
     status,
     isLastStageInTimeline,
-    lineColorClass,
-    dotColorClass,
-    textColorClass,
-    timeDisplay,
   }: {
     stage: TimelineStage
     status: StageStatus
     isLastStageInTimeline: boolean
-    lineColorClass: string
-    dotColorClass: string
-    textColorClass: string
-    timeDisplay: string
-  }) => (
-    <motion.div variants={itemVariants} className="flex items-start relative p-2 space-x-4">
-      <div className="w-16 text-right pr-3 pt-1">
-        <p className="text-sm text-muted-foreground">{timeDisplay}</p>
-      </div>
-      <div className="relative flex flex-col items-center">
-        {/* Simplified line logic for now, always draw from top if not first overall */}
-        {status !== 'upcoming' || stage.type !== 'focus'}
-        <div
-          className={cn('w-0.5 h-6 -mt-3', lineColorClass, status === 'upcoming' && 'opacity-50')}
-        />
-
-        <div
-          className={cn(
-            'w-4 h-4 rounded-full flex items-center justify-center z-10',
-            dotColorClass
-          )}
-        >
-          {status === 'completed' && <Check className="h-2.5 w-2.5" />}
-        </div>
-        {!isLastStageInTimeline && (
+  }) => {
+    return (
+      <motion.div variants={itemVariants} className="flex items-start relative p-2 space-x-4">
+        <div className="relative flex flex-col items-center">
+          <div
+            className={cn('w-0.5 h-6 -mt-3', 'bg-border', status === 'upcoming' && 'opacity-50')}
+          />
           <div
             className={cn(
-              'w-0.5 flex-grow min-h-[40px]',
-              lineColorClass,
-              status === 'upcoming' && 'opacity-50'
+              'w-4 h-4 rounded-full flex items-center justify-center z-10',
+              status === 'completed'
+                ? 'bg-border text-muted-foreground'
+                : status === 'current'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background border-2 border-border text-muted-foreground'
             )}
-          />
-        )}
-      </div>
-      <div className="flex-1 ml-3 py-1">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className={cn('font-medium text-sm', textColorClass)}>{stage.label}</h3>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              {stage.type === 'focus'
-                ? 'Focus on your work'
-                : `Take a ${stage.type === 'longBreak' ? 'long' : 'short'} break`}
-            </p>
+          >
+            {status === 'completed' && <Check className="h-2.5 w-2.5" />}
           </div>
-          <div className="text-right">
-            {status === 'current' && (
-              <Badge
-                variant="default"
-                className={cn(
-                  'text-sm px-1.5 py-0 h-4 mb-0.5',
-                  stage.type === 'focus'
-                    ? 'bg-[var(--pomodoro-focus)]'
-                    : stage.type === 'shortBreak'
-                      ? 'bg-[var(--pomodoro-short-break)]'
-                      : 'bg-[var(--pomodoro-long-break)]'
-                )}
-              >
-                In Progress
-              </Badge>
-            )}
-            {status === 'completed' && (
-              <Badge
-                variant="secondary"
-                className="text-sm px-1.5 py-0 h-4 mb-0.5 bg-[var(--pomodoro-completed)]/20"
-              >
-                Completed
-              </Badge>
-            )}
-            <div className="text-sm text-muted-foreground">
-              {formatDurationDisplay(stage.durationInSeconds)}
-            </div>
+          {!isLastStageInTimeline && (
+            <div
+              className={cn(
+                'w-0.5 flex-grow min-h-[40px]',
+                'bg-border',
+                status === 'upcoming' && 'opacity-50'
+              )}
+            />
+          )}
+        </div>
+        <div className="border-2 bg-muted/20 rounded-md p-2">
+          <div className="flex justify-between items-center">
+            <h3
+              className={cn(
+                'font-semibold text-base',
+                status === 'completed'
+                  ? 'text-muted-foreground'
+                  : status === 'current'
+                    ? 'text-primary'
+                    : 'text-muted-foreground opacity-80'
+              )}
+            >
+              {getStageDisplay(stage, status)}
+            </h3>
           </div>
         </div>
-      </div>
-    </motion.div>
-  )
+      </motion.div>
+    )
+  }
 )
 
 StageItem.displayName = 'StageItem'
@@ -189,8 +165,7 @@ export function CurrentSectionDisplay({
     return () => clearInterval(intervalId)
   }, [showTimeDisplay])
 
-  const { settings, currentMode, completedFocusSessionsInSet, displayMinutes, displaySeconds } =
-    uiState
+  const { settings, currentMode, completedFocusSessionsInSet } = uiState
 
   // 1. Derive the sequence of all stages in a full Pomodoro set (Focus, SB, F, SB, F, LB)
   const timelineStages = useMemo(() => {
@@ -225,16 +200,11 @@ export function CurrentSectionDisplay({
   // 2. Determine the current stage's global index in this timeline sequence
   const currentGlobalStageIndex = useMemo(() => {
     if (currentMode === 'focus') {
-      return completedFocusSessionsInSet * 2 // Focus 1 (idx 0), Focus 2 (idx 2), ...
+      return completedFocusSessionsInSet * 2
     }
     if (currentMode === 'shortBreak') {
-      // Short break N follows Focus N. Focus N is at (N-1)*2. Short Break N is (N-1)*2 + 1.
-      // completedFocusSessionsInSet is the count of *completed* focus sessions.
-      // If 1 focus session is done, currentMode is SB, completedFocusSessionsInSet = 1.
-      // This SB is SB1, index is (1-1)*2 + 1 = 1.
       return (completedFocusSessionsInSet - 1) * 2 + 1
     }
-    // Long Break is always the last stage in the derived timelineStages array
     return timelineStages.length - 1
   }, [currentMode, completedFocusSessionsInSet, timelineStages.length])
 
@@ -263,71 +233,27 @@ export function CurrentSectionDisplay({
             exit="exit"
             className={cn('fixed top-16 right-6 w-80', 'z-50')}
           >
-            <Card className="p-0 py-2 overflow-hidden">
-              <div className="max-h-[80vh] overflow-y-auto pr-2 no-scrollbar">
-                <div className="p-2">
-                  {timelineStages.map((stage, index) => {
-                    const status: StageStatus =
-                      index === currentGlobalStageIndex
-                        ? 'current'
-                        : index < currentGlobalStageIndex
-                          ? 'completed'
-                          : 'upcoming'
+            <div className="max-h-[80vh] overflow-y-auto pr-2 no-scrollbar">
+              <div className="p-2">
+                {timelineStages.map((stage, index) => {
+                  const status: StageStatus =
+                    index === currentGlobalStageIndex
+                      ? 'current'
+                      : index < currentGlobalStageIndex
+                        ? 'completed'
+                        : 'upcoming'
 
-                    let dotColorClass = ''
-                    let lineColorClass = ''
-                    let textColorClass = ''
-
-                    if (status === 'completed') {
-                      dotColorClass =
-                        'bg-[var(--pomodoro-completed)] text-[var(--pomodoro-icon-completed)]'
-                      lineColorClass = 'bg-[var(--pomodoro-completed)]'
-                      textColorClass = 'text-muted-foreground line-through opacity-70'
-                    } else if (status === 'current') {
-                      if (stage.type === 'focus') {
-                        dotColorClass = 'bg-[var(--pomodoro-focus)]'
-                        lineColorClass = 'bg-[var(--pomodoro-focus)]'
-                        textColorClass = 'text-[var(--pomodoro-focus)]'
-                      } else if (stage.type === 'shortBreak') {
-                        dotColorClass = 'bg-[var(--pomodoro-short-break)]'
-                        lineColorClass = 'bg-[var(--pomodoro-short-break)]'
-                        textColorClass = 'text-[var(--pomodoro-short-break)]'
-                      } else {
-                        // longBreak
-                        dotColorClass = 'bg-[var(--pomodoro-long-break)]'
-                        lineColorClass = 'bg-[var(--pomodoro-long-break)]'
-                        textColorClass = 'text-[var(--pomodoro-long-break)]'
-                      }
-                    } else {
-                      // upcoming
-                      dotColorClass = 'border-2 border-[var(--pomodoro-upcoming)] bg-background'
-                      lineColorClass = 'bg-[var(--pomodoro-upcoming)]' // Will be partially transparent via style
-                      textColorClass = 'text-muted-foreground opacity-50'
-                    }
-
-                    const timeDisplayStr =
-                      status === 'current'
-                        ? `${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`
-                        : status === 'completed'
-                          ? 'Done'
-                          : 'Pending'
-
-                    return (
-                      <StageItem
-                        key={stage.label}
-                        stage={stage}
-                        status={status}
-                        isLastStageInTimeline={index === timelineStages.length - 1}
-                        lineColorClass={lineColorClass}
-                        dotColorClass={dotColorClass}
-                        textColorClass={textColorClass}
-                        timeDisplay={timeDisplayStr}
-                      />
-                    )
-                  })}
-                </div>
+                  return (
+                    <StageItem
+                      key={stage.label}
+                      stage={stage}
+                      status={status}
+                      isLastStageInTimeline={index === timelineStages.length - 1}
+                    />
+                  )
+                })}
               </div>
-            </Card>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

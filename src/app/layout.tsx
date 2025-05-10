@@ -1,25 +1,45 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import { Geist, Geist_Mono } from 'next/font/google'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
-
 export const metadata: Metadata = {
-  title: 'Data Science Tools',
-  description: 'A collection of tools for data science',
+  title: {
+    template: '%s | Science Tools',
+    default: 'Science Tools',
+  },
+  description: 'A collection of interactive tools for science, math, and productivity',
+  keywords: ['science', 'tools', 'productivity', 'mathematics', 'logic', 'pomodoro'],
+  authors: [
+    {
+      name: 'Science Tools Team',
+    },
+  ],
+  category: 'Education',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    siteName: 'Science Tools',
+    title: 'Science Tools',
+    description: 'A collection of interactive tools for science, math, and productivity',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Science Tools',
+    description: 'A collection of interactive tools for science, math, and productivity',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#121212' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -30,7 +50,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className="antialiased" suppressHydrationWarning>
         <SpeedInsights />
         <Analytics />
         <ThemeProvider
