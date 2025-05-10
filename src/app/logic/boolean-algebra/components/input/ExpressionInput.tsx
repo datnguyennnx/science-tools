@@ -1,18 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Shuffle } from 'lucide-react'
-import { getSimplificationSteps, generateRandomExpression } from '../../engine'
-import { InputFormat, ParserOptions } from '../../engine/core/parsing/types'
+import { simplifyExpression, generateRandomExpression, BooleanExpression } from '../../engine'
+import { InputFormat, ParserOptions } from '../../engine/parser/types'
 import { KatexFormula, booleanToLatex } from '@/components/KatexFormula'
 import { toast } from 'sonner'
-import { parse as parseExpr, detectFormat } from '../../engine/core/parsing/parser'
+import { detectFormat, parseBoolean } from '../../engine/parser/parser'
 import {
   formatToBoolean as toBooleanString,
   formatToLatex as toLatexString,
-} from '../../engine/core/parsing/formatters'
-import { BooleanExpression } from '../../engine/core/types/types'
-import { OutputFormat } from '../../engine/generation/generator'
+} from '../../engine/parser/formatter'
+import type { OutputFormat } from '../../engine/generator/generator'
 
 /**
  * Detect input format (standard or LaTeX) based on content
@@ -46,32 +45,65 @@ export function ExpressionInput({
   const [error, setError] = useState('')
   const [complexity, setComplexity] = useState(3) // Default complexity level
 
-  // Create wrapper functions for the parser
-  const parse = (input: string, options: Partial<ParserOptions> = {}) => {
+  // Create wrapper functions for the parser, memoized with useCallback
+  const parse = useCallback((input: string, options: Partial<ParserOptions> = {}) => {
     try {
       // First auto-detect the format if not specified
       const inputFormat = options.inputFormat || detectInputFormat(input)
 
-      // Parse the expression
-      const expr = parseExpr(input)
-      return { success: true, expression: expr, format: inputFormat }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to parse expression'
-      if (options.showToasts) {
-        toast.error(errorMessage)
+      // Parse the expression using the imported parseBoolean
+      const result = parseBoolean(input, { ...options, inputFormat }) // Pass relevant options
+
+      if (result.success && result.expression) {
+        return { success: true, expression: result.expression, format: inputFormat }
+      } else {
+        // Error is already in result.error, component can decide to toast if needed
+        return { success: false, expression: null, error: result.error || 'Failed to parse' }
       }
+    } catch (error) {
+      // This catch might be redundant if parseBoolean itself returns a ParseResult with the error
+      const errorMessage = error instanceof Error ? error.message : 'Failed to parse expression'
+      // Component can decide to toast if needed
       return { success: false, expression: null, error: errorMessage }
     }
-  }
+  }, [])
 
-  const formatBoolean = (expr: BooleanExpression) => toBooleanString(expr)
-  const formatLatex = (expr: BooleanExpression) => toLatexString(expr)
+  const formatBoolean = useCallback((expr: BooleanExpression) => toBooleanString(expr), [])
+  const formatLatex = useCallback((expr: BooleanExpression) => toLatexString(expr), [])
 
   useEffect(() => {
     setExpression(defaultExpression)
   }, [defaultExpression])
 
   // Update previews whenever expression changes
+  const updatePreview = useCallback(
+    (expr: string) => {
+      if (!expr.trim()) return
+
+      // Auto-detect the input format
+      const detectedFormat = detectInputFormat(expr)
+
+      // Parse with silent error handling and auto-format detection
+      const result = parse(expr, {
+        silent: true,
+      })
+
+      if (result.success && result.expression) {
+        // Show alternative format in preview
+        if (detectedFormat === 'standard') {
+          setAlternativePreview(formatLatex(result.expression))
+        } else {
+          setAlternativePreview(formatBoolean(result.expression))
+        }
+        setError('')
+      } else if (result.error) {
+        // Only show errors in the UI, don't toast during typing
+        setError(result.error)
+      }
+    },
+    [parse, formatLatex, formatBoolean]
+  )
+
   useEffect(() => {
     if (!expression.trim()) {
       setAlternativePreview('')
@@ -81,35 +113,7 @@ export function ExpressionInput({
 
     onExpressionChange?.(expression)
     updatePreview(expression)
-  }, [expression, onExpressionChange])
-
-  // Function to update preview based on current expression
-  const updatePreview = (expr: string) => {
-    if (!expr.trim()) return
-
-    // Auto-detect the input format
-    const detectedFormat = detectInputFormat(expr)
-
-    // Parse with silent error handling and auto-format detection
-    const result = parse(expr, {
-      showToasts: false,
-      silent: true,
-      // Let the parser auto-detect format based on the expression
-    })
-
-    if (result.success && result.expression) {
-      // Show alternative format in preview
-      if (detectedFormat === 'standard') {
-        setAlternativePreview(formatLatex(result.expression))
-      } else {
-        setAlternativePreview(formatBoolean(result.expression))
-      }
-      setError('')
-    } else if (result.error) {
-      // Only show errors in the UI, don't toast during typing
-      setError(result.error)
-    }
-  }
+  }, [expression, onExpressionChange, updatePreview])
 
   const handleExpressionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newExpression = e.target.value
@@ -129,10 +133,13 @@ export function ExpressionInput({
 
     // Let the parser auto-detect format
     const parseResult = parse(expression, {
-      showToasts: true,
+      // No showToasts, silent defaults to false, so errors will be in parseResult.error
     })
 
-    if (!parseResult.success) {
+    if (!parseResult.success || !parseResult.expression) {
+      // If parseResult itself indicates failure, set error and return
+      setError(parseResult.error || 'Failed to parse expression for simplification.')
+      if (parseResult.error) toast.error(parseResult.error) // Toast if parse failed
       onResultChange?.(false)
       return
     }
@@ -140,7 +147,7 @@ export function ExpressionInput({
     try {
       // Use the standardized expression format for simplification
       const standardExpression = formatBoolean(parseResult.expression!)
-      const { finalExpression } = getSimplificationSteps(standardExpression)
+      const { finalExpression } = simplifyExpression(standardExpression)
       setLocalSimplifiedResult(finalExpression)
       onResultChange?.(true)
     } catch (err) {

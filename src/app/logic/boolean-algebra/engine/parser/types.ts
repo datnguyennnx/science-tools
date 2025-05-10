@@ -1,5 +1,4 @@
-import { BooleanExpression } from '../types/types'
-
+import { BooleanExpression } from '../ast/types'
 /**
  * Input format types supported by the parser
  */
@@ -25,9 +24,10 @@ export interface ParserOptions {
   silent?: boolean
 
   /**
-   * Whether to display toast notifications for errors
+   * Indicates if this is the first pass of parsing, to control certain preprocessing steps.
+   * Defaults to true.
    */
-  showToasts?: boolean
+  isInitialParse?: boolean
 }
 
 /**
@@ -37,7 +37,7 @@ export const DEFAULT_PARSER_OPTIONS: ParserOptions = {
   inputFormat: 'standard',
   autoFix: true,
   silent: false,
-  showToasts: true,
+  isInitialParse: true,
 }
 
 /**
@@ -57,7 +57,7 @@ export interface ParseResult {
   /**
    * Error message if parsing failed
    */
-  error?: string
+  error?: string | null
 
   /**
    * The input that was parsed (after preprocessing)

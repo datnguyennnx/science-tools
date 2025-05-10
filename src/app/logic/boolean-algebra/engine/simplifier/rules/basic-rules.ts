@@ -5,8 +5,8 @@
  * double negation, De Morgan's laws, etc.
  */
 
-import { BooleanExpression } from '../../core'
-import { SimplificationRule } from '../../core/types/rule-types'
+import { BooleanExpression } from '../../ast'
+import { SimplificationRule } from '../../ast/rule-types'
 
 /**
  * Get basic tree-based simplification rules

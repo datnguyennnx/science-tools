@@ -5,8 +5,9 @@
  * expressions containing negation operators.
  */
 
-import { BooleanExpression } from '../../core'
-import { SimplificationRule } from '../../core/types/rule-types'
+import { BooleanExpression } from '../../ast'
+import { SimplificationRule } from '../../ast/rule-types'
+import { deepClone } from '../../utils'
 
 /**
  * Get rules for handling chains of negations
@@ -72,13 +73,8 @@ export function getNegationRules(): SimplificationRule[] {
           return e
         }
 
-        return simplifyNegations(structuredClone(expr))
+        return simplifyNegations(deepClone(expr))
       },
     },
   ]
-}
-
-// Helper function to deep clone expressions
-function structuredClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj))
 }

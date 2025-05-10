@@ -5,10 +5,10 @@
  * to SimplificationRule objects that can be used by the simplifier.
  */
 
-import { BooleanExpression } from '../core'
-import { SimplificationRule } from '../core/types/rule-types'
-import { parseExpression, expressionToBooleanString } from '../core'
-import { booleanLaws, type BooleanLaw, type BooleanLaws } from '../simplification/constants'
+import { BooleanExpression } from '../ast'
+import { SimplificationRule } from '../ast/rule-types'
+import { parseExpression, expressionToBooleanString } from '../parser'
+import { booleanLaws, type BooleanLaw, type BooleanLaws } from '../simplifier/constants'
 
 // Type for accessing booleanLaws with string index
 type LawsRecord = BooleanLaws & {
@@ -97,7 +97,8 @@ export function convertLawsToRules(): SimplificationRule[] {
 
         // Parse the new expression string back to a tree
         if (newExprString !== exprString) {
-          return parseExpression(newExprString)
+          // Pass false for isInitialParse because the string is already processed by expressionToBooleanString
+          return parseExpression(newExprString, false)
         }
 
         // Return the original expression if no change

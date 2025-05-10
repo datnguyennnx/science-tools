@@ -11,13 +11,22 @@ export const booleanLaws: BooleanLaws = {
       name: 'AND Identity',
       formula: 'A * 1 = A',
       regex: /([A-Z])\s*\*\s*(1|T)|(?:1|T)\s*\*\s*([A-Z])/g,
-      replacement: (m: RegExpMatchArray) => m[1] || m[3],
+      replacement: (m: RegExpMatchArray): string => {
+        const v1 = m[1] // Variable from A*1 form
+        const v2 = m[3] // Variable from 1*A form
+        // Ensure a string is returned; fallback to original match if somehow both are undefined (should not happen with this regex)
+        return v1 || v2 || m[0]
+      },
     },
     {
       name: 'OR Identity',
       formula: 'A + 0 = A',
       regex: /([A-Z])\s*\+\s*(0|F)|(?:0|F)\s*\+\s*([A-Z])/g,
-      replacement: (m: RegExpMatchArray) => m[1] || m[3],
+      replacement: (m: RegExpMatchArray): string => {
+        const v1 = m[1] // Variable from A+0 form
+        const v2 = m[3] // Variable from 0+A form
+        return v1 || v2 || m[0]
+      },
     },
   ],
 
@@ -139,32 +148,7 @@ export const booleanLaws: BooleanLaws = {
   ],
 
   // Distributive expansions & factorizations
-  distributive: [
-    {
-      name: 'Distributive (X*(Y+Z))',
-      formula: 'X * (Y + Z) = XY + XZ',
-      regex: /([A-Z01]|!\([^()]+\))\s*\*\s*\(\s*([^()]+)\s*\+\s*([^()]+)\s*\)/g,
-      replacement: '($1 * $2) + ($1 * $3)',
-    },
-    {
-      name: 'Distributive (X+(Y*Z))',
-      formula: 'X + (Y * Z) = (X + Y)(X + Z)',
-      regex: /([A-Z01]|!\([^()]+\))\s*\+\s*\(\s*([^()]+)\s*\*\s*([^()]+)\s*\)/g,
-      replacement: '($1 + $2) * ($1 + $3)',
-    },
-    {
-      name: 'Distributive ( (X+Y)*Z )',
-      formula: '(X + Y) * Z = XZ + YZ',
-      regex: /\(\s*([^()]+)\s*\+\s*([^()]+)\s*\)\s*\*\s*([^()]+)/g,
-      replacement: '($1 * $3) + ($2 * $3)',
-    },
-    {
-      name: 'Distributive (XZ + YZ → (X+Y)Z)',
-      formula: 'X*Z + Y*Z = (X+Y)*Z',
-      regex: /([A-Z01]|!\([^()]+\))\s*\*\s*([^()]+)\s*\+\s*\1\s*\*\s*([^()]+)/g,
-      replacement: '$1 * ($2 + $3)',
-    },
-  ],
+  distributive: [], // Temporarily disable distributive laws
 
   // Constant-reduction (0/1) laws
   constantReduction: [

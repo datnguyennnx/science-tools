@@ -5,7 +5,15 @@
 /**
  * Boolean expression tree node types
  */
-export type ExpressionNodeType = 'VARIABLE' | 'CONSTANT' | 'NOT' | 'AND' | 'OR'
+export type ExpressionNodeType =
+  | 'VARIABLE'
+  | 'CONSTANT'
+  | 'NOT'
+  | 'AND'
+  | 'OR'
+  | 'XOR'
+  | 'NAND'
+  | 'NOR'
 
 /**
  * Boolean expression tree representation

@@ -6,159 +6,65 @@
  * expression tree-based simplification system.
  */
 
-import { toast } from 'sonner'
+// Import types from AST module
+import type { BooleanExpression, SimplificationStep } from './ast'
 
-// Import from core module
-import type { BooleanExpression, SimplificationStep } from './core'
+// Import from parser module
 import {
   parseExpression,
   expressionToBooleanString,
   expressionToLatexString,
   getValidExpressionExamples,
-} from './core'
+} from './parser'
 
-// Import from simplification module
-import { BooleanSimplifier } from './simplification'
+// Import from simplifier module
+import { simplifyExpression as simplifyExpr, getLatexResults as getLatexRes } from './simplifier'
 
-// Import from conversion module
-import { latexToBoolean } from './conversion'
-
-// Import from generation module
+// Import from generator module
 import {
   generateRandomExpression,
   generatePatternedExpression,
   type GeneratorOptions,
   type ExpressionPattern,
-} from './generation'
+} from './generator'
 
-// Import sanitization utility
-import { sanitizeExpression } from './utils'
+// Re-export core types
+export type { BooleanExpression, SimplificationStep }
 
-// Re-export types
-export type { BooleanExpression, SimplificationStep, GeneratorOptions, ExpressionPattern }
-
-// Re-export generator functions
+// Re-export generator types and functions
+export type { GeneratorOptions, ExpressionPattern }
 export { generateRandomExpression, generatePatternedExpression }
 
 /**
- * Import the boolean laws from the simplification module
- */
-import { booleanLaws } from './simplification/constants'
-export { booleanLaws }
-
-/**
  * Interface for simplification results that matches the format expected
- * by the existing presentation layer
+ * by the existing presentation layer.
+ * The `steps` provide string representations of the expressions.
  */
 export interface SimplificationResults {
   steps: {
-    lawName: string
-    lawDefinition: string
-    expressionBefore: string
-    expressionAfter: string
+    lawName: string // Corresponds to ruleName from SimplificationStep
+    lawDefinition: string // Corresponds to ruleFormula from SimplificationStep
+    expressionBefore: string // Stringified version of expressionBefore from SimplificationStep
+    expressionAfter: string // Stringified version of expressionAfter from SimplificationStep
   }[]
   finalExpression: string
 }
 
 /**
- * Interface for simplification results with LaTeX formatting
+ * Interface for simplification results with LaTeX formatting.
+ * The `steps` provide LaTeX string representations of the expressions.
  */
 export interface LatexSimplificationResults {
   steps: {
-    lawName: string
-    lawDefinition: string
-    expressionBefore: string
-    expressionAfter: string
+    lawName: string // Corresponds to ruleName from SimplificationStep
+    lawDefinition: string // Corresponds to ruleFormula from SimplificationStep
+    expressionBefore: string // LaTeX stringified version
+    expressionAfter: string // LaTeX stringified version
   }[]
   finalExpression: string
 }
 
-/**
- * Get basic simplification steps in the old format for backward compatibility
- */
-export function getSimplificationSteps(expression: string) {
-  try {
-    // Sanitize the expression
-    const sanitizedExpression = sanitizeExpression(expression)
-
-    // Create a simplifier instance
-    const simplifier = new BooleanSimplifier()
-
-    // Get results with string formatting
-    const results = simplifier.simplifyExpression(sanitizedExpression)
-
-    return {
-      steps: results.steps.map(step => ({
-        expressionBefore: step.before,
-        lawName: step.ruleName,
-        lawDefinition: step.ruleFormula,
-        expressionAfter: step.after,
-      })),
-      finalExpression: results.finalExpression,
-    }
-  } catch (error) {
-    // Show toast notification with error
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    toast.error(errorMessage)
-
-    // Re-throw with more context
-    if (error instanceof Error) {
-      throw new Error(`Error simplifying expression: ${error.message}`)
-    }
-    throw new Error('Failed to simplify expression')
-  }
-}
-
-/**
- * Simplify a boolean expression and return the results in the format
- * expected by the existing application
- */
-export function simplifyBooleanExpression(expression: string): LatexSimplificationResults {
-  try {
-    // Sanitize and validate the expression
-    if (!expression || expression.trim() === '') {
-      return {
-        steps: [],
-        finalExpression: '',
-      }
-    }
-
-    // Sanitize the expression to catch 'undefined' values
-    const sanitizedExpression = sanitizeExpression(expression)
-
-    // First convert from LaTeX to our internal boolean representation
-    const booleanExpr = latexToBoolean(sanitizedExpression)
-
-    // Create a simplifier instance
-    const simplifier = new BooleanSimplifier()
-
-    // Get results with LaTeX formatting
-    const results = simplifier.getLatexResults(booleanExpr)
-
-    // Convert to the interface expected by the presentation layer
-    return {
-      steps: results.steps.map(step => ({
-        lawName: step.ruleName,
-        lawDefinition: step.ruleFormula,
-        expressionBefore: step.beforeLatex,
-        expressionAfter: step.afterLatex,
-      })),
-      finalExpression: results.finalLatex,
-    }
-  } catch (error) {
-    // Show toast notification with error
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    toast.error(errorMessage)
-
-    // Instead of returning an empty result, throw the error to allow proper error handling
-    if (error instanceof Error) {
-      throw new Error(`Error simplifying expression: ${error.message}`)
-    }
-    throw new Error('Failed to simplify expression')
-  }
-}
-
-// Create compatibility layer for ExpressionParser
+// Create compatibility layer for ExpressionParser, using functions from the parser module
 export const ExpressionParser = {
   parse: parseExpression,
   toBooleanString: expressionToBooleanString,
@@ -166,5 +72,5 @@ export const ExpressionParser = {
   getValidExamples: getValidExpressionExamples,
 }
 
-// Re-export BooleanSimplifier
-export { BooleanSimplifier }
+// Export the functional APIs for simplification
+export { simplifyExpr as simplifyExpression, getLatexRes as getLatexResults }

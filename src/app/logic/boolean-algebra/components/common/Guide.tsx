@@ -1,6 +1,6 @@
 'use client'
 
-import { booleanLaws } from '../../engine'
+import { booleanLaws } from '../../engine/simplifier/constants'
 import { KatexFormula, booleanToLatex } from '@/components/KatexFormula'
 
 export function Guide() {

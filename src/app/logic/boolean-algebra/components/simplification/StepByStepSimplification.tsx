@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { simplifyBooleanExpression, LatexSimplificationResults } from '../../engine'
+import { getLatexResults as simplifyBooleanExpression } from '../../engine'
 import { KatexFormula } from '@/components/KatexFormula'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,8 +13,13 @@ interface StepByStepSimplificationProps {
 
 export function StepByStepSimplification({ expression }: StepByStepSimplificationProps) {
   const memoizedSimplification = useMemo(() => {
-    const steps: LatexSimplificationResults['steps'] = []
-    let finalSimplifiedExpression = ''
+    const steps: Array<{
+      ruleName: string
+      ruleFormula: string
+      beforeLatex: string
+      afterLatex: string
+    }> = []
+    let finalSimplifiedLatex = ''
     let errorOccurred = false
     let errorMessage = ''
     let processedExpression = ''
@@ -45,19 +50,26 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
       // The new engine handles LaTeX conversion internally
       const simplificationResult = simplifyBooleanExpression(expression)
 
-      simplificationResult.steps.forEach(step => steps.push(step))
-      finalSimplifiedExpression = simplificationResult.finalExpression
+      simplificationResult.steps.forEach(s =>
+        steps.push({
+          ruleName: s.ruleName,
+          ruleFormula: s.ruleFormula,
+          beforeLatex: s.beforeLatex,
+          afterLatex: s.afterLatex,
+        })
+      )
+      finalSimplifiedLatex = simplificationResult.finalLatex
       processedExpression = expression
     } catch (err) {
       console.error('Error in simplification logic:', err)
       errorOccurred = true
       errorMessage = err instanceof Error ? err.message : 'Failed to simplify expression.'
-      finalSimplifiedExpression = processedExpression || expression
+      finalSimplifiedLatex = processedExpression || expression
     }
 
     return {
       steps,
-      finalExpression: finalSimplifiedExpression,
+      finalExpression: finalSimplifiedLatex,
       errorOccurred,
       errorMessage,
       rawInput: expression,
@@ -113,7 +125,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
               {/* Simplification steps */}
               {memoizedSimplification.steps.map((step, idx) => (
                 <Card
-                  key={`${step.lawName}-${step.expressionBefore}-${step.expressionAfter.substring(0, 15)}`}
+                  key={`${step.ruleName}-${step.beforeLatex}-${step.afterLatex.substring(0, 15)}`}
                 >
                   <CardContent className="p-2 sm:p-3">
                     <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
@@ -123,16 +135,16 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                       >
                         Step {idx + 1}
                       </Badge>
-                      <span className="font-medium text-xs sm:text-sm">{step.lawName}</span>
+                      <span className="font-medium text-xs sm:text-sm">{step.ruleName}</span>
                       <div className="flex flex-wrap items-center mt-1 w-full sm:w-auto sm:mt-0 sm:ml-auto">
                         <div className="overflow-x-auto max-w-full no-scrollbar">
-                          <KatexFormula formula={step.lawDefinition} block={false} />
+                          <KatexFormula formula={step.ruleFormula} block={false} />
                         </div>
                       </div>
                     </div>
 
                     <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
-                      <KatexFormula formula={step.expressionBefore} block={true} />
+                      <KatexFormula formula={step.beforeLatex} block={true} />
                     </div>
 
                     <div className="flex justify-center my-1">
@@ -140,7 +152,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                     </div>
 
                     <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar ">
-                      <KatexFormula formula={step.expressionAfter} block={true} />
+                      <KatexFormula formula={step.afterLatex} block={true} />
                     </div>
                   </CardContent>
                 </Card>

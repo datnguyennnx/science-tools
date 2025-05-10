@@ -27,8 +27,11 @@ const extractVariables = (expression: string): string[] => {
 }
 
 // Safely evaluate a boolean expression without using eval or Function constructor
-const evaluateExpression = (expression: string, values: Record<string, boolean>): boolean => {
-  if (!expression.trim()) return false
+const evaluateExpression = (
+  expression: string,
+  values: Record<string, boolean>
+): { result: boolean; steps: string } => {
+  if (!expression.trim()) return { result: false, steps: '' }
 
   try {
     // Replace variables with their values
@@ -37,7 +40,8 @@ const evaluateExpression = (expression: string, values: Record<string, boolean>)
     // First, replace all variables with their boolean values
     Object.entries(values).forEach(([variable, value]) => {
       const regex = new RegExp(variable, 'g')
-      processedExpr = processedExpr.replace(regex, value ? 'true' : 'false')
+      const valueStr = value ? '1' : '0'
+      processedExpr = processedExpr.replace(regex, valueStr)
     })
 
     // Replace any remaining variables with false
@@ -64,12 +68,28 @@ const evaluateExpression = (expression: string, values: Record<string, boolean>)
       })
     }
 
-    return evaluateSimpleExpression(processedExpr)
+    // Track the steps of evaluation
+    let evaluationSteps = ''
+
+    // Build the evaluation step string
+    if (processedExpr.includes('+')) {
+      evaluationSteps = processedExpr.replace(/\+/g, '∨').replace(/!/g, '¬')
+    } else if (processedExpr.includes('*')) {
+      evaluationSteps = processedExpr.replace(/\*/g, '∧').replace(/!/g, '¬')
+    }
+
+    // Add the result
+    evaluationSteps += `=${evaluateSimpleExpression(processedExpr) ? '1' : '0'}`
+
+    return {
+      result: evaluateSimpleExpression(processedExpr),
+      steps: evaluationSteps,
+    }
   } catch (error) {
     toast.error(
       `Error evaluating expression: ${error instanceof Error ? error.message : String(error)}`
     )
-    return false
+    return { result: false, steps: '' }
   }
 }
 
@@ -151,7 +171,7 @@ export function TruthTable({ expression, variables }: TruthTableProps) {
           const variable = localVariablesToUse[j]
           values[variable] = Boolean((i >> (numVars - j - 1)) & 1)
         }
-        const result = evaluateExpression(processedExpression, values)
+        const { result } = evaluateExpression(processedExpression, values)
         localRows.push({ values, result })
       }
     } catch (err) {

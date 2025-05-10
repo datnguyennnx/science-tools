@@ -1,7 +1,7 @@
 /**
  * Types for Karnaugh Map implementation
  */
-import { BooleanExpression } from '../../../engine/core/types'
+import { BooleanExpression } from '../../../engine'
 
 /**
  * Cell position interface for K-Map
