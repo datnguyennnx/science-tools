@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, memo, useEffect, useState } from 'react'
+import { useMemo, memo, useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence, Variants } from 'framer-motion'
 import { PomodoroUIState, TimerMode } from '../engine/core/types'
@@ -85,7 +85,7 @@ const getStageDisplay = (stage: TimelineStage, status: StageStatus) => {
     if (stage.type === 'longBreak') return `🎯 ${stage.label} In Progress!`
   }
   // upcoming
-  return `🎯 ${stage.label}`
+  return `${stage.label}`
 }
 
 // Create a memoized stage component to prevent unnecessary re-renders
@@ -158,16 +158,8 @@ export function CurrentSectionDisplay({
 }: CurrentSectionDisplayProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
 
-  useEffect(() => {
-    const updateTime = () => setCurrentTime(new Date())
-    updateTime()
-    const intervalId = setInterval(updateTime, showTimeDisplay ? 1000 : 60000)
-    return () => clearInterval(intervalId)
-  }, [showTimeDisplay])
-
   const { settings, currentMode, completedFocusSessionsInSet } = uiState
 
-  // 1. Derive the sequence of all stages in a full Pomodoro set (Focus, SB, F, SB, F, LB)
   const timelineStages = useMemo(() => {
     const stages: TimelineStage[] = []
     for (let i = 0; i < settings.sessionsUntilLongBreak; i++) {
@@ -197,7 +189,6 @@ export function CurrentSectionDisplay({
     settings.longBreakDuration,
   ])
 
-  // 2. Determine the current stage's global index in this timeline sequence
   const currentGlobalStageIndex = useMemo(() => {
     if (currentMode === 'focus') {
       return completedFocusSessionsInSet * 2
@@ -208,9 +199,24 @@ export function CurrentSectionDisplay({
     return timelineStages.length - 1
   }, [currentMode, completedFocusSessionsInSet, timelineStages.length])
 
-  // 3. Group stages by session for display (optional, can render flat list too)
-  // This logic is complex and can be simplified or adjusted based on desired UI.
-  // For now, let's map directly over timelineStages for rendering.
+  // Auto-scroll logic
+  const timelineContainerRef = useRef<HTMLDivElement>(null)
+  const currentStageRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const updateTime = () => setCurrentTime(new Date())
+    updateTime()
+    const intervalId = setInterval(updateTime, showTimeDisplay ? 1000 : 60000)
+    return () => clearInterval(intervalId)
+  }, [showTimeDisplay])
+
+  useEffect(() => {
+    if (currentStageRef.current && timelineContainerRef.current) {
+      setTimeout(() => {
+        currentStageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 50)
+    }
+  }, [currentGlobalStageIndex, isVisible])
 
   if (!timelineStages || timelineStages.length === 0) {
     return null
@@ -233,7 +239,10 @@ export function CurrentSectionDisplay({
             exit="exit"
             className={cn('fixed top-16 right-6 w-80', 'z-50')}
           >
-            <div className="max-h-[80vh] overflow-y-auto pr-2 no-scrollbar">
+            <div
+              className="max-h-[80vh] overflow-y-auto pr-2 no-scrollbar"
+              ref={timelineContainerRef}
+            >
               <div className="p-2">
                 {timelineStages.map((stage, index) => {
                   const status: StageStatus =
@@ -243,13 +252,17 @@ export function CurrentSectionDisplay({
                         ? 'completed'
                         : 'upcoming'
 
+                  // Attach ref to current stage
+                  const ref = status === 'current' ? currentStageRef : undefined
+
                   return (
-                    <StageItem
-                      key={stage.label}
-                      stage={stage}
-                      status={status}
-                      isLastStageInTimeline={index === timelineStages.length - 1}
-                    />
+                    <div ref={ref} key={stage.label}>
+                      <StageItem
+                        stage={stage}
+                        status={status}
+                        isLastStageInTimeline={index === timelineStages.length - 1}
+                      />
+                    </div>
                   )
                 })}
               </div>
