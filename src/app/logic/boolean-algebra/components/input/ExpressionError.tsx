@@ -60,8 +60,7 @@ export function ExpressionError({ error, className = '' }: ExpressionErrorProps)
             <div className="mt-2 text-sm border-t border-red-200 pt-2">
               <p className="font-semibold">Example fix:</p>
               <code className="block bg-red-50 p-1 rounded mt-1">
-                <span className="line-through">0!(B)</span> →{' '}
-                <span className="font-semibold">0*!(B)</span>
+                <p className="line-through">0!(B)</p> → <p className="font-semibold">0*!(B)</p>
               </code>
             </div>
           )}

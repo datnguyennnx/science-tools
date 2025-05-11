@@ -48,7 +48,7 @@ export default function BooleanAlgebraLayout({ children }: BooleanAlgebraLayoutP
           <DialogTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Open Boolean Algebra Guide">
               <HelpCircle className="h-5 w-5" />
-              <span className="sr-only">Open Guide</span>
+              <p className="sr-only">Open Guide</p>
             </Button>
           </DialogTrigger>
           <DialogContent className="min-w-3xl max-h-[80vh] overflow-y-auto no-scrollbar">

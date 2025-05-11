@@ -38,14 +38,14 @@ export const KMapCell: React.FC<KMapCellProps> = ({
         <div className="absolute top-1 left-1 text-[0.6rem] text-muted-foreground">{minterm}</div>
       )}
       <div className="h-full w-full flex items-center justify-center">
-        <span
+        <p
           className={`
             text-lg font-semibold 
             ${hasMinterm ? 'text-primary' : 'text-muted-foreground'}
           `}
         >
           {cellValue}
-        </span>
+        </p>
       </div>
     </td>
   )

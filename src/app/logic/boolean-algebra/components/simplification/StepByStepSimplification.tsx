@@ -118,7 +118,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                     >
                       Step 0
                     </Badge>
-                    <span className="font-medium text-xs sm:text-sm">Original Expression</span>
+                    <p className="font-medium text-xs sm:text-sm">Original Expression</p>
                   </div>
                   <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
                     <KatexFormula formula={booleanToLatex(expression)} block={true} />
@@ -145,7 +145,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                         >
                           Step {idx + 1}
                         </Badge>
-                        <span className="font-medium text-xs sm:text-sm">{step.ruleName}</span>
+                        <p className="font-medium text-xs sm:text-sm">{step.ruleName}</p>
                         <div className="flex flex-wrap items-center mt-1 w-full sm:w-auto sm:mt-0 sm:ml-auto">
                           <div className="overflow-x-auto max-w-full no-scrollbar">
                             <KatexFormula formula={step.ruleFormula} block={false} />
@@ -158,7 +158,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                       </div>
 
                       <div className="flex justify-center my-1">
-                        <span>↓</span>
+                        <p>↓</p>
                       </div>
 
                       <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar ">
@@ -184,7 +184,7 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
         </>
       ) : (
         <div className="p-3 text-center border-dashed border rounded-md">
-          <p className="mb-2 text-sm">
+          <p className="mb-2 text-sm text-muted-foreground">
             No explicit simplification steps applied. Expression might be already simplified or no
             specific laws were triggered by the current ruleset.
           </p>

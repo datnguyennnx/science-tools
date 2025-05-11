@@ -85,7 +85,7 @@ export function PomodoroDialogs({
       const IconComponent = iconMap[iconName]
       return <IconComponent className="mr-2 h-4 w-4" />
     }
-    return <span className="mr-2">{iconName}</span> // For ReactNode icons
+    return <p className="mr-2">{iconName}</p> // For ReactNode icons
   }
 
   // Group commands by category for display in CommandDialog
@@ -134,7 +134,7 @@ export function PomodoroDialogs({
                   disabled={cmd.disabled}
                 >
                   {renderIcon(cmd.icon)}
-                  <span>{cmd.label}</span>
+                  <p>{cmd.label}</p>
                   {cmd.displayShortcut && <CommandShortcut>{cmd.displayShortcut}</CommandShortcut>}
                 </CommandItem>
               ))}
@@ -203,7 +203,7 @@ export function PomodoroDialogs({
                   return (
                     <div className="flex items-center justify-between space-x-2 py-2" key={key}>
                       <Label htmlFor={key} className="flex flex-col space-y-1">
-                        <span>{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        <p>{key.replace(/([A-Z])/g, ' $1').trim()}</p>
                       </Label>
                       <Checkbox
                         id={key}

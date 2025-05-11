@@ -28,9 +28,9 @@ export const KMapLegend: React.FC<KMapLegendProps> = ({ className = '' }) => {
               backgroundColor: `${color}25`, // 25% opacity
             }}
           ></div>
-          <span className="text-sm text-foreground">
+          <p className="text-sm text-foreground">
             {name} ({size === 1 ? '1 cell' : `${size} cells`})
-          </span>
+          </p>
         </div>
       ))}
     </div>

@@ -36,9 +36,9 @@ export function TimerDisplay({ minutes, seconds, mode, className }: TimerDisplay
       aria-label={`${timeString} remaining in ${getModeLabel()}`}
     >
       {/* Timer display with custom font */}
-      <span className={'text-9xl font-mono font-extrabold tracking-tighter text-foreground'}>
+      <p className={'text-9xl font-mono font-extrabold tracking-tighter text-foreground'}>
         {timeString}
-      </span>
+      </p>
     </div>
   )
 }

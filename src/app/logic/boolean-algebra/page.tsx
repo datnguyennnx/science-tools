@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 // Import the components
@@ -14,30 +14,30 @@ export default function BooleanAlgebraPage() {
   const [isSimplified, setIsSimplified] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const handleExpressionChange = (newExpression: string) => {
+  const handleExpressionChange = useCallback((newExpression: string) => {
     setCurrentExpressionInput(newExpression)
-  }
+  }, [])
 
-  const handleSimplificationStart = () => {
+  const handleSimplificationStart = useCallback(() => {
     setIsProcessing(true)
     setSubmittedExpression(currentExpressionInput)
     setIsSimplified(false)
-  }
+  }, [currentExpressionInput])
 
-  const handleSimplificationComplete = (success: boolean) => {
+  const handleSimplificationComplete = useCallback((success: boolean) => {
     setIsProcessing(false)
     setIsSimplified(success)
-  }
+  }, [])
 
   return (
     <div className="w-full max-w-full">
-      <div className="grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-4`}>
         {/* Input Section */}
         <Card className="w-full h-fit col-span-1 md:col-span-6 xl:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle>Boolean Algebra Input</CardTitle>
             <CardDescription className="flex flex-col space-y-1">
-              <span>Supported notation formats:</span>
+              <p>Supported notation formats:</p>
               <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs pl-1">
                 <div className="font-medium">Standard:</div>
                 <div>A+B (OR), A*B (AND), !A (NOT)</div>
@@ -74,10 +74,12 @@ export default function BooleanAlgebraPage() {
             {isSimplified && submittedExpression.trim() ? (
               <StepByStepSimplification expression={submittedExpression} />
             ) : (
-              <div className="text-center p-4 text-muted-foreground">
-                {!isProcessing &&
-                  submittedExpression.trim() === '' &&
-                  'Enter a boolean expression and click Simplify to begin'}
+              <div className="text-center p-3 border-dashed border rounded-md">
+                {!isProcessing && submittedExpression.trim() === '' && (
+                  <p className="text-sm text-muted-foreground">
+                    Enter a boolean expression and click Simplify to begin
+                  </p>
+                )}
                 {!isProcessing &&
                   submittedExpression.trim() !== '' &&
                   !isSimplified &&
@@ -90,29 +92,8 @@ export default function BooleanAlgebraPage() {
 
         {/* Truth Table Section & K-Map Section Group */}
         <div className="col-span-1 md:col-span-6 xl:col-span-3 flex flex-col gap-4">
-          {/* Truth Table Section */}
-          <Card className="w-full h-fit">
-            <CardHeader className="pb-2">
-              <CardTitle>Truth Table</CardTitle>
-              <CardDescription>Evaluation for all possible inputs</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isSimplified && submittedExpression.trim() ? (
-                <TruthTable expression={submittedExpression} />
-              ) : (
-                <div className="text-center text-muted-foreground p-4">
-                  {!isProcessing &&
-                    'Enter a boolean expression and click Simplify to generate a truth table'}
-                  {isProcessing && 'Processing...'}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* K-Map Section */}
-          <div className="w-full h-fit">
-            <KarnaughMap expression={submittedExpression} />
-          </div>
+          <TruthTable expression={submittedExpression} />
+          <KarnaughMap expression={submittedExpression} />
         </div>
       </div>
     </div>

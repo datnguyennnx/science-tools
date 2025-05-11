@@ -181,7 +181,7 @@ export function ExpressionInput({
       <div className="flex items-center justify-between">
         <div className="text-sm">Auto-detecting input format</div>
         <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground">Complexity:</span>
+          <p className="text-xs text-muted-foreground">Complexity:</p>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -192,7 +192,7 @@ export function ExpressionInput({
             >
               -
             </Button>
-            <span className="text-xs font-medium w-4 text-center">{complexity}</span>
+            <p className="text-xs font-medium w-4 text-center">{complexity}</p>
             <Button
               variant="ghost"
               size="sm"

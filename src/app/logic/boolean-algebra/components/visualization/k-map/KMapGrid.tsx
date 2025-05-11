@@ -26,22 +26,22 @@ export const KMapGrid: React.FC<KMapGridProps> = ({
       <div className="relative mt-8 ml-8">
         {/* Column Headers Label (CD) */}
         <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 font-bold text-sm flex items-center">
-          <span className="mr-1">
+          <p className="mr-1">
             <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
               {colVarLabel}
             </span>
-          </span>
-          <span className="border-t-2 border-primary w-24 h-0"></span>
+          </p>
+          <p className="border-t-2 border-primary w-24 h-0"></p>
         </div>
 
         {/* Row Headers Label (AB) - vertical */}
         <div className="absolute -left-8 top-1/2 transform -translate-y-1/2 flex flex-col items-center">
-          <span className="mb-1">
+          <p className="mb-1">
             <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground rotate-90">
               {rowVarLabel}
             </span>
-          </span>
-          <span className="border-l-2 border-primary h-24 w-0"></span>
+          </p>
+          <p className="border-l-2 border-primary h-24 w-0"></p>
         </div>
 
         <table className="border-collapse shadow-md rounded overflow-hidden">
