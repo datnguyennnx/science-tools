@@ -5,7 +5,13 @@
  */
 
 // Export the functional simplification utilities
-export { simplify, simplifyExpression, getLatexResults, getDefaultRules } from './simplifier'
+export {
+  simplify,
+  simplifyExpression,
+  getDefaultRules,
+  type SimplifierConfig,
+  defaultConfig,
+} from './simplifier'
 
 // Re-export all rule categories
 export * from './rules'

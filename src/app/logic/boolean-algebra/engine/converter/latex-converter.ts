@@ -124,7 +124,7 @@ export function latexToBoolean(latex: string): string {
 
     // Ensure no leftover LaTeX commands (backslashes) remain
     if (processedLatex.includes('\\')) {
-      console.warn('LaTeX conversion may be incomplete, LaTeX commands remain:', processedLatex)
+      // console.warn('LaTeX conversion may be incomplete, LaTeX commands remain:', processedLatex)
       // Optionally, throw an error if strict conversion is required
       // throw new Error(`Incomplete LaTeX conversion. Leftover commands in: ${processedLatex}`)
     }

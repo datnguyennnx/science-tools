@@ -1,14 +1,25 @@
 /**
- * Rules Module Index
- *
- * This file exports all simplification rule modules.
+ * Barrel file for all simplification rule modules.
+ * This file re-exports all individual rule-fetching functions for easy import
+ * into the main simplifier logic.
  */
 
-// Export the basic rule sets
-export { getBasicRules } from './basic-rules'
-export { getConstantRules } from './constant-rules'
-export { getContradictionRules } from './contradiction-rules'
-export { getNegationRules } from './negation-rules'
-export { getDerivedRules } from './derived-rules'
-export { getConsensusRules } from './consensus-rules'
-export { getDistributiveRules } from './distributive-rules'
+import { getConstantRules } from './constant-rules'
+import { getContradictionRules } from './contradiction-rules'
+import { getDeMorganRules } from './de-morgan-rules'
+import { getDerivedRules } from './derived-rules'
+import { getDistributiveRules } from './distributive-rules'
+import { getIdempotentRules } from './idempotent-rules'
+import { getNegationRules } from './negation-rules'
+import { getConsensusRules } from './consensus-rules'
+
+export {
+  getConstantRules,
+  getContradictionRules,
+  getDeMorganRules,
+  getDerivedRules,
+  getDistributiveRules,
+  getIdempotentRules,
+  getNegationRules,
+  getConsensusRules,
+}

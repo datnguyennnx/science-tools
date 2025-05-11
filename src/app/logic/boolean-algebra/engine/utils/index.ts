@@ -6,5 +6,4 @@
  */
 
 export * from './validation'
-export * from './cloning'
 export * from './comparison'

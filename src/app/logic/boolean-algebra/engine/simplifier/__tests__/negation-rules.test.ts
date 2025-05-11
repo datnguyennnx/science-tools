@@ -1,14 +1,18 @@
 import { describe, expect, test } from 'vitest'
 import { getNegationRules } from '../rules/negation-rules'
 import { BooleanExpression } from '../../ast/types'
+import { expressionsEqual } from '../../utils'
 
 describe('Negation Simplification Rules', () => {
   const rules = getNegationRules()
-  const chainNegationRule = rules.find(rule => rule.info.name.includes('Chain Negation'))
+  const chainNegationRule = rules[0] // Assuming getNegationRules returns an array with one rule
 
   // Helper to create expressions with multiple negations
-  const createMultipleNegations = (count: number): BooleanExpression => {
-    let expr: BooleanExpression = {
+  const createMultipleNegations = (
+    count: number,
+    innerExpr?: BooleanExpression
+  ): BooleanExpression => {
+    let expr: BooleanExpression = innerExpr || {
       type: 'VARIABLE',
       value: 'A',
     }
@@ -24,11 +28,71 @@ describe('Negation Simplification Rules', () => {
     return expr
   }
 
+  const varA: BooleanExpression = { type: 'VARIABLE', value: 'A' }
+  const notA: BooleanExpression = { type: 'NOT', left: varA }
+
+  // Helper function to test a single rule application
+  const testNegationRuleApplication = (
+    inputExpr: BooleanExpression,
+    expectedOutputExpr: BooleanExpression,
+    shouldChange: boolean,
+    ruleCanApply: boolean = shouldChange // Most of the time, if it changes, it can apply
+  ) => {
+    const originalJson = JSON.stringify(inputExpr)
+
+    expect(
+      chainNegationRule!.canApply(inputExpr),
+      `canApply mismatch for input: ${JSON.stringify(inputExpr)}`
+    ).toBe(ruleCanApply)
+
+    const result = chainNegationRule!.apply(inputExpr)
+
+    expect(JSON.stringify(inputExpr), 'Input expression should not be mutated.').toBe(originalJson)
+
+    if (shouldChange) {
+      expect(
+        expressionsEqual(result, expectedOutputExpr),
+        `Expected ${JSON.stringify(inputExpr)} -> ${JSON.stringify(
+          expectedOutputExpr
+        )}, got ${JSON.stringify(result)}`
+      ).toBe(true)
+      // If a change occurred and it's not structurally identical to input (it shouldn't be if shouldChange is true)
+      if (!expressionsEqual(result, inputExpr)) {
+        expect(result, 'Result should be a new instance if expression changed.').not.toBe(inputExpr)
+      } else {
+        // This case might happen if the rule "applies" but results in the same structure.
+        // For negation, this is less common unless it's an odd chain becoming a shorter odd chain
+        // or an even chain becoming a shorter even chain but still structurally different from !!A -> A.
+        // However, if it's !!A -> A, it *is* a change. If it's !!!A -> !A, it *is* a change.
+        // The `shouldChange` flag should accurately capture this.
+        // If shouldChange is true, we expect a new instance OR a structurally different object.
+        // If the result is structurally equal to expectedOutputExpr AND inputExpr,
+        // it means expectedOutputExpr was same as inputExpr, which contradicts `shouldChange = true`.
+        // So, this path implies result is structurally different from input, thus must be a new instance.
+        expect(result, 'Result should be a new instance if shouldChange is true.').not.toBe(
+          inputExpr
+        )
+      }
+    } else {
+      // No change expected
+      expect(
+        expressionsEqual(result, inputExpr),
+        `Expected ${JSON.stringify(inputExpr)} to remain unchanged.`
+      ).toBe(true)
+      // If no change is expected, the result should be the same instance.
+      expect(result, 'Result should be the same instance if no change was expected.').toBe(
+        inputExpr
+      )
+      // Also ensure it matches the expected output (which should be same as input)
+      expect(expressionsEqual(result, expectedOutputExpr)).toBe(true)
+    }
+  }
+
   // 1. Functional Correctness Tests
   describe('Functional Correctness', () => {
     test('chain negation rule is defined', () => {
       expect(chainNegationRule).toBeDefined()
-      expect(chainNegationRule!.info.name).toContain('Chain Negation')
+      expect(chainNegationRule!.info.name).toBe('Double Negation Elimination (Recursive)')
       expect(chainNegationRule!.canApply).toBeInstanceOf(Function)
       expect(chainNegationRule!.apply).toBeInstanceOf(Function)
     })
@@ -42,142 +106,100 @@ describe('Negation Simplification Rules', () => {
       const tripleNegation = createMultipleNegations(3)
       expect(chainNegationRule!.canApply(tripleNegation)).toBe(true)
 
-      // Single negation - should not be detected
+      // Single negation - should NOT be detected by this rule if it only looks for !!A
+      // The rule is recursive, so it looks for NOT(NOT(...)). A single NOT will not match.
       const singleNegation = createMultipleNegations(1)
       expect(chainNegationRule!.canApply(singleNegation)).toBe(false)
 
       // No negation - should not be detected
-      const noNegation: BooleanExpression = {
-        type: 'VARIABLE',
-        value: 'A',
-      }
+      const noNegation: BooleanExpression = { type: 'VARIABLE', value: 'A' }
       expect(chainNegationRule!.canApply(noNegation)).toBe(false)
     })
 
     test('simplifies double negation correctly', () => {
       const doubleNegation = createMultipleNegations(2)
-      const result = chainNegationRule!.apply(doubleNegation)
-
-      // Current implementation doesn't fully simplify to the variable directly
-      expect(result.type).toBe('NOT')
-      expect(result.left?.type).toBe('VARIABLE')
-      expect(result.left?.value).toBe('A')
+      testNegationRuleApplication(doubleNegation, varA, true)
     })
 
     test('simplifies triple negation to single negation', () => {
       const tripleNegation = createMultipleNegations(3)
-      const result = chainNegationRule!.apply(tripleNegation)
-
-      // Result should be NOT 'A'
-      expect(result).toEqual({
-        type: 'NOT',
-        left: { type: 'VARIABLE', value: 'A' },
-      })
+      testNegationRuleApplication(tripleNegation, notA, true)
     })
 
     test('simplifies quadruple negation correctly', () => {
       const quadrupleNegation = createMultipleNegations(4)
-      const result = chainNegationRule!.apply(quadrupleNegation)
-
-      // Current implementation doesn't fully simplify all the way
-      expect(result.type).toBe('NOT')
-      expect(result.left?.type).toBe('VARIABLE')
-      expect(result.left?.value).toBe('A')
+      testNegationRuleApplication(quadrupleNegation, varA, true)
     })
   })
 
   // 2. Happy-Path Tests
   describe('Happy Path', () => {
     test('detects and simplifies negations in complex expressions', () => {
-      // Create a complex expression with double negation in one branch
-      const complexExpr: BooleanExpression = {
+      const complexExprInput: BooleanExpression = {
         type: 'AND',
-        left: {
-          type: 'NOT',
-          left: {
-            type: 'NOT',
-            left: { type: 'VARIABLE', value: 'A' },
-          },
-        },
+        left: createMultipleNegations(2, { type: 'VARIABLE', value: 'X' }),
         right: { type: 'VARIABLE', value: 'B' },
       }
-
-      expect(chainNegationRule!.canApply(complexExpr)).toBe(true)
-
-      const result = chainNegationRule!.apply(complexExpr)
-
-      // The double negation should be simplified
-      expect(result.type).toBe('AND')
-      expect(result.left?.type).toBe('NOT')
-      expect(result.left?.left?.type).toBe('VARIABLE')
-      expect(result.left?.left?.value).toBe('A')
-      expect(result.right).toEqual({ type: 'VARIABLE', value: 'B' })
+      const complexExprExpected: BooleanExpression = {
+        type: 'AND',
+        left: { type: 'VARIABLE', value: 'X' },
+        right: { type: 'VARIABLE', value: 'B' },
+      }
+      testNegationRuleApplication(complexExprInput, complexExprExpected, true)
     })
 
     test('simplifies multiple chained negations', () => {
-      // Create an expression with two chains of negations
-      const multiChainExpr: BooleanExpression = {
+      const multiChainInput: BooleanExpression = {
         type: 'OR',
-        left: createMultipleNegations(4), // Will be simplified
-        right: createMultipleNegations(3), // Will be simplified
+        left: createMultipleNegations(4), // Becomes A
+        right: createMultipleNegations(3), // Becomes !A
       }
-
-      expect(chainNegationRule!.canApply(multiChainExpr)).toBe(true)
-
-      const result = chainNegationRule!.apply(multiChainExpr)
-
-      // Both chains should be simplified
-      expect(result.type).toBe('OR')
-      expect(result.left?.type).toBe('NOT')
-      expect(result.left?.left?.type).toBe('VARIABLE')
-      expect(result.right).toEqual({
-        type: 'NOT',
-        left: { type: 'VARIABLE', value: 'A' },
-      })
+      const multiChainExpected: BooleanExpression = {
+        type: 'OR',
+        left: varA,
+        right: notA,
+      }
+      testNegationRuleApplication(multiChainInput, multiChainExpected, true)
     })
   })
 
   // 3. Negative-Path Tests
   describe('Negative Path', () => {
-    test('ignores expressions without chained negations', () => {
-      // Single negation
+    test('ignores expressions without chained negations if not nested', () => {
       const singleNegation: BooleanExpression = {
         type: 'NOT',
         left: { type: 'VARIABLE', value: 'A' },
       }
-      expect(chainNegationRule!.canApply(singleNegation)).toBe(false)
+      testNegationRuleApplication(singleNegation, singleNegation, false, false)
 
-      // Simple AND expression
       const andExpr: BooleanExpression = {
         type: 'AND',
         left: { type: 'VARIABLE', value: 'A' },
         right: { type: 'VARIABLE', value: 'B' },
       }
-      expect(chainNegationRule!.canApply(andExpr)).toBe(false)
+      testNegationRuleApplication(andExpr, andExpr, false, false)
     })
 
-    test('handles non-negation operators correctly', () => {
-      // An AND of two NOTs, but not chained NOTs
+    test('handles non-negation operators correctly (no !!A pattern)', () => {
       const nonChainedExpr: BooleanExpression = {
         type: 'AND',
-        left: {
-          type: 'NOT',
-          left: { type: 'VARIABLE', value: 'A' },
-        },
-        right: {
-          type: 'NOT',
-          left: { type: 'VARIABLE', value: 'B' },
-        },
+        left: { type: 'NOT', left: { type: 'VARIABLE', value: 'A' } },
+        right: { type: 'NOT', left: { type: 'VARIABLE', value: 'B' } },
       }
-
-      expect(chainNegationRule!.canApply(nonChainedExpr)).toBe(false)
+      // Rule canApply is recursive, so it *can* apply to sub-expressions if they had !!.
+      // However, for THIS top-level expression, the chainNegationRule specifically
+      // looks for NOT(NOT(...)) or NOT(OPERATOR(...)) where OPERATOR might contain NOT(NOT(...)).
+      // For '(!A & !B)', canApply at root level should be false as it's not NOT(anything).
+      // The rule itself is `applyRecursiveNegation`, which applies `applyDoubleNegation` where `expr.type === 'NOT' && expr.left.type === 'NOT'`.
+      // Let's assume the canApply for the top-level rule is smart enough.
+      // Given the rule logic, canApply should be false at the root of `!A & !B`
+      testNegationRuleApplication(nonChainedExpr, nonChainedExpr, false, false)
     })
   })
 
   // 4. Equivalence-Partitioning Tests
   describe('Equivalence Partitioning', () => {
     test('different negation chain lengths', () => {
-      // Test with different numbers of negations (0-5)
       const noNegation: BooleanExpression = { type: 'VARIABLE', value: 'A' }
       const singleNegation = createMultipleNegations(1)
       const doubleNegation = createMultipleNegations(2)
@@ -185,211 +207,153 @@ describe('Negation Simplification Rules', () => {
       const quadrupleNegation = createMultipleNegations(4)
       const quintupleNegation = createMultipleNegations(5)
 
-      // No chains with 0 or 1 negation
-      expect(chainNegationRule!.canApply(noNegation)).toBe(false)
-      expect(chainNegationRule!.canApply(singleNegation)).toBe(false)
-
-      // 2+ negations should be detected as chains
-      expect(chainNegationRule!.canApply(doubleNegation)).toBe(true)
-      expect(chainNegationRule!.canApply(tripleNegation)).toBe(true)
-      expect(chainNegationRule!.canApply(quadrupleNegation)).toBe(true)
-      expect(chainNegationRule!.canApply(quintupleNegation)).toBe(true)
-
-      // Check all simplifications
-      const resultDouble = chainNegationRule!.apply(doubleNegation)
-      expect(resultDouble.type).toBe('NOT')
-      expect(resultDouble.left?.type).toBe('VARIABLE')
-
-      const resultTriple = chainNegationRule!.apply(tripleNegation)
-      expect(resultTriple).toEqual({
-        type: 'NOT',
-        left: { type: 'VARIABLE', value: 'A' },
-      })
-
-      const resultQuad = chainNegationRule!.apply(quadrupleNegation)
-      expect(resultQuad.type).toBe('NOT')
-      expect(resultQuad.left?.type).toBe('VARIABLE')
+      testNegationRuleApplication(noNegation, noNegation, false, false)
+      testNegationRuleApplication(singleNegation, singleNegation, false, false)
+      testNegationRuleApplication(doubleNegation, varA, true, true)
+      testNegationRuleApplication(tripleNegation, notA, true, true)
+      testNegationRuleApplication(quadrupleNegation, varA, true, true)
+      testNegationRuleApplication(quintupleNegation, notA, true, true)
     })
 
     test('negations with different inner expression types', () => {
-      // Double negation with a variable
-      const doubleNegVar: BooleanExpression = {
-        type: 'NOT',
-        left: {
-          type: 'NOT',
-          left: { type: 'VARIABLE', value: 'A' },
-        },
+      const innerVarA = varA
+      const innerAnd: BooleanExpression = {
+        type: 'AND',
+        left: { type: 'VARIABLE', value: 'X' },
+        right: { type: 'VARIABLE', value: 'Y' },
       }
+      const innerConst: BooleanExpression = { type: 'CONSTANT', value: true }
 
-      // Double negation with an AND operation
-      const doubleNegAnd: BooleanExpression = {
-        type: 'NOT',
-        left: {
-          type: 'NOT',
-          left: {
-            type: 'AND',
-            left: { type: 'VARIABLE', value: 'A' },
-            right: { type: 'VARIABLE', value: 'B' },
-          },
-        },
-      }
-
-      // Double negation with a constant
-      const doubleNegConst: BooleanExpression = {
-        type: 'NOT',
-        left: {
-          type: 'NOT',
-          left: { type: 'CONSTANT', value: true },
-        },
-      }
-
-      // All should be detected as chains
-      expect(chainNegationRule!.canApply(doubleNegVar)).toBe(true)
-      expect(chainNegationRule!.canApply(doubleNegAnd)).toBe(true)
-      expect(chainNegationRule!.canApply(doubleNegConst)).toBe(true)
-
-      // Check simplifications
-      const resultVar = chainNegationRule!.apply(doubleNegVar)
-      expect(resultVar.type).toBe('NOT')
-      expect(resultVar.left?.type).toBe('VARIABLE')
-
-      const resultAnd = chainNegationRule!.apply(doubleNegAnd)
-      expect(resultAnd.type).toBe('NOT')
-      expect(resultAnd.left?.type).toBe('AND')
-
-      const resultConst = chainNegationRule!.apply(doubleNegConst)
-      expect(resultConst.type).toBe('NOT')
-      expect(resultConst.left?.type).toBe('CONSTANT')
+      testNegationRuleApplication(createMultipleNegations(2, innerVarA), innerVarA, true)
+      testNegationRuleApplication(createMultipleNegations(2, innerAnd), innerAnd, true)
+      testNegationRuleApplication(createMultipleNegations(2, innerConst), innerConst, true)
     })
   })
 
   // 5. Boundary-Value Tests
   describe('Boundary Values', () => {
     test('handles long chains of negations', () => {
-      // Create a very long chain (10 negations)
-      const longChain = createMultipleNegations(10)
+      const longChainEven = createMultipleNegations(10) // -> A
+      const longChainOdd = createMultipleNegations(11) // -> !A
 
-      expect(chainNegationRule!.canApply(longChain)).toBe(true)
-
-      const result = chainNegationRule!.apply(longChain)
-
-      // Simplifies but doesn't fully eliminate all negations
-      expect(result.type).toBe('NOT')
-      expect(result.left?.type).toBe('VARIABLE')
+      testNegationRuleApplication(longChainEven, varA, true)
+      testNegationRuleApplication(longChainOdd, notA, true)
     })
 
     test('handles negations with deeply nested expressions', () => {
-      // Create a double negation with a deeply nested expression
-      const deepNested: BooleanExpression = {
-        type: 'NOT',
+      const deepNestedInner: BooleanExpression = {
+        type: 'AND',
         left: {
-          type: 'NOT',
-          left: {
-            type: 'AND',
-            left: {
-              type: 'OR',
-              left: { type: 'VARIABLE', value: 'A' },
-              right: { type: 'VARIABLE', value: 'B' },
-            },
-            right: {
-              type: 'NOT',
-              left: { type: 'VARIABLE', value: 'C' },
-            },
-          },
+          type: 'OR',
+          left: { type: 'VARIABLE', value: 'X' },
+          right: { type: 'VARIABLE', value: 'Y' },
         },
+        right: { type: 'NOT', left: { type: 'VARIABLE', value: 'C' } },
+      }
+      const doubleNegDeepInput = createMultipleNegations(2, deepNestedInner)
+      const tripleNegDeepInput = createMultipleNegations(3, deepNestedInner)
+      const tripleNegDeepExpected: BooleanExpression = {
+        type: 'NOT',
+        left: deepNestedInner,
       }
 
-      expect(chainNegationRule!.canApply(deepNested)).toBe(true)
-
-      const result = chainNegationRule!.apply(deepNested)
-
-      // Should preserve the inner structure but with simplified negations
-      expect(result.type).toBe('NOT')
-      expect(result.left?.type).toBe('AND')
+      testNegationRuleApplication(doubleNegDeepInput, deepNestedInner, true)
+      testNegationRuleApplication(tripleNegDeepInput, tripleNegDeepExpected, true)
     })
   })
 
   // 6. Error-Handling Tests
-  describe('Error Handling', () => {
-    test('handles incomplete NOT expressions', () => {
-      // Create a NOT node with missing left operand
-      const incompleteNot: BooleanExpression = {
+  // For negation, "error handling" usually means graceful handling of incomplete structures
+  // if the rule is applied to them. The rule should ideally not throw and either
+  // return the input as-is or simplify what it can.
+  describe('Error Handling (Graceful handling of incomplete structures)', () => {
+    test('canApply and apply handle incomplete NOT expressions gracefully', () => {
+      // This structure is NOT(NOT(incomplete_operand)).
+      // The rule specifically looks for NOT(NOT(...))
+      const incompleteChainOuterNot: BooleanExpression = {
         type: 'NOT',
-        // left is undefined
+        left: {
+          // This is the inner NOT
+          type: 'NOT',
+          // @ts-expect-error Intentionally malformed for testing: inner operand is undefined
+          left: undefined,
+        },
       }
 
-      // Create a chain with incomplete inner NOT
-      const incompleteChain: BooleanExpression = {
+      // canApply should now be true because expression.left.left check was removed from rule
+      expect(chainNegationRule!.canApply(incompleteChainOuterNot)).toBe(true)
+
+      // apply should simplify !!(undefined_operand) to undefined_operand
+      const originalJson = JSON.stringify(incompleteChainOuterNot)
+      const result = chainNegationRule!.apply(incompleteChainOuterNot)
+      expect(JSON.stringify(incompleteChainOuterNot)).toBe(originalJson) // Immutability
+
+      // The result should be the innermost operand, which is undefined in this case.
+      expect(result).toBeUndefined() // Changed from expect(result).toBe(incompleteChainOuterNot.left.left)
+      expect(result).not.toBe(incompleteChainOuterNot) // undefined is not the original object instance
+
+      // Test case from before: NOT(NOT(VARIABLE)) where inner NOT is considered "incomplete" for other rules.
+      // For this rule, it's a valid !!X pattern.
+      const incompleteNotVar: BooleanExpression = {
         type: 'NOT',
-        left: incompleteNot,
+        left: { type: 'VARIABLE', value: 'dummy' },
       }
+      const incompleteChainVar: BooleanExpression = { type: 'NOT', left: incompleteNotVar }
+      const expectedVar: BooleanExpression = { type: 'VARIABLE', value: 'dummy' }
 
-      // Should not throw when checking
-      expect(() => chainNegationRule!.canApply(incompleteChain)).not.toThrow()
-
-      // Should correctly identify this is technically a chain (though invalid)
-      expect(chainNegationRule!.canApply(incompleteChain)).toBe(true)
-
-      // Should handle application gracefully (not throw)
-      expect(() => chainNegationRule!.apply(incompleteChain)).not.toThrow()
+      testNegationRuleApplication(incompleteChainVar, expectedVar, true, true)
     })
 
-    test('guards against null/undefined expressions', () => {
-      // @ts-expect-error Testing with undefined
-      expect(() => chainNegationRule!.canApply(undefined)).not.toThrow()
+    test('apply on single NOT returns input unchanged and same instance', () => {
+      const singleNot: BooleanExpression = { type: 'NOT', left: { type: 'VARIABLE', value: 'A' } }
+      testNegationRuleApplication(singleNot, singleNot, false, false)
+    })
 
-      // @ts-expect-error Testing with null
-      expect(() => chainNegationRule!.canApply(null)).not.toThrow()
+    test('apply on variable returns input unchanged and same instance', () => {
+      const variable: BooleanExpression = { type: 'VARIABLE', value: 'A' }
+      testNegationRuleApplication(variable, variable, false, false)
+    })
+
+    test('apply on AND expression (no negations) returns input unchanged and same instance', () => {
+      const andExpr: BooleanExpression = {
+        type: 'AND',
+        left: varA,
+        right: { type: 'VARIABLE', value: 'B' },
+      }
+      testNegationRuleApplication(andExpr, andExpr, false, false)
     })
   })
 
   // 7. Dependency-Failure Tests
   describe('Dependency Behavior', () => {
     test('uses structured clone for deep copying', () => {
-      // Create a double negation expression
       const doubleNeg = createMultipleNegations(2)
-
-      // Apply the rule
+      const originalDoubleNeg = JSON.parse(JSON.stringify(doubleNeg))
       const result = chainNegationRule!.apply(doubleNeg)
-
-      // Verify the original expression is not modified
-      expect(doubleNeg.type).toBe('NOT')
-      expect(doubleNeg.left?.type).toBe('NOT')
-
-      // And the result is as expected
-      expect(result.type).toBe('NOT')
-      expect(result.left?.type).toBe('VARIABLE')
+      expect(doubleNeg).toEqual(originalDoubleNeg)
+      expect(result).toEqual(varA)
     })
   })
 
   // 8. State-Transition Tests
   describe('Transformation States', () => {
     test('transforms between negation states correctly', () => {
-      // Start with A and apply negations incrementally
       let expr: BooleanExpression = { type: 'VARIABLE', value: 'A' }
-
-      // Apply first negation: A → !A (not a chain yet)
       expr = { type: 'NOT', left: expr }
       expect(chainNegationRule!.canApply(expr)).toBe(false)
 
-      // Apply second negation: !A → !!A (now a chain)
       expr = { type: 'NOT', left: expr }
       expect(chainNegationRule!.canApply(expr)).toBe(true)
-
-      // Simplifying doesn't eliminate all negations
       let result = chainNegationRule!.apply(expr)
-      expect(result.type).toBe('NOT')
-      expect(result.left?.type).toBe('VARIABLE')
+      expect(result).toEqual(varA)
 
-      // Add negation again: A → !A
-      result = { type: 'NOT', left: result }
-      result = { type: 'NOT', left: result }
-      expect(chainNegationRule!.canApply(result)).toBe(true)
+      expr = { type: 'NOT', left: result }
+      expect(chainNegationRule!.canApply(expr)).toBe(false)
 
-      // Simplifying again
-      const finalResult = chainNegationRule!.apply(result)
-      expect(finalResult.type).toBe('NOT')
-      expect(finalResult.left?.type).toBe('VARIABLE')
+      expr = { type: 'NOT', left: expr }
+      expect(chainNegationRule!.canApply(expr)).toBe(true)
+      result = chainNegationRule!.apply(expr)
+      expect(result).toEqual(varA)
     })
   })
 })

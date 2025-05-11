@@ -94,6 +94,7 @@ export function normalizeStandardOperators(input: string): string {
   processed = processed.replace(/\bXOR\b/gi, '^')
   processed = processed.replace(/\bNAND\b/gi, '@')
   processed = processed.replace(/\bNOR\b/gi, '#')
+  processed = processed.replace(/\bXNOR\b/gi, '<=>') // Added XNOR
 
   // Remove all spaces around the final set of operators *, +, !, ^, @, #
   // This ensures expressions like "A * B" become "A*B"
@@ -103,6 +104,7 @@ export function normalizeStandardOperators(input: string): string {
   processed = processed.replace(/\s*\^\s*/g, '^')
   processed = processed.replace(/\s*@\s*/g, '@')
   processed = processed.replace(/\s*#\s*/g, '#')
+  processed = processed.replace(/\s*<=>\s*/g, '<=>') // Added XNOR
 
   // After all operator normalization and specific space removal around them,
   // remove any remaining whitespace globally to compact the expression.

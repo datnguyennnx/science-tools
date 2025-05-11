@@ -7,7 +7,14 @@
  */
 
 // Import types from AST module
-import type { BooleanExpression, SimplificationStep } from './ast'
+import type {
+  BooleanExpression,
+  SimplificationStep,
+  SimplificationResult,
+  LatexSimplificationStep,
+  ExtendedLatexResults,
+} from './ast'
+import type { SimplifierConfig } from './simplifier'
 
 // Import from parser module
 import {
@@ -18,7 +25,7 @@ import {
 } from './parser'
 
 // Import from simplifier module
-import { simplifyExpression as simplifyExpr, getLatexResults as getLatexRes } from './simplifier'
+import { simplify, simplifyExpression as simplifyExprString } from './simplifier'
 
 // Import from generator module
 import {
@@ -73,4 +80,36 @@ export const ExpressionParser = {
 }
 
 // Export the functional APIs for simplification
-export { simplifyExpr as simplifyExpression, getLatexRes as getLatexResults }
+export const getLatexRes = (
+  expression: string | BooleanExpression,
+  config?: Partial<SimplifierConfig>
+): ExtendedLatexResults => {
+  const result: SimplificationResult = simplify(expression, config)
+  const latexSteps: LatexSimplificationStep[] = result.steps.map((step: SimplificationStep) => ({
+    ruleName: step.ruleName,
+    ruleFormula: step.ruleFormula, // This is already LaTeX from rule definition
+    beforeLatex: step.expressionTreeBefore
+      ? expressionToLatexString(step.expressionTreeBefore)
+      : // : step.expressionBefore, // Fallback if tree not available
+        expressionToLatexString(parseExpression(step.expressionBefore)), // Ensure LaTeX
+    afterLatex: step.expressionTreeAfter
+      ? expressionToLatexString(step.expressionTreeAfter)
+      : // : step.expressionAfter, // Fallback if tree not available
+        expressionToLatexString(parseExpression(step.expressionAfter)), // Ensure LaTeX
+    phase: step.phase,
+  }))
+  return {
+    steps: latexSteps,
+    finalLatex: result.simplifiedExpressionLatex,
+    originalExpression: result.originalExpression,
+    simplifiedExpressionString: result.simplifiedExpressionString,
+  }
+}
+
+export {
+  simplifyExprString as simplifyExpression,
+  getLatexRes as getLatexResults,
+  simplify as simplifyFull,
+  type ExtendedLatexResults,
+  type LatexSimplificationStep,
+}

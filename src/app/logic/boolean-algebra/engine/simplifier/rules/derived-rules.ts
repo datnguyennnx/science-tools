@@ -1,166 +1,125 @@
 /**
- * Derived Operations Rules Module
+ * Derived Operation Rules Module
  *
- * This module contains rules for simplifying XOR, NAND, and NOR operations.
+ * This module contains rules for derived Boolean operations such as XOR, XNOR, NAND, and NOR.
+ * It includes rules for simplifying thes operations based on identities, constants,
+ * and their relationships with fundamental AND, OR, NOT operations.
  */
 
-import { BooleanExpression } from '../../ast'
+import { BooleanExpression, NotNode, NandNode, AndNode } from '../../ast'
 import { SimplificationRule } from '../../ast/rule-types'
-import { deepClone, expressionsEqual } from '../../utils'
+import { expressionsEqual } from '../../utils'
+
+// Generic helper to create a recursive canApply function for a specific internal check
+function createRecursiveCanApply(
+  internalChecker: (expr: BooleanExpression) => boolean
+): (expr: BooleanExpression | undefined) => boolean {
+  return (expr: BooleanExpression | undefined): boolean => {
+    if (!expr) return false
+    if (internalChecker(expr)) {
+      return true
+    }
+    if (expr.left && createRecursiveCanApply(internalChecker)(expr.left)) return true
+    if (expr.right && createRecursiveCanApply(internalChecker)(expr.right)) return true
+    return false
+  }
+}
+
+// Helper function to create a recursive apply function for simple rules
+function createRecursiveRuleApply(
+  ruleLogic: (expr: BooleanExpression) => BooleanExpression, // The original apply logic for the current node
+  canApplyLogic: (expr: BooleanExpression) => boolean // The original canApply logic for the current node
+): (originalExpr: BooleanExpression) => BooleanExpression {
+  const recursiveApplyFunc = (exprInput: BooleanExpression): BooleanExpression => {
+    let childrenChanged = false
+    let processedLeft = exprInput.left
+    if (exprInput.left) {
+      const resultLeft = recursiveApplyFunc(exprInput.left)
+      if (resultLeft !== exprInput.left) {
+        processedLeft = resultLeft
+        childrenChanged = true
+      }
+    }
+
+    let processedRight = exprInput.right
+    if (exprInput.right && ['AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'].includes(exprInput.type)) {
+      const resultRight = recursiveApplyFunc(exprInput.right)
+      if (resultRight !== exprInput.right) {
+        processedRight = resultRight
+        childrenChanged = true
+      }
+    }
+
+    let nodeAfterChildProcessing = exprInput
+    if (childrenChanged) {
+      if (exprInput.type === 'NOT') {
+        nodeAfterChildProcessing = { type: 'NOT', left: processedLeft } as NotNode
+      } else if (['AND', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR'].includes(exprInput.type)) {
+        if (processedLeft && processedRight) {
+          nodeAfterChildProcessing = {
+            type: exprInput.type,
+            left: processedLeft,
+            right: processedRight,
+          } as BooleanExpression
+        } else {
+          nodeAfterChildProcessing = exprInput
+        }
+      }
+    }
+
+    if (canApplyLogic(nodeAfterChildProcessing)) {
+      const resultFromRuleLogic = ruleLogic(nodeAfterChildProcessing)
+      return resultFromRuleLogic
+    }
+
+    return nodeAfterChildProcessing
+  }
+  return recursiveApplyFunc
+}
 
 /**
  * Get rules for simplifying XOR operations
  */
 export function getXORRules(): SimplificationRule[] {
   return [
-    // XOR Identity: A XOR 0 = A
     {
       info: {
         name: 'XOR Identity',
-        description: 'A XOR 0 = A',
+        description: 'A ^ 0 = A (or 0 ^ A = A)',
         formula: 'A \\oplus 0 = A',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'XOR') return false
-
-        return Boolean(
-          (expr.left?.type === 'CONSTANT' && expr.left.value === false) ||
-            (expr.right?.type === 'CONSTANT' && expr.right.value === false)
-        )
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        if (expr.left?.type === 'CONSTANT' && expr.left.value === false) {
-          return deepClone(expr.right!)
-        }
-        return deepClone(expr.left!)
-      },
+      canApply: canApplyXorIdentityForRule,
+      apply: createRecursiveRuleApply(applyXorIdentity, canApplyXorIdentityInternal),
     },
-
-    // XOR with 1: A XOR 1 = NOT A
     {
       info: {
         name: 'XOR with True',
-        description: 'A XOR 1 = NOT A',
+        description: 'A ^ 1 = !A (or 1 ^ A = !A)',
         formula: 'A \\oplus 1 = \\lnot A',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'XOR') return false
-
-        return Boolean(
-          (expr.left?.type === 'CONSTANT' && expr.left.value === true) ||
-            (expr.right?.type === 'CONSTANT' && expr.right.value === true)
-        )
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        if (expr.left?.type === 'CONSTANT' && expr.left.value === true) {
-          return { type: 'NOT', left: deepClone(expr.right!) }
-        }
-        return { type: 'NOT', left: deepClone(expr.left!) }
-      },
+      canApply: canApplyXorWithTrueForRule,
+      apply: createRecursiveRuleApply(applyXorWithTrue, canApplyXorWithTrueInternal),
     },
-
-    // XOR with Self: A XOR A = 0
     {
       info: {
         name: 'XOR Self-Cancellation',
-        description: 'A XOR A = 0',
+        description: 'A ^ A = 0',
         formula: 'A \\oplus A = 0',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'XOR') return false
-
-        return Boolean(expr.left && expr.right && expressionsEqual(expr.left, expr.right))
-      },
-      apply: (): BooleanExpression => {
-        return { type: 'CONSTANT', value: false }
-      },
+      canApply: canApplyXorSelfCancellationForRule,
+      apply: createRecursiveRuleApply(
+        applyXorSelfCancellation,
+        canApplyXorSelfCancellationInternal
+      ),
     },
-
-    // XOR Associativity: (A XOR B) XOR C = A XOR (B XOR C)
-    // We don't modify the expression here, just recognize the pattern
     {
       info: {
-        name: 'XOR Associativity',
-        description: '(A XOR B) XOR C = A XOR (B XOR C)',
-        formula: '(A \\oplus B) \\oplus C = A \\oplus (B \\oplus C)',
+        name: 'XOR with Complement',
+        description: 'A ^ !A = 1 (or !A ^ A = 1)',
+        formula: 'A \\oplus \\lnot A = 1',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        return Boolean(
-          expr.type === 'XOR' &&
-            expr.left?.type === 'XOR' &&
-            expr.left.left &&
-            expr.left.right &&
-            expr.right
-        )
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        // We don't modify the structure, but return the equivalent form
-        // This is mostly for documentation purposes in the simplification steps
-        return deepClone(expr)
-      },
-    },
-
-    // XOR Commutativity: A XOR B = B XOR A
-    // We don't modify the expression here, just recognize the pattern
-    {
-      info: {
-        name: 'XOR Commutativity',
-        description: 'A XOR B = B XOR A',
-        formula: 'A \\oplus B = B \\oplus A',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        return Boolean(expr.type === 'XOR' && expr.left && expr.right)
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        // We don't modify the structure, but return the equivalent form
-        // This is mostly for documentation purposes in the simplification steps
-        return deepClone(expr)
-      },
-    },
-
-    // Add a rule to simplify (A ^ A) to 0
-    {
-      info: {
-        name: 'XOR Self-Cancellation Complex',
-        description: 'A XOR A = 0',
-        formula: 'A \\oplus A = 0',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        // Check if it's an XOR operation
-        if (expr.type !== 'XOR') return false
-
-        // Check if both operands are the same
-        return JSON.stringify(expr.left) === JSON.stringify(expr.right)
-      },
-      apply: (): BooleanExpression => {
-        // A XOR A = 0
-        return { type: 'CONSTANT', value: false }
-      },
-    },
-
-    // Add XOR Expansion Rule
-    {
-      info: {
-        name: 'XOR Expansion',
-        description: 'A XOR B = (A * !B) + (!A * B)',
-        formula: 'A \\\\oplus B = (A \\\\land \\\\lnot B) \\\\lor (\\\\lnot A \\\\land B)',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        return expr.type === 'XOR' && expr.left !== undefined && expr.right !== undefined
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        const A_clone = deepClone(expr.left!)
-        const B_clone = deepClone(expr.right!)
-
-        const not_A_clone: BooleanExpression = { type: 'NOT', left: deepClone(expr.left!) }
-        const not_B_clone: BooleanExpression = { type: 'NOT', left: deepClone(expr.right!) }
-
-        const term1: BooleanExpression = { type: 'AND', left: A_clone, right: not_B_clone }
-        const term2: BooleanExpression = { type: 'AND', left: not_A_clone, right: B_clone }
-
-        const finalExpr: BooleanExpression = { type: 'OR', left: term1, right: term2 }
-        return finalExpr
-      },
+      canApply: canApplyXorWithComplementForRule,
+      apply: createRecursiveRuleApply(applyXorWithComplement, canApplyXorWithComplementInternal),
     },
   ]
 }
@@ -170,176 +129,41 @@ export function getXORRules(): SimplificationRule[] {
  */
 export function getNANDRules(): SimplificationRule[] {
   return [
-    // NAND with 0: A NAND 0 = 1
     {
       info: {
         name: 'NAND with False',
-        description: 'A NAND 0 = 1',
+        description: 'A @ 0 = 1 (or 0 @ A = 1)',
         formula: 'A \\uparrow 0 = 1',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'NAND') return false
-
-        return Boolean(
-          (expr.left?.type === 'CONSTANT' && expr.left.value === false) ||
-            (expr.right?.type === 'CONSTANT' && expr.right.value === false)
-        )
-      },
-      apply: (): BooleanExpression => {
-        return { type: 'CONSTANT', value: true }
-      },
+      canApply: canApplyNandWithFalseForRule,
+      apply: createRecursiveRuleApply(applyNandWithFalse, canApplyNandWithFalseInternal),
     },
-
-    // NAND with 1: A NAND 1 = NOT A
     {
       info: {
         name: 'NAND with True',
-        description: 'A NAND 1 = NOT A',
+        description: 'A @ 1 = !A (or 1 @ A = !A)',
         formula: 'A \\uparrow 1 = \\lnot A',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'NAND') return false
-
-        return Boolean(
-          (expr.left?.type === 'CONSTANT' && expr.left.value === true) ||
-            (expr.right?.type === 'CONSTANT' && expr.right.value === true)
-        )
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        if (expr.left?.type === 'CONSTANT' && expr.left.value === true) {
-          return { type: 'NOT', left: deepClone(expr.right!) }
-        }
-        return { type: 'NOT', left: deepClone(expr.left!) }
-      },
+      canApply: canApplyNandWithTrueForRule,
+      apply: createRecursiveRuleApply(applyNandWithTrue, canApplyNandWithTrueInternal),
     },
-
-    // NAND with Self: A NAND A = NOT A
     {
       info: {
         name: 'NAND Self-Negation',
-        description: 'A NAND A = NOT A',
+        description: 'A @ A = !A',
         formula: 'A \\uparrow A = \\lnot A',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'NAND') return false
-
-        return Boolean(expr.left && expr.right && expressionsEqual(expr.left, expr.right))
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        return { type: 'NOT', left: deepClone(expr.left!) }
-      },
+      canApply: canApplyNandSelfNegationForRule,
+      apply: createRecursiveRuleApply(applyNandSelfNegation, canApplyNandSelfNegationInternal),
     },
-
-    // Double NAND: NOT(A NAND B) = A AND B
     {
       info: {
         name: 'Double NAND',
-        description: 'NOT(A NAND B) = A AND B',
+        description: '!(A @ B) = A & B',
         formula: '\\lnot(A \\uparrow B) = A \\land B',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        return Boolean(
-          expr.type === 'NOT' && expr.left?.type === 'NAND' && expr.left.left && expr.left.right
-        )
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        const nandExpr = expr.left!
-        return {
-          type: 'AND',
-          left: deepClone(nandExpr.left!),
-          right: deepClone(nandExpr.right!),
-        }
-      },
-    },
-
-    // Add a rule to simplify (A @ A) to !A
-    {
-      info: {
-        name: 'NAND Self-Negation Complex',
-        description: 'A NAND A = NOT A',
-        formula: 'A \\uparrow A = \\lnot A',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        // Check if it's a NAND operation
-        if (expr.type !== 'NAND') return false
-
-        // Check if both operands are the same
-        return JSON.stringify(expr.left) === JSON.stringify(expr.right)
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        // A NAND A = !A
-        return { type: 'NOT', left: expr.left }
-      },
-    },
-
-    // Add NAND Expansion Rule
-    {
-      info: {
-        name: 'NAND Expansion',
-        description: 'A NAND B = !(A * B)',
-        formula: 'A \\\\uparrow B = \\\\lnot (A \\\\land B)',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        return expr.type === 'NAND' && expr.left !== undefined && expr.right !== undefined
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        const andNode: BooleanExpression = {
-          type: 'AND',
-          left: deepClone(expr.left!),
-          right: deepClone(expr.right!),
-        }
-        const finalExpr: BooleanExpression = { type: 'NOT', left: andNode }
-        return finalExpr
-      },
-    },
-
-    // Rule to handle nested XOR and NOR operations within NAND
-    {
-      info: {
-        name: 'NAND with Complex Operands',
-        description: 'Simplify NAND operations with complex operands',
-        formula: '(A \\oplus A) \\uparrow (B \\downarrow B) = 0 \\uparrow !B = 1',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'NAND') return false
-
-        // Check if left operand is an XOR of identical expressions
-        const hasXORSelfCancellation =
-          expr.left?.type === 'XOR' &&
-          JSON.stringify(expr.left.left) === JSON.stringify(expr.left.right)
-
-        // Check if right operand is a NOR of identical expressions
-        const hasNORSelfNegation =
-          expr.right?.type === 'NOR' &&
-          JSON.stringify(expr.right.left) === JSON.stringify(expr.right.right)
-
-        return Boolean(hasXORSelfCancellation || hasNORSelfNegation)
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        // If left is XOR Self-Cancellation (becomes false)
-        if (
-          expr.left?.type === 'XOR' &&
-          JSON.stringify(expr.left.left) === JSON.stringify(expr.left.right)
-        ) {
-          // false NAND anything = true
-          return { type: 'CONSTANT', value: true }
-        }
-
-        // If right is NOR Self-Negation (becomes NOT B)
-        if (
-          expr.right?.type === 'NOR' &&
-          JSON.stringify(expr.right.left) === JSON.stringify(expr.right.right)
-        ) {
-          // A NAND NOT B
-          return {
-            type: 'NAND',
-            left: deepClone(expr.left!),
-            right: { type: 'NOT', left: deepClone(expr.right.left!) },
-          }
-        }
-
-        return expr
-      },
+      canApply: canApplyDoubleNand,
+      apply: createRecursiveRuleApply(applyDoubleNand, canApplyDoubleNand),
     },
   ]
 }
@@ -349,134 +173,481 @@ export function getNANDRules(): SimplificationRule[] {
  */
 export function getNORRules(): SimplificationRule[] {
   return [
-    // NOR with 0: A NOR 0 = NOT A
     {
       info: {
         name: 'NOR with False',
-        description: 'A NOR 0 = NOT A',
+        description: 'A # 0 = !A (or 0 # A = !A)',
         formula: 'A \\downarrow 0 = \\lnot A',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'NOR') return false
-
-        return Boolean(
-          (expr.left?.type === 'CONSTANT' && expr.left.value === false) ||
-            (expr.right?.type === 'CONSTANT' && expr.right.value === false)
-        )
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        if (expr.left?.type === 'CONSTANT' && expr.left.value === false) {
-          return { type: 'NOT', left: deepClone(expr.right!) }
-        }
-        return { type: 'NOT', left: deepClone(expr.left!) }
-      },
+      canApply: canApplyNorWithFalseForRule,
+      apply: createRecursiveRuleApply(applyNorWithFalse, canApplyNorWithFalseInternal),
     },
-
-    // NOR with 1: A NOR 1 = 0
     {
       info: {
         name: 'NOR with True',
-        description: 'A NOR 1 = 0',
+        description: 'A # 1 = 0 (or 1 # A = 0)',
         formula: 'A \\downarrow 1 = 0',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'NOR') return false
-
-        return Boolean(
-          (expr.left?.type === 'CONSTANT' && expr.left.value === true) ||
-            (expr.right?.type === 'CONSTANT' && expr.right.value === true)
-        )
-      },
-      apply: (): BooleanExpression => {
-        return { type: 'CONSTANT', value: false }
-      },
+      canApply: canApplyNorWithTrueForRule,
+      apply: createRecursiveRuleApply(applyNorWithTrue, canApplyNorWithTrueInternal),
     },
-
-    // NOR with Self: A NOR A = NOT A
     {
       info: {
         name: 'NOR Self-Negation',
-        description: 'A NOR A = NOT A',
-        formula: 'A \\downarrow A = \\lnot A',
+        description: 'A NOR A = !A (Self-Negation for NOR)',
+        formula: 'A \# A = \lnot A',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        if (expr.type !== 'NOR') return false
-
-        return Boolean(expr.left && expr.right && expressionsEqual(expr.left, expr.right))
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        return { type: 'NOT', left: deepClone(expr.left!) }
-      },
+      canApply: canApplyNorSelfNegationForRule,
+      apply: createRecursiveRuleApply(applyNorSelfNegation, canApplyNorSelfNegationInternal),
     },
-
-    // Double NOR: NOT(A NOR B) = A OR B
     {
       info: {
         name: 'Double NOR',
-        description: 'NOT(A NOR B) = A OR B',
+        description: '!(A # B) = A + B',
         formula: '\\lnot(A \\downarrow B) = A \\lor B',
       },
-      canApply: (expr: BooleanExpression): boolean => {
-        return Boolean(
-          expr.type === 'NOT' && expr.left?.type === 'NOR' && expr.left.left && expr.left.right
-        )
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        const norExpr = expr.left!
-        return {
-          type: 'OR',
-          left: deepClone(norExpr.left!),
-          right: deepClone(norExpr.right!),
-        }
-      },
-    },
-
-    // Add a rule to simplify (A # A) to !A
-    {
-      info: {
-        name: 'NOR Self-Negation Complex',
-        description: 'A NOR A = NOT A',
-        formula: 'A \\downarrow A = \\lnot A',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        // Check if it's a NOR operation
-        if (expr.type !== 'NOR') return false
-
-        // Check if both operands are the same
-        return JSON.stringify(expr.left) === JSON.stringify(expr.right)
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        // A NOR A = !A
-        return { type: 'NOT', left: expr.left }
-      },
-    },
-
-    // Add NOR Expansion Rule
-    {
-      info: {
-        name: 'NOR Expansion',
-        description: 'A NOR B = !(A + B)',
-        formula: 'A \\\\downarrow B = \\\\lnot (A \\\\lor B)',
-      },
-      canApply: (expr: BooleanExpression): boolean => {
-        return expr.type === 'NOR' && expr.left !== undefined && expr.right !== undefined
-      },
-      apply: (expr: BooleanExpression): BooleanExpression => {
-        const orNode: BooleanExpression = {
-          type: 'OR',
-          left: deepClone(expr.left!),
-          right: deepClone(expr.right!),
-        }
-        const finalExpr: BooleanExpression = { type: 'NOT', left: orNode }
-        return finalExpr
-      },
+      canApply: canApplyDoubleNor,
+      apply: createRecursiveRuleApply(applyDoubleNor, canApplyDoubleNor),
     },
   ]
 }
 
 /**
- * Get all derived operation rules
+ * Get rules for simplifying XNOR operations
+ */
+export function getXNORRules(): SimplificationRule[] {
+  return [
+    {
+      info: {
+        name: 'XNOR Identity',
+        description: 'A <=> 1 = A (or 1 <=> A = A)',
+        formula: 'A \\leftrightarrow 1 = A',
+      },
+      canApply: canApplyXnorIdentityForRule,
+      apply: createRecursiveRuleApply(applyXnorIdentity, canApplyXnorIdentityInternal),
+    },
+    {
+      info: {
+        name: 'XNOR with False',
+        description: 'A <=> 0 = !A (or 0 <=> A = !A)',
+        formula: 'A \\leftrightarrow 0 = \\lnot A',
+      },
+      canApply: canApplyXnorWithFalseForRule,
+      apply: createRecursiveRuleApply(applyXnorWithFalse, canApplyXnorWithFalseInternal),
+    },
+    {
+      info: {
+        name: 'XNOR Self-Equivalence',
+        description: 'A <=> A = 1',
+        formula: 'A \\leftrightarrow A = 1',
+      },
+      canApply: canApplyXnorSelfEquivalenceForRule,
+      apply: createRecursiveRuleApply(
+        applyXnorSelfEquivalence,
+        canApplyXnorSelfEquivalenceInternal
+      ),
+    },
+    {
+      info: {
+        name: 'XNOR with Complement',
+        description: 'A <=> !A = 0 (or !A <=> A = 0)',
+        formula: 'A \\leftrightarrow \\lnot A = 0',
+      },
+      canApply: canApplyXnorWithComplementForRule,
+      apply: createRecursiveRuleApply(applyXnorWithComplement, canApplyXnorWithComplementInternal),
+    },
+  ]
+}
+
+/**
+ * Get all derived operation rules including expansions
  */
 export function getDerivedRules(): SimplificationRule[] {
-  return [...getXORRules(), ...getNANDRules(), ...getNORRules()]
+  return [
+    ...getXORRules(),
+    ...getNANDRules(),
+    ...getNORRules(),
+    ...getXNORRules(),
+    ...getExpansionRules(), // Add expansion rules here
+  ]
+}
+
+// --- XOR Rule Helpers ---
+const applyXorIdentity = (expr: BooleanExpression): BooleanExpression => {
+  return expr.left! // A ^ 0 = A (if 0 is right) or 0 ^ A = A (if 0 is left)
+}
+const canApplyXorIdentityInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'XOR' &&
+    ((expr.left?.type === 'VARIABLE' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === false) ||
+      (expr.right?.type === 'VARIABLE' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === false))
+  )
+}
+const canApplyXorIdentityForRule = createRecursiveCanApply(canApplyXorIdentityInternal)
+
+const applyXorWithTrue = (expr: BooleanExpression): BooleanExpression => {
+  const termToNegate = expr.left?.type === 'CONSTANT' ? expr.right! : expr.left!
+  return { type: 'NOT', left: termToNegate } as NotNode // A ^ 1 = !A
+}
+const canApplyXorWithTrueInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'XOR' &&
+    ((expr.left?.type === 'VARIABLE' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === true) ||
+      (expr.right?.type === 'VARIABLE' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === true))
+  )
+}
+const canApplyXorWithTrueForRule = createRecursiveCanApply(canApplyXorWithTrueInternal)
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const applyXorSelfCancellation = (_expr: BooleanExpression): BooleanExpression => ({
+  type: 'CONSTANT',
+  value: false,
+})
+const canApplyXorSelfCancellationInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'XOR' &&
+    expr.left !== undefined &&
+    expr.right !== undefined &&
+    expressionsEqual(expr.left, expr.right)
+  )
+}
+const canApplyXorSelfCancellationForRule = createRecursiveCanApply(
+  canApplyXorSelfCancellationInternal
+)
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const applyXorWithComplement = (_expr: BooleanExpression): BooleanExpression => ({
+  type: 'CONSTANT',
+  value: true,
+})
+const canApplyXorWithComplementInternal = (expr: BooleanExpression): boolean => {
+  if (expr.type !== 'XOR' || !expr.left || !expr.right) return false
+  return (
+    (expr.left.type === 'NOT' && expr.left.left && expressionsEqual(expr.left.left, expr.right)) ||
+    (expr.right.type === 'NOT' && expr.right.left && expressionsEqual(expr.right.left, expr.left))
+  )
+}
+const canApplyXorWithComplementForRule = createRecursiveCanApply(canApplyXorWithComplementInternal)
+
+// --- NAND Rule Helpers ---
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const applyNandWithFalse = (_expr: BooleanExpression): BooleanExpression => ({
+  type: 'CONSTANT',
+  value: true,
+})
+const canApplyNandWithFalseInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'NAND' &&
+    ((expr.left?.type !== 'CONSTANT' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === false) ||
+      (expr.right?.type !== 'CONSTANT' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === false))
+  )
+}
+const canApplyNandWithFalseForRule = createRecursiveCanApply(canApplyNandWithFalseInternal)
+
+const applyNandWithTrue = (expr: BooleanExpression): BooleanExpression => {
+  const termToNegate = expr.left?.type === 'CONSTANT' ? expr.right! : expr.left!
+  return { type: 'NOT', left: termToNegate } as NotNode // A @ 1 = !A
+}
+const canApplyNandWithTrueInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'NAND' &&
+    ((expr.left?.type !== 'CONSTANT' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === true) ||
+      (expr.right?.type !== 'CONSTANT' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === true))
+  )
+}
+const canApplyNandWithTrueForRule = createRecursiveCanApply(canApplyNandWithTrueInternal)
+
+const applyNandSelfNegation = (expr: BooleanExpression): BooleanExpression => {
+  return { type: 'NOT', left: expr.left } as NotNode // A @ A = !A
+}
+const canApplyNandSelfNegationInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'NAND' &&
+    expr.left !== undefined &&
+    expr.right !== undefined &&
+    expressionsEqual(expr.left, expr.right)
+  )
+}
+const canApplyNandSelfNegationForRule = createRecursiveCanApply(canApplyNandSelfNegationInternal)
+
+const applyDoubleNand = (expr: BooleanExpression): BooleanExpression => {
+  const nandNode = expr.left as NandNode
+  return { type: 'AND', left: nandNode.left, right: nandNode.right } as AndNode
+}
+const canApplyDoubleNand = (expr: BooleanExpression): boolean => {
+  return expr.type === 'NOT' && expr.left?.type === 'NAND'
+}
+
+// --- NOR Rule Helpers ---
+const applyNorWithFalse = (expr: BooleanExpression): BooleanExpression => {
+  const termToNegate = expr.left?.type === 'CONSTANT' ? expr.right! : expr.left!
+  return { type: 'NOT', left: termToNegate } as NotNode // A # 0 = !A
+}
+const canApplyNorWithFalseInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'NOR' &&
+    ((expr.left?.type !== 'CONSTANT' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === false) ||
+      (expr.right?.type !== 'CONSTANT' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === false))
+  )
+}
+const canApplyNorWithFalseForRule = createRecursiveCanApply(canApplyNorWithFalseInternal)
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const applyNorWithTrue = (_expr: BooleanExpression): BooleanExpression => ({
+  type: 'CONSTANT',
+  value: false,
+})
+const canApplyNorWithTrueInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'NOR' &&
+    ((expr.left?.type !== 'CONSTANT' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === true) ||
+      (expr.right?.type !== 'CONSTANT' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === true))
+  )
+}
+const canApplyNorWithTrueForRule = createRecursiveCanApply(canApplyNorWithTrueInternal)
+
+// Internal check for the exact pattern X # X at the current node
+const canApplyNorSelfNegationInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'NOR' &&
+    expr.left !== undefined &&
+    expr.right !== undefined &&
+    expressionsEqual(expr.left, expr.right)
+  )
+}
+
+// Main canApply for the rule: checks if the X # X pattern exists anywhere in the expression
+const canApplyNorSelfNegationForRule = (expr: BooleanExpression | undefined): boolean => {
+  if (!expr) return false
+  if (canApplyNorSelfNegationInternal(expr)) {
+    return true
+  }
+  if (expr.left && canApplyNorSelfNegationForRule(expr.left)) return true
+  if (expr.right && canApplyNorSelfNegationForRule(expr.right)) return true
+  return false
+}
+
+const applyNorSelfNegation = (expr: BooleanExpression): BooleanExpression => {
+  return { type: 'NOT', left: expr.left } as NotNode // A # A = !A
+}
+
+const applyDoubleNor = (expr: BooleanExpression): BooleanExpression => {
+  const norExpr = expr.left! // NOR node
+  return { type: 'OR', left: norExpr.left!, right: norExpr.right! }
+}
+const canApplyDoubleNor = (expr: BooleanExpression): boolean => {
+  return Boolean(
+    expr.type === 'NOT' && expr.left?.type === 'NOR' && expr.left.left && expr.left.right
+  )
+}
+
+// --- XNOR Rule Helpers ---
+const applyXnorIdentity = (expr: BooleanExpression): BooleanExpression => {
+  return expr.left?.type === 'CONSTANT' ? expr.right! : expr.left! // A <=> 1 = A
+}
+const canApplyXnorIdentityInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'XNOR' &&
+    ((expr.left?.type !== 'CONSTANT' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === true) ||
+      (expr.right?.type !== 'CONSTANT' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === true))
+  )
+}
+const canApplyXnorIdentityForRule = createRecursiveCanApply(canApplyXnorIdentityInternal)
+
+const applyXnorWithFalse = (expr: BooleanExpression): BooleanExpression => {
+  const termToNegate = expr.left?.type === 'CONSTANT' ? expr.right! : expr.left!
+  return { type: 'NOT', left: termToNegate } as NotNode // A <=> 0 = !A
+}
+const canApplyXnorWithFalseInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'XNOR' &&
+    ((expr.left?.type !== 'CONSTANT' &&
+      expr.right?.type === 'CONSTANT' &&
+      expr.right.value === false) ||
+      (expr.right?.type !== 'CONSTANT' &&
+        expr.left?.type === 'CONSTANT' &&
+        expr.left.value === false))
+  )
+}
+const canApplyXnorWithFalseForRule = createRecursiveCanApply(canApplyXnorWithFalseInternal)
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const applyXnorSelfEquivalence = (_expr: BooleanExpression): BooleanExpression => ({
+  type: 'CONSTANT',
+  value: true,
+})
+const canApplyXnorSelfEquivalenceInternal = (expr: BooleanExpression): boolean => {
+  return (
+    expr.type === 'XNOR' &&
+    expr.left !== undefined &&
+    expr.right !== undefined &&
+    expressionsEqual(expr.left, expr.right)
+  )
+}
+const canApplyXnorSelfEquivalenceForRule = createRecursiveCanApply(
+  canApplyXnorSelfEquivalenceInternal
+)
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const applyXnorWithComplement = (_expr: BooleanExpression): BooleanExpression => ({
+  type: 'CONSTANT',
+  value: false,
+})
+const canApplyXnorWithComplementInternal = (expr: BooleanExpression): boolean => {
+  if (expr.type !== 'XNOR' || !expr.left || !expr.right) return false
+  return (
+    (expr.left.type === 'NOT' && expr.left.left && expressionsEqual(expr.left.left, expr.right)) ||
+    (expr.right.type === 'NOT' && expr.right.left && expressionsEqual(expr.right.left, expr.left))
+  )
+}
+const canApplyXnorWithComplementForRule = createRecursiveCanApply(
+  canApplyXnorWithComplementInternal
+)
+
+// --- Expansion Rule Helpers ---
+
+// NAND Expansion: A @ B => !(A & B)
+const applyNandExpansionLogic = (expr: BooleanExpression): BooleanExpression => {
+  if (expr.type === 'NAND' && expr.left && expr.right) {
+    const result: BooleanExpression = {
+      type: 'NOT',
+      left: { type: 'AND', left: expr.left, right: expr.right },
+    } as NotNode
+    return result
+  }
+  return expr
+}
+const canApplyNandExpansionLogic = (expr: BooleanExpression): boolean => {
+  return expr.type === 'NAND' && expr.left !== undefined && expr.right !== undefined
+}
+
+// NOR Expansion: A # B => !(A + B)
+const applyNorExpansionLogic = (expr: BooleanExpression): BooleanExpression => {
+  if (expr.type === 'NOR' && expr.left && expr.right) {
+    return {
+      type: 'NOT',
+      left: { type: 'OR', left: expr.left, right: expr.right },
+    } as NotNode
+  }
+  return expr
+}
+const canApplyNorExpansionLogic = (expr: BooleanExpression): boolean => {
+  return expr.type === 'NOR' && expr.left !== undefined && expr.right !== undefined
+}
+
+// XOR Expansion: A ^ B => (A & !B) + (!A & B)
+const applyXorExpansionLogic = (expr: BooleanExpression): BooleanExpression => {
+  if (expr.type === 'XOR' && expr.left && expr.right) {
+    return {
+      type: 'OR',
+      left: {
+        type: 'AND',
+        left: expr.left,
+        right: { type: 'NOT', left: expr.right } as NotNode,
+      },
+      right: {
+        type: 'AND',
+        left: { type: 'NOT', left: expr.left } as NotNode,
+        right: expr.right,
+      },
+    }
+  }
+  return expr
+}
+const canApplyXorExpansionLogic = (expr: BooleanExpression): boolean => {
+  return expr.type === 'XOR' && expr.left !== undefined && expr.right !== undefined
+}
+
+// XNOR Expansion: A <=> B => (A & B) + (!A & !B)
+const applyXnorExpansionLogic = (expr: BooleanExpression): BooleanExpression => {
+  if (expr.type === 'XNOR' && expr.left && expr.right) {
+    return {
+      type: 'OR',
+      left: {
+        type: 'AND',
+        left: expr.left,
+        right: expr.right,
+      },
+      right: {
+        type: 'AND',
+        left: { type: 'NOT', left: expr.left } as NotNode,
+        right: { type: 'NOT', left: expr.right } as NotNode,
+      },
+    }
+  }
+  return expr
+}
+const canApplyXnorExpansionLogic = (expr: BooleanExpression): boolean => {
+  return expr.type === 'XNOR' && expr.left !== undefined && expr.right !== undefined
+}
+
+// --- Expansion Rules ---
+export function getExpansionRules(): SimplificationRule[] {
+  return [
+    {
+      info: {
+        name: 'NAND Expansion',
+        description: 'A @ B => !(A & B)',
+        formula: 'A \\uparrow B \\Leftrightarrow \\lnot(A \\land B)',
+      },
+      canApply: canApplyNandExpansionLogic,
+      apply: createRecursiveRuleApply(applyNandExpansionLogic, canApplyNandExpansionLogic),
+    },
+    {
+      info: {
+        name: 'NOR Expansion',
+        description: 'A # B => !(A + B)',
+        formula: 'A \\downarrow B \\Leftrightarrow \\lnot(A \\lor B)',
+      },
+      canApply: canApplyNorExpansionLogic,
+      apply: createRecursiveRuleApply(applyNorExpansionLogic, canApplyNorExpansionLogic),
+    },
+    {
+      info: {
+        name: 'XOR Expansion',
+        description: 'A ^ B => (A & !B) + (!A & B)',
+        formula: 'A \\oplus B \\Leftrightarrow (A \\land \\lnot B) \\lor (\\lnot A \\land B)',
+      },
+      canApply: canApplyXorExpansionLogic,
+      apply: createRecursiveRuleApply(applyXorExpansionLogic, canApplyXorExpansionLogic),
+    },
+    {
+      info: {
+        name: 'XNOR Expansion',
+        description: 'A <=> B => (A & B) + (!A & !B)',
+        formula:
+          'A \\leftrightarrow B \\Leftrightarrow (A \\land B) \\lor (\\lnot A \\land \\lnot B)',
+      },
+      canApply: canApplyXnorExpansionLogic,
+      apply: createRecursiveRuleApply(applyXnorExpansionLogic, canApplyXnorExpansionLogic),
+    },
+  ]
 }

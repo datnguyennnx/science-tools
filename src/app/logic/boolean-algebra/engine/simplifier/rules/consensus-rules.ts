@@ -7,7 +7,6 @@
 
 import { BooleanExpression } from '../../ast'
 import { SimplificationRule } from '../../ast/rule-types'
-import { deepClone } from '../../utils'
 import { expressionsEqual } from '../../utils'
 
 /**
@@ -24,16 +23,9 @@ export function getConsensusRules(): SimplificationRule[] {
           '(A \\land B) \\lor (A \\land \\lnot C) \\lor (B \\land C) = (A \\land B) \\lor (A \\land \\lnot C)',
       },
       canApply: (expr: BooleanExpression): boolean => {
-        // Look for patterns of OR expressions with three terms
         if (expr.type !== 'OR') return false
-
-        // First, we need to collect all the AND terms in the OR expression
         const terms: BooleanExpression[] = collectORTerms(expr)
-
-        // Check for consensus pattern only if we have at least 3 terms
         if (terms.length < 3) return false
-
-        // Check each triplet of terms for the consensus pattern
         for (let i = 0; i < terms.length - 2; i++) {
           for (let j = i + 1; j < terms.length - 1; j++) {
             for (let k = j + 1; k < terms.length; k++) {
@@ -43,29 +35,27 @@ export function getConsensusRules(): SimplificationRule[] {
             }
           }
         }
-
         return false
       },
       apply: (expr: BooleanExpression): BooleanExpression => {
-        // Make a deep copy we can modify
-        const result = deepClone(expr)
-        const terms = collectORTerms(result)
+        const terms = collectORTerms(expr)
 
-        // Identify and remove the redundant term
         for (let i = 0; i < terms.length - 2; i++) {
           for (let j = i + 1; j < terms.length - 1; j++) {
             for (let k = j + 1; k < terms.length; k++) {
-              const [a, b, c] = findConsensusTerms(terms[i], terms[j], terms[k])
-              if (a && b && c) {
-                // Remove the consensus term (B * C) from the expression
-                return buildExpressionWithoutTerm(terms, c)
+              const [ab_expr, ac_not_expr, bc_expr_to_remove] = findConsensusTermsAndRedundant(
+                terms[i],
+                terms[j],
+                terms[k]
+              )
+              if (ab_expr && ac_not_expr && bc_expr_to_remove) {
+                const originalTerms = collectORTerms(expr)
+                return buildExpressionWithoutTerm(originalTerms, bc_expr_to_remove)
               }
             }
           }
         }
-
-        // If we couldn't apply the rule (shouldn't happen if canApply was true)
-        return result
+        return expr
       },
     },
 
@@ -78,16 +68,9 @@ export function getConsensusRules(): SimplificationRule[] {
           '(A \\lor B) \\land (A \\lor \\lnot C) \\land (B \\lor C) = (A \\lor B) \\land (A \\lor \\lnot C)',
       },
       canApply: (expr: BooleanExpression): boolean => {
-        // Look for patterns of AND expressions with three terms
         if (expr.type !== 'AND') return false
-
-        // First, we need to collect all the OR terms in the AND expression
         const terms: BooleanExpression[] = collectANDTerms(expr)
-
-        // Check for consensus pattern only if we have at least 3 terms
         if (terms.length < 3) return false
-
-        // Check each triplet of terms for the consensus pattern
         for (let i = 0; i < terms.length - 2; i++) {
           for (let j = i + 1; j < terms.length - 1; j++) {
             for (let k = j + 1; k < terms.length; k++) {
@@ -97,29 +80,26 @@ export function getConsensusRules(): SimplificationRule[] {
             }
           }
         }
-
         return false
       },
       apply: (expr: BooleanExpression): BooleanExpression => {
-        // Make a deep copy we can modify
-        const result = deepClone(expr)
-        const terms = collectANDTerms(result)
-
-        // Identify and remove the redundant term
+        const terms = collectANDTerms(expr)
         for (let i = 0; i < terms.length - 2; i++) {
           for (let j = i + 1; j < terms.length - 1; j++) {
             for (let k = j + 1; k < terms.length; k++) {
-              const [a, b, c] = findDualConsensusTerms(terms[i], terms[j], terms[k])
-              if (a && b && c) {
-                // Remove the consensus term (B + C) from the expression
-                return buildExpressionWithoutANDTerm(terms, c)
+              const [ab_expr, ac_not_expr, bc_expr_to_remove] = findDualConsensusTermsAndRedundant(
+                terms[i],
+                terms[j],
+                terms[k]
+              )
+              if (ab_expr && ac_not_expr && bc_expr_to_remove) {
+                const originalTerms = collectANDTerms(expr)
+                return buildExpressionWithoutANDTerm(originalTerms, bc_expr_to_remove)
               }
             }
           }
         }
-
-        // If we couldn't apply the rule (shouldn't happen if canApply was true)
-        return result
+        return expr
       },
     },
   ]
@@ -130,8 +110,6 @@ export function getConsensusRules(): SimplificationRule[] {
  */
 function collectORTerms(expr: BooleanExpression): BooleanExpression[] {
   const terms: BooleanExpression[] = []
-
-  // Helper function to recursively collect OR terms
   function collect(e: BooleanExpression) {
     if (e.type === 'OR') {
       if (e.left) collect(e.left)
@@ -140,7 +118,6 @@ function collectORTerms(expr: BooleanExpression): BooleanExpression[] {
       terms.push(e)
     }
   }
-
   collect(expr)
   return terms
 }
@@ -150,8 +127,6 @@ function collectORTerms(expr: BooleanExpression): BooleanExpression[] {
  */
 function collectANDTerms(expr: BooleanExpression): BooleanExpression[] {
   const terms: BooleanExpression[] = []
-
-  // Helper function to recursively collect AND terms
   function collect(e: BooleanExpression) {
     if (e.type === 'AND') {
       if (e.left) collect(e.left)
@@ -160,7 +135,6 @@ function collectANDTerms(expr: BooleanExpression): BooleanExpression[] {
       terms.push(e)
     }
   }
-
   collect(expr)
   return terms
 }
@@ -173,10 +147,7 @@ function isConsensusPattern(
   term2: BooleanExpression,
   term3: BooleanExpression
 ): boolean {
-  // All terms must be AND expressions
   if (term1.type !== 'AND' || term2.type !== 'AND' || term3.type !== 'AND') return false
-
-  // Look for the pattern in all permutations
   const permutations = [
     [term1, term2, term3],
     [term1, term3, term2],
@@ -185,12 +156,9 @@ function isConsensusPattern(
     [term3, term1, term2],
     [term3, term2, term1],
   ]
-
   for (const [a, b, c] of permutations) {
-    // Try to match (A * B) + (A * !C) + (B * C) pattern
     if (isConsensusTriple(a, b, c)) return true
   }
-
   return false
 }
 
@@ -202,10 +170,7 @@ function isDualConsensusPattern(
   term2: BooleanExpression,
   term3: BooleanExpression
 ): boolean {
-  // All terms must be OR expressions
   if (term1.type !== 'OR' || term2.type !== 'OR' || term3.type !== 'OR') return false
-
-  // Look for the pattern in all permutations
   const permutations = [
     [term1, term2, term3],
     [term1, term3, term2],
@@ -214,166 +179,134 @@ function isDualConsensusPattern(
     [term3, term1, term2],
     [term3, term2, term1],
   ]
-
   for (const [a, b, c] of permutations) {
-    // Try to match (A + B) * (A + !C) * (B + C) pattern
     if (isDualConsensusTriple(a, b, c)) return true
   }
-
   return false
 }
 
 /**
- * Check if three AND terms form the specific consensus pattern
+ * Check if three AND terms form the specific consensus pattern XY, X'Z, YZ (term3 is YZ)
  */
 function isConsensusTriple(
-  ab: BooleanExpression,
-  ac: BooleanExpression,
-  bc: BooleanExpression
+  term_XY: BooleanExpression, // Potential XY
+  term_XprimeZ: BooleanExpression, // Potential X'Z
+  term_YZ: BooleanExpression // Potential YZ (redundant)
 ): boolean {
-  // Extract the operands from each AND term
-  const abLeft = ab.left
-  const abRight = ab.right
-  const acLeft = ac.left
-  const acRight = ac.right
-  const bcLeft = bc.left
-  const bcRight = bc.right
-
-  if (!abLeft || !abRight || !acLeft || !acRight || !bcLeft || !bcRight) return false
-
-  // Look for the A term in the first two expressions
-  if (expressionsEqual(abLeft, acLeft)) {
-    // abLeft is A, abRight is B, acRight is !C
-    if (acRight.type !== 'NOT' || !acRight.left) return false
-
-    // Check if bcLeft = B and bcRight = C
-    if (
-      (expressionsEqual(abRight, bcLeft) && expressionsEqual(acRight.left, bcRight)) ||
-      (expressionsEqual(abRight, bcRight) && expressionsEqual(acRight.left, bcLeft))
-    ) {
-      return true
-    }
+  if (
+    term_XY.type !== 'AND' ||
+    !term_XY.left ||
+    !term_XY.right ||
+    term_XprimeZ.type !== 'AND' ||
+    !term_XprimeZ.left ||
+    !term_XprimeZ.right ||
+    term_YZ.type !== 'AND' ||
+    !term_YZ.left ||
+    !term_YZ.right
+  ) {
+    return false
   }
 
-  // Check the other possibility where A is in the right side
-  if (expressionsEqual(abRight, acRight)) {
-    // abRight is A, abLeft is B, acLeft is !C
-    if (acLeft.type !== 'NOT' || !acLeft.left) return false
+  const ops_XY = [term_XY.left, term_XY.right]
+  const ops_XprimeZ = [term_XprimeZ.left, term_XprimeZ.right]
+  const ops_YZ = [term_YZ.left, term_YZ.right]
 
-    // Check if bcLeft = B and bcRight = C
-    if (
-      (expressionsEqual(abLeft, bcLeft) && expressionsEqual(acLeft.left, bcRight)) ||
-      (expressionsEqual(abLeft, bcRight) && expressionsEqual(acLeft.left, bcLeft))
-    ) {
-      return true
+  for (let i = 0; i < 2; i++) {
+    // Iterate for X from ops_XY
+    const X_cand = ops_XY[i]
+    const Y_cand = ops_XY[1 - i]
+
+    for (let j = 0; j < 2; j++) {
+      // Iterate for X' from ops_XprimeZ
+      const X_prime_cand = ops_XprimeZ[j]
+      const Z_cand = ops_XprimeZ[1 - j]
+
+      if (isComplement(X_cand, X_prime_cand)) {
+        // Check if term_YZ is Y_cand * Z_cand (or Z_cand * Y_cand)
+        if (
+          (expressionsEqual(ops_YZ[0], Y_cand) && expressionsEqual(ops_YZ[1], Z_cand)) ||
+          (expressionsEqual(ops_YZ[0], Z_cand) && expressionsEqual(ops_YZ[1], Y_cand))
+        ) {
+          return true
+        }
+      }
     }
   }
-
-  // Also check mixed cases
-  if (expressionsEqual(abLeft, acRight)) {
-    // abLeft is A, abRight is B, acLeft is !C
-    if (acLeft.type !== 'NOT' || !acLeft.left) return false
-
-    // Check if bcLeft = B and bcRight = C
-    if (
-      (expressionsEqual(abRight, bcLeft) && expressionsEqual(acLeft.left, bcRight)) ||
-      (expressionsEqual(abRight, bcRight) && expressionsEqual(acLeft.left, bcLeft))
-    ) {
-      return true
-    }
-  }
-
-  if (expressionsEqual(abRight, acLeft)) {
-    // abRight is A, abLeft is B, acRight is !C
-    if (acRight.type !== 'NOT' || !acRight.left) return false
-
-    // Check if bcLeft = B and bcRight = C
-    if (
-      (expressionsEqual(abLeft, bcLeft) && expressionsEqual(acRight.left, bcRight)) ||
-      (expressionsEqual(abLeft, bcRight) && expressionsEqual(acRight.left, bcLeft))
-    ) {
-      return true
-    }
-  }
-
   return false
 }
 
 /**
- * Check if three OR terms form the specific dual consensus pattern
+ * Check if three OR terms form the specific dual consensus pattern (X+Y), (X'+Z), (Y+Z) (term3 is Y+Z)
  */
 function isDualConsensusTriple(
-  ab: BooleanExpression,
-  ac: BooleanExpression,
-  bc: BooleanExpression
+  term_XplusY: BooleanExpression, // Potential X+Y
+  term_XprimePlusZ: BooleanExpression, // Potential X'+Z
+  term_YplusZ: BooleanExpression // Potential Y+Z (redundant)
 ): boolean {
-  // Extract the operands from each OR term
-  const abLeft = ab.left
-  const abRight = ab.right
-  const acLeft = ac.left
-  const acRight = ac.right
-  const bcLeft = bc.left
-  const bcRight = bc.right
-
-  if (!abLeft || !abRight || !acLeft || !acRight || !bcLeft || !bcRight) return false
-
-  // Look for the A term in the first two expressions
-  if (expressionsEqual(abLeft, acLeft)) {
-    // abLeft is A, abRight is B, acRight is !C
-    if (acRight.type !== 'NOT' || !acRight.left) return false
-
-    // Check if bcLeft = B and bcRight = C
-    if (
-      (expressionsEqual(abRight, bcLeft) && expressionsEqual(acRight.left, bcRight)) ||
-      (expressionsEqual(abRight, bcRight) && expressionsEqual(acRight.left, bcLeft))
-    ) {
-      return true
-    }
+  if (
+    term_XplusY.type !== 'OR' ||
+    !term_XplusY.left ||
+    !term_XplusY.right ||
+    term_XprimePlusZ.type !== 'OR' ||
+    !term_XprimePlusZ.left ||
+    !term_XprimePlusZ.right ||
+    term_YplusZ.type !== 'OR' ||
+    !term_YplusZ.left ||
+    !term_YplusZ.right
+  ) {
+    return false
   }
 
-  // Check all the other possible combinations (similar to isConsensusTriple)
-  if (expressionsEqual(abRight, acRight)) {
-    if (acLeft.type !== 'NOT' || !acLeft.left) return false
-    if (
-      (expressionsEqual(abLeft, bcLeft) && expressionsEqual(acLeft.left, bcRight)) ||
-      (expressionsEqual(abLeft, bcRight) && expressionsEqual(acLeft.left, bcLeft))
-    ) {
-      return true
+  const ops_XplusY = [term_XplusY.left, term_XplusY.right]
+  const ops_XprimePlusZ = [term_XprimePlusZ.left, term_XprimePlusZ.right]
+  const ops_YplusZ = [term_YplusZ.left, term_YplusZ.right]
+
+  for (let i = 0; i < 2; i++) {
+    // Iterate for X from ops_XplusY
+    const X_cand = ops_XplusY[i]
+    const Y_cand = ops_XplusY[1 - i]
+
+    for (let j = 0; j < 2; j++) {
+      // Iterate for X' from ops_XprimePlusZ
+      const X_prime_cand = ops_XprimePlusZ[j]
+      const Z_cand = ops_XprimePlusZ[1 - j]
+
+      if (isComplement(X_cand, X_prime_cand)) {
+        // Check if term_YplusZ is Y_cand + Z_cand (or Z_cand + Y_cand)
+        if (
+          (expressionsEqual(ops_YplusZ[0], Y_cand) && expressionsEqual(ops_YplusZ[1], Z_cand)) ||
+          (expressionsEqual(ops_YplusZ[0], Z_cand) && expressionsEqual(ops_YplusZ[1], Y_cand))
+        ) {
+          return true
+        }
+      }
     }
   }
-
-  if (expressionsEqual(abLeft, acRight)) {
-    if (acLeft.type !== 'NOT' || !acLeft.left) return false
-    if (
-      (expressionsEqual(abRight, bcLeft) && expressionsEqual(acLeft.left, bcRight)) ||
-      (expressionsEqual(abRight, bcRight) && expressionsEqual(acLeft.left, bcLeft))
-    ) {
-      return true
-    }
-  }
-
-  if (expressionsEqual(abRight, acLeft)) {
-    if (acRight.type !== 'NOT' || !acRight.left) return false
-    if (
-      (expressionsEqual(abLeft, bcLeft) && expressionsEqual(acRight.left, bcRight)) ||
-      (expressionsEqual(abLeft, bcRight) && expressionsEqual(acRight.left, bcLeft))
-    ) {
-      return true
-    }
-  }
-
   return false
 }
 
 /**
- * Find which terms correspond to (A * B), (A * !C), and (B * C) in the consensus pattern
+ * Helper function to check if two expressions are complements of each other.
+ * e.g., A and !A
  */
-function findConsensusTerms(
+function isComplement(expr1: BooleanExpression, expr2: BooleanExpression): boolean {
+  if (expr1.type === 'NOT' && expr1.left && expressionsEqual(expr1.left, expr2)) {
+    return true
+  }
+  if (expr2.type === 'NOT' && expr2.left && expressionsEqual(expr2.left, expr1)) {
+    return true
+  }
+  return false
+}
+
+/**
+ * Modified findConsensusTerms to findConsensusTermsAndRedundant: returns the term to be removed as the third element
+ */
+function findConsensusTermsAndRedundant(
   term1: BooleanExpression,
   term2: BooleanExpression,
   term3: BooleanExpression
 ): [BooleanExpression?, BooleanExpression?, BooleanExpression?] {
-  // Try all permutations to find the correct mapping
   const permutations = [
     [term1, term2, term3],
     [term1, term3, term2],
@@ -382,25 +315,24 @@ function findConsensusTerms(
     [term3, term1, term2],
     [term3, term2, term1],
   ]
-
-  for (const [ab, ac, bc] of permutations) {
-    if (isConsensusTriple(ab, ac, bc)) {
-      return [ab, ac, bc]
+  for (const [tA, tB, tC] of permutations) {
+    if (
+      tA.type === 'AND' &&
+      tB.type === 'AND' &&
+      tC.type === 'AND' &&
+      isConsensusTriple(tA, tB, tC)
+    ) {
+      return [tA, tB, tC]
     }
   }
-
   return [undefined, undefined, undefined]
 }
 
-/**
- * Find which terms correspond to (A + B), (A + !C), and (B + C) in the dual consensus pattern
- */
-function findDualConsensusTerms(
+function findDualConsensusTermsAndRedundant(
   term1: BooleanExpression,
   term2: BooleanExpression,
   term3: BooleanExpression
 ): [BooleanExpression?, BooleanExpression?, BooleanExpression?] {
-  // Try all permutations to find the correct mapping
   const permutations = [
     [term1, term2, term3],
     [term1, term3, term2],
@@ -409,13 +341,16 @@ function findDualConsensusTerms(
     [term3, term1, term2],
     [term3, term2, term1],
   ]
-
-  for (const [ab, ac, bc] of permutations) {
-    if (isDualConsensusTriple(ab, ac, bc)) {
-      return [ab, ac, bc]
+  for (const [tA, tB, tC] of permutations) {
+    if (
+      tA.type === 'OR' &&
+      tB.type === 'OR' &&
+      tC.type === 'OR' &&
+      isDualConsensusTriple(tA, tB, tC)
+    ) {
+      return [tA, tB, tC]
     }
   }
-
   return [undefined, undefined, undefined]
 }
 
@@ -426,10 +361,10 @@ function buildExpressionWithoutTerm(
   terms: BooleanExpression[],
   termToExclude: BooleanExpression
 ): BooleanExpression {
-  // Filter out the term to exclude
   const filteredTerms = terms.filter(term => !expressionsEqual(term, termToExclude))
-
-  // Build a balanced OR tree from the terms
+  if (filteredTerms.length === 0) {
+    return { type: 'CONSTANT', value: false }
+  }
   return buildBalancedORTree(filteredTerms)
 }
 
@@ -440,10 +375,10 @@ function buildExpressionWithoutANDTerm(
   terms: BooleanExpression[],
   termToExclude: BooleanExpression
 ): BooleanExpression {
-  // Filter out the term to exclude
   const filteredTerms = terms.filter(term => !expressionsEqual(term, termToExclude))
-
-  // Build a balanced AND tree from the terms
+  if (filteredTerms.length === 0) {
+    return { type: 'CONSTANT', value: true }
+  }
   return buildBalancedANDTree(filteredTerms)
 }
 
@@ -452,18 +387,16 @@ function buildExpressionWithoutANDTerm(
  */
 function buildBalancedORTree(terms: BooleanExpression[]): BooleanExpression {
   if (terms.length === 0) {
-    throw new Error('Cannot build OR tree from zero terms')
+    throw new Error(
+      'Cannot build OR tree from zero terms, this should have been caught and returned as CONSTANT false.'
+    )
   }
-
   if (terms.length === 1) {
     return terms[0]
   }
-
-  // Recursively build a balanced tree
   const mid = Math.floor(terms.length / 2)
   const left = buildBalancedORTree(terms.slice(0, mid))
   const right = buildBalancedORTree(terms.slice(mid))
-
   return {
     type: 'OR',
     left,
@@ -476,18 +409,16 @@ function buildBalancedORTree(terms: BooleanExpression[]): BooleanExpression {
  */
 function buildBalancedANDTree(terms: BooleanExpression[]): BooleanExpression {
   if (terms.length === 0) {
-    throw new Error('Cannot build AND tree from zero terms')
+    throw new Error(
+      'Cannot build AND tree from zero terms, this should have been caught and returned as CONSTANT true.'
+    )
   }
-
   if (terms.length === 1) {
     return terms[0]
   }
-
-  // Recursively build a balanced tree
   const mid = Math.floor(terms.length / 2)
   const left = buildBalancedANDTree(terms.slice(0, mid))
   const right = buildBalancedANDTree(terms.slice(mid))
-
   return {
     type: 'AND',
     left,

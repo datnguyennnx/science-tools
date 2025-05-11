@@ -7,6 +7,3 @@
 
 // Export the LaTeX converter
 export { latexToBoolean } from './latex-converter'
-
-// Export the law converter
-export * from './law-converter'

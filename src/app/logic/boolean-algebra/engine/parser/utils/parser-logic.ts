@@ -13,6 +13,8 @@ function tokenize(input: string): Token[] {
 
   while (i < sanitizedInput.length) {
     const char = sanitizedInput[i]
+    const nextChar = sanitizedInput[i + 1]
+    const thirdChar = sanitizedInput[i + 2]
 
     if (char === '(') {
       tokens.push({ type: 'LPAREN' })
@@ -41,6 +43,10 @@ function tokenize(input: string): Token[] {
       // NOR
       tokens.push({ type: 'OPERATOR', value: '#' })
       i++
+    } else if (char === '<' && nextChar === '=' && thirdChar === '>') {
+      // XNOR
+      tokens.push({ type: 'OPERATOR', value: '<=>' })
+      i += 3
     } else if (char === '0') {
       tokens.push({ type: 'CONSTANT', value: false })
       i++
@@ -144,9 +150,21 @@ function parseXorTerm(): BooleanExpression {
   return left
 }
 
+// XNOR precedence: XorTerm (<=> XorTerm)*
+function parseXnorTerm(): BooleanExpression {
+  let left = parseXorTerm()
+
+  while (current().type === 'OPERATOR' && current().value === '<=>') {
+    consume('OPERATOR', '<=>')
+    const right = parseXorTerm() // Parses operands at XOR or higher precedence
+    left = { type: 'XNOR', left, right }
+  }
+  return left
+}
+
 // Lowest precedence: XorTerm (+ XorTerm)* or XorTerm (# XorTerm)*
 function parseSum(): BooleanExpression {
-  let left = parseXorTerm()
+  let left = parseXnorTerm() // Changed from parseXorTerm
 
   while (current().type === 'OPERATOR' && (current().value === '+' || current().value === '#')) {
     const operatorToken = consume('OPERATOR')

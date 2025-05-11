@@ -62,8 +62,14 @@ export function formatToBoolean(expr: BooleanExpression): string {
       const right = formatToBoolean(expr.right!)
       return `(${left} # ${right})`
     }
+    case 'XNOR': {
+      const left = formatToBoolean(expr.left!)
+      const right = formatToBoolean(expr.right!)
+      return `(${left} <=> ${right})`
+    }
     default:
-      throw new Error(`Unknown expression type: ${expr.type}`)
+      const unknownExpr = expr as BooleanExpression
+      throw new Error(`Unknown expression type: ${unknownExpr.type}`)
   }
 }
 
@@ -143,8 +149,14 @@ export function formatToLatex(expr: BooleanExpression): string {
       const right = formatToLatex(expr.right!)
       return `(${left} \\downarrow ${right})`
     }
+    case 'XNOR': {
+      const left = formatToLatex(expr.left!)
+      const right = formatToLatex(expr.right!)
+      return `(${left} \\leftrightarrow ${right})`
+    }
     default:
-      throw new Error(`Unknown expression type: ${expr.type}`)
+      const unknownExpr = expr as BooleanExpression
+      throw new Error(`Unknown expression type: ${unknownExpr.type}`)
   }
 }
 

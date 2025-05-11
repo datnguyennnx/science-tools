@@ -1,8 +1,12 @@
 'use client'
 
 import { useMemo } from 'react'
-import { getLatexResults as simplifyBooleanExpression } from '../../engine'
-import { KatexFormula } from '@/components/KatexFormula'
+import {
+  getLatexResults as simplifyBooleanExpression,
+  type ExtendedLatexResults,
+  type LatexSimplificationStep,
+} from '../../engine'
+import { KatexFormula, booleanToLatex } from '@/components/KatexFormula'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ExpressionError } from '../input/ExpressionError'
@@ -48,9 +52,9 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
 
     try {
       // The new engine handles LaTeX conversion internally
-      const simplificationResult = simplifyBooleanExpression(expression)
+      const simplificationResult: ExtendedLatexResults = simplifyBooleanExpression(expression)
 
-      simplificationResult.steps.forEach(s =>
+      simplificationResult.steps.forEach((s: LatexSimplificationStep) =>
         steps.push({
           ruleName: s.ruleName,
           ruleFormula: s.ruleFormula,
@@ -117,46 +121,53 @@ export function StepByStepSimplification({ expression }: StepByStepSimplificatio
                     <span className="font-medium text-xs sm:text-sm">Original Expression</span>
                   </div>
                   <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
-                    <KatexFormula formula={expression} block={true} />
+                    <KatexFormula formula={booleanToLatex(expression)} block={true} />
                   </div>
                 </CardContent>
               </Card>
 
               {/* Simplification steps */}
-              {memoizedSimplification.steps.map((step, idx) => (
-                <Card
-                  key={`${step.ruleName}-${step.beforeLatex}-${step.afterLatex.substring(0, 15)}`}
-                >
-                  <CardContent className="p-2 sm:p-3">
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
-                      <Badge
-                        variant="outline"
-                        className="font-medium px-1 sm:px-2 text-xs sm:text-sm"
-                      >
-                        Step {idx + 1}
-                      </Badge>
-                      <span className="font-medium text-xs sm:text-sm">{step.ruleName}</span>
-                      <div className="flex flex-wrap items-center mt-1 w-full sm:w-auto sm:mt-0 sm:ml-auto">
-                        <div className="overflow-x-auto max-w-full no-scrollbar">
-                          <KatexFormula formula={step.ruleFormula} block={false} />
+              {memoizedSimplification.steps.map((step, idx) => {
+                // Create a unique hash based on the step content
+                const stepHash = btoa(
+                  encodeURIComponent(
+                    `${step.ruleName}-${step.beforeLatex.slice(0, 10)}-${step.afterLatex.slice(0, 10)}-${idx}`
+                  )
+                ).replace(/[^a-zA-Z0-9]/g, '')
+
+                return (
+                  <Card key={`step-${stepHash}`}>
+                    <CardContent className="p-2 sm:p-3">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
+                        <Badge
+                          variant="outline"
+                          className="font-medium px-1 sm:px-2 text-xs sm:text-sm"
+                        >
+                          Step {idx + 1}
+                        </Badge>
+                        <span className="font-medium text-xs sm:text-sm">{step.ruleName}</span>
+                        <div className="flex flex-wrap items-center mt-1 w-full sm:w-auto sm:mt-0 sm:ml-auto">
+                          <div className="overflow-x-auto max-w-full no-scrollbar">
+                            <KatexFormula formula={step.ruleFormula} block={false} />
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
-                      <KatexFormula formula={step.beforeLatex} block={true} />
-                    </div>
+                      <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar">
+                        <KatexFormula formula={step.beforeLatex} block={true} />
+                      </div>
 
-                    <div className="flex justify-center my-1">
-                      <span>↓</span>
-                    </div>
+                      <div className="flex justify-center my-1">
+                        <span>↓</span>
+                      </div>
 
-                    <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar ">
-                      <KatexFormula formula={step.afterLatex} block={true} />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="rounded bg-muted/80 p-2 overflow-x-auto max-w-full no-scrollbar ">
+                        <KatexFormula formula={step.afterLatex} block={true} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           </div>
 

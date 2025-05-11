@@ -7,7 +7,8 @@
 
 import { BooleanExpression } from '../../ast'
 import { SimplificationRule } from '../../ast/rule-types'
-import { deepClone, expressionsEqual } from '../../utils'
+import { expressionsEqual } from '../../utils'
+import { expressionToBooleanString } from '../../parser'
 
 /**
  * Get rules for detecting and simplifying contradictions
@@ -17,149 +18,369 @@ export function getContradictionRules(): SimplificationRule[] {
     {
       info: {
         name: 'Deep Contradiction Detection',
-        description: 'Identify and simplify contradictions at any level',
-        formula: 'A ∧ ¬A = 0',
+        description:
+          'Identify and simplify contradictions like A ∧ ¬A = 0 at any level, including within nested ANDs like (X ∧ A) ∧ ¬A = 0',
+        formula: 'A \\land \\lnot A = 0',
       },
       canApply: (expr: BooleanExpression): boolean => {
-        // Check if this expression or any subexpression has a contradiction
-        const hasContradiction = (e: BooleanExpression | undefined): boolean => {
+        const checkForPotentialContradiction = (e: BooleanExpression | undefined): boolean => {
           if (!e) return false
-
-          // Check for direct contradiction: A ∧ ¬A or ¬A ∧ A
-          if (e.type === 'AND') {
-            if (e.left?.type === 'NOT' && e.left.left && expressionsEqual(e.left.left, e.right)) {
+          if (e.type === 'AND' && e.left && e.right) {
+            if (e.left.type === 'NOT' && e.left.left && expressionsEqual(e.left.left, e.right)) {
               return true
             }
-            if (e.right?.type === 'NOT' && e.right.left && expressionsEqual(e.right.left, e.left)) {
+            if (e.right.type === 'NOT' && e.right.left && expressionsEqual(e.right.left, e.left)) {
               return true
             }
           }
-
-          // Check children recursively
-          return Boolean(
-            (e.left && hasContradiction(e.left)) || (e.right && hasContradiction(e.right))
-          )
+          if (e.type === 'AND') {
+            const terms = collectAndOperands(e, [])
+            const termStrings = new Set<string>()
+            const notTermStrings = new Set<string>()
+            for (const term of terms) {
+              const termAsStr = expressionToBooleanString(term)
+              if (term.type === 'NOT' && term.left) {
+                const targetOfNot = expressionToBooleanString(term.left)
+                notTermStrings.add(targetOfNot)
+              } else {
+                termStrings.add(termAsStr)
+              }
+            }
+            for (const str of termStrings) {
+              if (notTermStrings.has(str)) {
+                return true
+              }
+            }
+          }
+          const leftCanApply = e.left ? checkForPotentialContradiction(e.left) : false
+          if (leftCanApply) {
+            return true
+          }
+          const rightCanApply = e.right ? checkForPotentialContradiction(e.right) : false
+          if (rightCanApply) {
+            return true
+          }
+          return false
         }
-
-        return hasContradiction(expr)
+        return checkForPotentialContradiction(expr)
       },
       apply: (expr: BooleanExpression): BooleanExpression => {
-        const simplifyContradictions = (e: BooleanExpression): BooleanExpression => {
-          if (!e) return e
+        const simplifyContradictionsRecursive = (
+          currentRecursiveExpr: BooleanExpression
+        ): BooleanExpression => {
+          let workingExpr = currentRecursiveExpr // Start with the original reference
 
-          // First process children
-          if (e.left) e.left = simplifyContradictions(e.left)
-          if (e.right) e.right = simplifyContradictions(e.right)
+          let processedLeft = workingExpr.left
+          if (workingExpr.left) {
+            processedLeft = simplifyContradictionsRecursive(workingExpr.left)
+          }
 
-          // Check for contradictions: A ∧ ¬A
-          if (e.type === 'AND') {
-            // Check for A ∧ ¬A
-            if (e.left?.type === 'NOT' && e.left.left && expressionsEqual(e.left.left, e.right)) {
+          let processedRight = workingExpr.right
+          if (workingExpr.right) {
+            processedRight = simplifyContradictionsRecursive(workingExpr.right)
+          }
+
+          // If children changed, create a new node instance for workingExpr
+          if (processedLeft !== workingExpr.left || processedRight !== workingExpr.right) {
+            // Clone with proper type handling
+            const newExpr = { ...workingExpr }
+            newExpr.left = processedLeft
+            newExpr.right = processedRight
+            workingExpr = newExpr as BooleanExpression
+          }
+
+          // Now, workingExpr is either the original node (if children unchanged)
+          // or a new node with (potentially) changed children.
+          // Check current node workingExpr for contradiction
+
+          if (workingExpr.type === 'AND' && workingExpr.left && workingExpr.right) {
+            const leftTerm = workingExpr.left
+            const rightTerm = workingExpr.right
+            if (
+              leftTerm.type === 'NOT' &&
+              leftTerm.left &&
+              expressionsEqual(leftTerm.left, rightTerm)
+            ) {
               return { type: 'CONSTANT', value: false }
             }
-            // Check for ¬A ∧ A
-            if (e.right?.type === 'NOT' && e.right.left && expressionsEqual(e.right.left, e.left)) {
+            if (
+              rightTerm.type === 'NOT' &&
+              rightTerm.left &&
+              expressionsEqual(rightTerm.left, leftTerm)
+            ) {
               return { type: 'CONSTANT', value: false }
             }
           }
 
-          return e
+          if (workingExpr.type === 'AND') {
+            const terms = collectAndOperands(workingExpr, [])
+            const termStrings = new Set<string>()
+            const notTermTargets = new Set<string>()
+            for (const term of terms) {
+              const termStr = expressionToBooleanString(term)
+              if (term.type === 'NOT' && term.left) {
+                const targetStr = expressionToBooleanString(term.left)
+                if (termStrings.has(targetStr)) {
+                  return { type: 'CONSTANT', value: false }
+                }
+                notTermTargets.add(targetStr)
+              } else {
+                if (notTermTargets.has(termStr)) {
+                  return { type: 'CONSTANT', value: false }
+                }
+                termStrings.add(termStr)
+              }
+            }
+          }
+          return workingExpr
         }
-
-        return simplifyContradictions(deepClone(expr))
+        return simplifyContradictionsRecursive(expr)
       },
     },
     {
       info: {
         name: 'Tautology Recognition',
-        description: 'Recognize expressions that are always true, e.g., (A ∨ ¬A) = 1',
-        formula: 'A ∨ ¬A = 1',
+        description: 'A + !A => 1 (applied recursively to OR branches)',
+        formula: 'A \\lor \\lnot A = 1',
       },
       canApply: (expr: BooleanExpression): boolean => {
-        // Check if this expression or any subexpression has a tautology
-        const hasTautology = (e: BooleanExpression | undefined): boolean => {
+        const checkForPotentialTautology = (e: BooleanExpression | undefined): boolean => {
           if (!e) return false
-
-          // Check for direct tautology: A ∨ ¬A or ¬A ∨ A
           if (e.type === 'OR') {
-            if (e.left && e.right) {
-              // Ensure both children exist
-              if (e.left.type === 'NOT' && e.left.left && expressionsEqual(e.left.left, e.right)) {
-                return true
-              }
-              if (
-                e.right.type === 'NOT' &&
-                e.right.left &&
-                expressionsEqual(e.right.left, e.left)
-              ) {
-                return true
+            const terms = collectOrOperands(e, [])
+            const termStrings = new Set<string>()
+            const notTermTargets = new Set<string>()
+            for (const term of terms) {
+              const termStr = expressionToBooleanString(term)
+              if (term.type === 'NOT' && term.left) {
+                const targetStr = expressionToBooleanString(term.left)
+                if (termStrings.has(targetStr)) return true
+                notTermTargets.add(targetStr)
+              } else {
+                if (notTermTargets.has(termStr)) return true
+                termStrings.add(termStr)
               }
             }
           }
-
-          // Check children recursively
-          // For NOT nodes, check its operand. For AND/OR, check both children.
           if (e.type === 'NOT') {
-            return hasTautology(e.left)
-          } else if (
-            e.type === 'AND' ||
-            e.type === 'OR' ||
-            e.type === 'XOR' ||
-            e.type === 'NAND' ||
-            e.type === 'NOR'
-          ) {
-            return hasTautology(e.left) || hasTautology(e.right)
+            return checkForPotentialTautology(e.left)
+          } else if (e.left && e.right) {
+            if (checkForPotentialTautology(e.left)) return true
+            if (checkForPotentialTautology(e.right)) return true
           }
-          // Variables and Constants cannot contain tautologies themselves
           return false
         }
-        return hasTautology(expr)
+        return checkForPotentialTautology(expr)
       },
       apply: (expr: BooleanExpression): BooleanExpression => {
-        const simplifyTautologies = (e: BooleanExpression): BooleanExpression => {
-          if (!e) return e // Should not happen with a valid AST node
+        const simplifyTautologiesRecursive = (
+          currentRecursiveExpr: BooleanExpression
+        ): BooleanExpression => {
+          let workingExpr = currentRecursiveExpr
 
-          // First process children recursively
-          // This ensures that deeper tautologies are simplified before checking the current node
-          if (e.type === 'NOT') {
-            if (e.left) e.left = simplifyTautologies(e.left)
-          } else if (
-            e.type === 'AND' ||
-            e.type === 'OR' ||
-            e.type === 'XOR' ||
-            e.type === 'NAND' ||
-            e.type === 'NOR'
-          ) {
-            if (e.left) e.left = simplifyTautologies(e.left)
-            if (e.right) e.right = simplifyTautologies(e.right)
+          let processedLeft = workingExpr.left
+          if (workingExpr.left) {
+            processedLeft = simplifyTautologiesRecursive(workingExpr.left)
+          }
+          let processedRight = workingExpr.right
+          if (workingExpr.right) {
+            processedRight = simplifyTautologiesRecursive(workingExpr.right)
           }
 
-          // Check for tautologies: A ∨ ¬A or ¬A ∨ A at the current node
-          if (e.type === 'OR') {
-            if (e.left && e.right) {
-              // Ensure both children exist
-              // Check for A ∨ ¬A
-              if (
-                e.right.type === 'NOT' &&
-                e.right.left &&
-                expressionsEqual(e.left, e.right.left)
-              ) {
-                return { type: 'CONSTANT', value: true }
-              }
-              // Check for ¬A ∨ A
-              if (e.left.type === 'NOT' && e.left.left && expressionsEqual(e.right, e.left.left)) {
-                return { type: 'CONSTANT', value: true }
+          if (processedLeft !== workingExpr.left || processedRight !== workingExpr.right) {
+            // Clone with proper type handling
+            const newExpr = { ...workingExpr }
+            newExpr.left = processedLeft
+            newExpr.right = processedRight
+            workingExpr = newExpr as BooleanExpression
+          }
+
+          if (workingExpr.type === 'OR') {
+            const terms = collectOrOperands(workingExpr, [])
+            const termStrings = new Set<string>()
+            const notTermTargets = new Set<string>()
+            for (const term of terms) {
+              const termStr = expressionToBooleanString(term)
+              if (term.type === 'NOT' && term.left) {
+                const targetStr = expressionToBooleanString(term.left)
+                if (termStrings.has(targetStr)) {
+                  return { type: 'CONSTANT', value: true }
+                }
+                notTermTargets.add(targetStr)
+              } else {
+                if (notTermTargets.has(termStr)) {
+                  return { type: 'CONSTANT', value: true }
+                }
+                termStrings.add(termStr)
               }
             }
           }
-          return e
+          return workingExpr
         }
-        // It's important to clone the expression if we are modifying it in place
-        // or if simplifyTautologies might return parts of the original unchanged.
-        // Since simplifyTautologies reconstructs nodes or returns original children,
-        // cloning at the start ensures the original AST passed to the rule is not mutated directly by this rule's apply function.
-        return simplifyTautologies(deepClone(expr))
+        return simplifyTautologiesRecursive(expr)
+      },
+    },
+    {
+      info: {
+        name: 'Redundancy (AND terms with complement)',
+        description: '(X · Y) + (X · ¬Y) = X',
+        formula: '(X \\land Y) \\lor (X \\land \\lnot Y) = X',
+        ruleType: 'redundancy',
+      },
+      canApply: (expr: BooleanExpression): boolean => {
+        if (expr.type !== 'OR' || !expr.left || !expr.right) return false
+        if (expr.left.type !== 'AND' || !expr.left.left || !expr.left.right) return false
+        if (expr.right.type !== 'AND' || !expr.right.left || !expr.right.right) return false
+
+        const term1_left = expr.left.left!
+        const term1_right = expr.left.right!
+        const term2_left = expr.right.left!
+        const term2_right = expr.right.right!
+
+        const areComplements = (
+          subTermA: BooleanExpression,
+          subTermB: BooleanExpression
+        ): boolean => {
+          if (subTermA.type === 'NOT' && subTermA.left && expressionsEqual(subTermA.left, subTermB))
+            return true
+          if (subTermB.type === 'NOT' && subTermB.left && expressionsEqual(subTermB.left, subTermA))
+            return true
+          return false
+        }
+
+        if (expressionsEqual(term1_left, term2_left) && areComplements(term1_right, term2_right))
+          return true
+        if (expressionsEqual(term1_left, term2_right) && areComplements(term1_right, term2_left))
+          return true
+        if (expressionsEqual(term1_right, term2_left) && areComplements(term1_left, term2_right))
+          return true
+        if (expressionsEqual(term1_right, term2_right) && areComplements(term1_left, term2_left))
+          return true
+
+        return false
+      },
+      apply: (expr: BooleanExpression): BooleanExpression => {
+        const term1_left = expr.left!.left!
+        const term1_right = expr.left!.right!
+        const term2_left = expr.right!.left!
+        const term2_right = expr.right!.right!
+
+        const areComplements = (
+          subTermA: BooleanExpression,
+          subTermB: BooleanExpression
+        ): boolean => {
+          if (subTermA.type === 'NOT' && subTermA.left && expressionsEqual(subTermA.left, subTermB))
+            return true
+          if (subTermB.type === 'NOT' && subTermB.left && expressionsEqual(subTermB.left, subTermA))
+            return true
+          return false
+        }
+        // Returning a new object (deepClone of the relevant part) is correct here as the structure changes significantly.
+        if (expressionsEqual(term1_left, term2_left) && areComplements(term1_right, term2_right))
+          return { ...term1_left } // Shallow clone X if it's an object
+        if (expressionsEqual(term1_left, term2_right) && areComplements(term1_right, term2_left))
+          return { ...term1_left }
+        if (expressionsEqual(term1_right, term2_left) && areComplements(term1_left, term2_right))
+          return { ...term1_right }
+        if (expressionsEqual(term1_right, term2_right) && areComplements(term1_left, term2_left))
+          return { ...term1_right }
+
+        return expr // Fallback, should ideally not be reached if canApply is robust
+      },
+    },
+    {
+      info: {
+        name: 'Redundancy (OR terms with complement)',
+        description: '(X + Y) · (X + ¬Y) = X',
+        formula: '(X \\lor Y) \\land (X \\lor \\lnot Y) = X',
+        ruleType: 'redundancy',
+      },
+      canApply: (expr: BooleanExpression): boolean => {
+        if (expr.type !== 'AND' || !expr.left || !expr.right) return false
+        if (expr.left.type !== 'OR' || !expr.left.left || !expr.left.right) return false
+        if (expr.right.type !== 'OR' || !expr.right.left || !expr.right.right) return false
+
+        const term1_left = expr.left.left!
+        const term1_right = expr.left.right!
+        const term2_left = expr.right.left!
+        const term2_right = expr.right.right!
+
+        const areComplements = (
+          subTermA: BooleanExpression,
+          subTermB: BooleanExpression
+        ): boolean => {
+          if (subTermA.type === 'NOT' && subTermA.left && expressionsEqual(subTermA.left, subTermB))
+            return true
+          if (subTermB.type === 'NOT' && subTermB.left && expressionsEqual(subTermB.left, subTermA))
+            return true
+          return false
+        }
+
+        if (expressionsEqual(term1_left, term2_left) && areComplements(term1_right, term2_right))
+          return true
+        if (expressionsEqual(term1_left, term2_right) && areComplements(term1_right, term2_left))
+          return true
+        if (expressionsEqual(term1_right, term2_left) && areComplements(term1_left, term2_right))
+          return true
+        if (expressionsEqual(term1_right, term2_right) && areComplements(term1_left, term2_left))
+          return true
+
+        return false
+      },
+      apply: (expr: BooleanExpression): BooleanExpression => {
+        const term1_left = expr.left!.left!
+        const term1_right = expr.left!.right!
+        const term2_left = expr.right!.left!
+        const term2_right = expr.right!.right!
+
+        const areComplements = (
+          subTermA: BooleanExpression,
+          subTermB: BooleanExpression
+        ): boolean => {
+          if (subTermA.type === 'NOT' && subTermA.left && expressionsEqual(subTermA.left, subTermB))
+            return true
+          if (subTermB.type === 'NOT' && subTermB.left && expressionsEqual(subTermB.left, subTermA))
+            return true
+          return false
+        }
+
+        if (expressionsEqual(term1_left, term2_left) && areComplements(term1_right, term2_right))
+          return { ...term1_left }
+        if (expressionsEqual(term1_left, term2_right) && areComplements(term1_right, term2_left))
+          return { ...term1_left }
+        if (expressionsEqual(term1_right, term2_left) && areComplements(term1_left, term2_right))
+          return { ...term1_right }
+        if (expressionsEqual(term1_right, term2_right) && areComplements(term1_left, term2_left))
+          return { ...term1_right }
+
+        return expr
       },
     },
   ]
+}
+
+function collectAndOperands(
+  expr: BooleanExpression,
+  terms: BooleanExpression[]
+): BooleanExpression[] {
+  if (expr.type === 'AND') {
+    if (expr.left) collectAndOperands(expr.left, terms)
+    if (expr.right) collectAndOperands(expr.right, terms)
+  } else {
+    terms.push(expr)
+  }
+  return terms
+}
+
+function collectOrOperands(
+  expr: BooleanExpression,
+  terms: BooleanExpression[]
+): BooleanExpression[] {
+  if (expr.type === 'OR') {
+    if (expr.left) collectOrOperands(expr.left, terms)
+    if (expr.right) collectOrOperands(expr.right, terms)
+  } else {
+    terms.push(expr)
+  }
+  return terms
 }

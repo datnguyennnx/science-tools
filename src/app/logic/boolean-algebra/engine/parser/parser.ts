@@ -182,11 +182,6 @@ export function parseExpression(input: string, isInitialParse: boolean = true): 
   // Auto-detect the format if not explicitly specified
   const format = detectFormat(input)
 
-  // if (!isInitialParse) {
-  //   // Temporary log to catch strings being reparsed by the simplifier
-  //   console.log(`Reparsing with isInitialParse=false: "${input}"`)
-  // }
-
   const result = parseBoolean(input, { inputFormat: format, isInitialParse })
   if (!result.success || !result.expression) {
     throw new Error(result.error || 'Failed to parse expression')

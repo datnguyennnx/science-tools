@@ -10,6 +10,17 @@ export type {
   BooleanExpression,
   SimplificationStep,
   SimplificationResult,
+  VariableNode,
+  ConstantNode,
+  NotNode,
+  AndNode,
+  OrNode,
+  XorNode,
+  NandNode,
+  NorNode,
+  XnorNode,
+  LatexSimplificationStep,
+  ExtendedLatexResults,
 } from './types'
 
 // Export all rule-related types with renamed RuleInfo to avoid conflict
