@@ -339,7 +339,7 @@ export function getDistributiveRules(type: DistributiveRuleType = 'all'): Simpli
       info: {
         name: 'Factorize AND from OR (Common Left)',
         description: 'Factorize AND from OR (Common Left): (X*Y) + (X*Z) => X*(Y+Z)',
-        formula: '(X \cdot Y) + (X \cdot Z) \Leftrightarrow X \cdot (Y+Z)',
+        formula: '(X \\cdot Y) + (X \\cdot Z) \\Leftrightarrow X \\cdot (Y+Z)',
       },
       canApply: (expr: BooleanExpression): boolean => {
         if (expr.type !== 'OR') return false
@@ -424,7 +424,7 @@ export function getDistributiveRules(type: DistributiveRuleType = 'all'): Simpli
       info: {
         name: 'Factorize AND from OR (Common Mixed 1)',
         description: '(X*Y) + (Z*X) => X*(Y+Z)',
-        formula: '(X \land Y) \lor (Z \land X) = X \land (Y \lor Z)',
+        formula: '(X \\land Y) \\lor (Z \\land X) = X \\land (Y \\lor Z)',
         ruleType: 'factorization',
       },
       canApply: (expr: BooleanExpression): boolean => {
@@ -469,7 +469,7 @@ export function getDistributiveRules(type: DistributiveRuleType = 'all'): Simpli
       info: {
         name: 'Factorize AND from OR (Common Mixed 2)',
         description: '(Y*X) + (X*Z) => (Y+Z)*X',
-        formula: '(Y \land X) \lor (X \land Z) = (Y \lor Z) \land X',
+        formula: '(Y \\land X) \\lor (X \\land Z) = (Y \\lor Z) \\land X',
         ruleType: 'factorization',
       },
       canApply: (expr: BooleanExpression): boolean => {
@@ -514,7 +514,7 @@ export function getDistributiveRules(type: DistributiveRuleType = 'all'): Simpli
       info: {
         name: 'Factorize OR from AND (Common Left in ORs)',
         description: '(X + Y) * (X + Z) => X + (Y * Z)',
-        formula: '(X \lor Y) \land (X \lor Z) = X \lor (Y \land Z)',
+        formula: '(X \\lor Y) \\land (X \\lor Z) = X \\lor (Y \\land Z)',
         ruleType: 'factorization',
       },
       canApply: (expr: BooleanExpression): boolean => {
@@ -555,7 +555,7 @@ export function getDistributiveRules(type: DistributiveRuleType = 'all'): Simpli
       info: {
         name: 'Factorize OR from AND (Common Right in ORs)',
         description: '(Y + X) * (Z + X) => (Y * Z) + X',
-        formula: '(Y \lor X) \land (Z \lor X) = (Y \land Z) \lor X',
+        formula: '(Y \\lor X) \\land (Z \\lor X) = (Y \\land Z) \\lor X',
         ruleType: 'factorization',
       },
       canApply: (expr: BooleanExpression): boolean => {
@@ -598,7 +598,7 @@ export function getDistributiveRules(type: DistributiveRuleType = 'all'): Simpli
       info: {
         name: 'Factorize OR from AND (Common Mixed 1: X+Y and Z+X)',
         description: '(X + Y) * (Z + X) => X + (Y * Z)',
-        formula: '(X \lor Y) \land (Z \lor X) = X \lor (Y \land Z)',
+        formula: '(X \\lor Y) \\land (Z \\lor X) = X \\lor (Y \\land Z)',
         ruleType: 'factorization',
       },
       canApply: (expr: BooleanExpression): boolean => {
@@ -639,7 +639,7 @@ export function getDistributiveRules(type: DistributiveRuleType = 'all'): Simpli
       info: {
         name: 'Factorize OR from AND (Common Mixed 2: Y+X and X+Z)',
         description: '(Y + X) * (X + Z) => (Y * Z) + X',
-        formula: '(Y \lor X) \land (X \lor Z) = (Y \land Z) \lor X',
+        formula: '(Y \\lor X) \\land (X \\lor Z) = (Y \\land Z) \\lor X',
         ruleType: 'factorization',
       },
       canApply: (expr: BooleanExpression): boolean => {

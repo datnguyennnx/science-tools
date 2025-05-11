@@ -107,7 +107,7 @@ export function getDeMorganRules(): SimplificationRule[] {
       info: {
         name: "De Morgan's Law (AND)",
         description: "De Morgan's Law: !(A * B) <=> !A + !B",
-        formula: '!(A \cdot B) \Leftrightarrow !A + !B',
+        formula: '\\lnot(A \\land B) \\Leftrightarrow \\lnot A \\lor \\lnot B',
       },
       canApply: (expr: BooleanExpression): boolean => {
         return expr.type === 'NOT' && expr.left?.type === 'AND'
@@ -118,7 +118,7 @@ export function getDeMorganRules(): SimplificationRule[] {
       info: {
         name: "De Morgan's Law (OR)",
         description: "De Morgan's Law: !(A + B) <=> !A * !B",
-        formula: '!(A + B) \Leftrightarrow !A \cdot !B',
+        formula: '\\lnot(A \\lor B) \\Leftrightarrow \\lnot A \\land \\lnot B',
       },
       canApply: (expr: BooleanExpression): boolean => {
         return expr.type === 'NOT' && expr.left?.type === 'OR'

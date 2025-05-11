@@ -189,7 +189,7 @@ export function getConstantRules(): SimplificationRule[] {
       info: {
         name: 'Recursive Constant Simplification',
         description: 'Recursively simplifies constants (0, 1) in the expression tree.',
-        formula: 'e.g., (A ∧ 1) ∨ 0 = A',
+        formula: '(A \\land 1) \\lor 0 = A',
       },
       canApply: (): boolean => {
         return true // Let apply handle the details.

@@ -127,7 +127,7 @@ export function getNegationRules(): SimplificationRule[] {
       info: {
         name: 'Double Negation Elimination (Recursive)',
         description: 'Recursively simplifies ¬¬A to A',
-        formula: '\\\\lnot\\\\lnot A = A',
+        formula: '\\lnot\\lnot A = A',
       },
       canApply: (expr: BooleanExpression): boolean => {
         return canDoubleNegationBeAppliedRecursively(expr)

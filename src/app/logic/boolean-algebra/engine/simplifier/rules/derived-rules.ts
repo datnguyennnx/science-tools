@@ -195,7 +195,7 @@ export function getNORRules(): SimplificationRule[] {
       info: {
         name: 'NOR Self-Negation',
         description: 'A NOR A = !A (Self-Negation for NOR)',
-        formula: 'A \# A = \lnot A',
+        formula: 'A \\downarrow A = \\lnot A',
       },
       canApply: canApplyNorSelfNegationForRule,
       apply: createRecursiveRuleApply(applyNorSelfNegation, canApplyNorSelfNegationInternal),
