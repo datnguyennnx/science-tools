@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Guide } from './components/common'
+import { Guide } from './components/common' // Assuming Guide is in a common components directory
 import { Toaster } from '@/components/ui/sonner'
 
 export const metadata: Metadata = {
@@ -41,7 +41,9 @@ export default function BooleanAlgebraLayout({ children }: BooleanAlgebraLayoutP
   return (
     <section aria-label="Boolean Algebra Tool" className="flex flex-col h-full p-2 sm:p-4">
       <header className="w-full flex items-center justify-between mb-1 sm:mb-2 pt-1 sm:pt-2">
-        <h1 className="text-lg sm:text-xl font-bold">Boolean Algebra Simplifier</h1>
+        <h1 className="text-lg sm:text-xl font-bold text-[--color-foreground]">
+          Boolean Algebra Simplifier
+        </h1>
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="ghost" size="icon" aria-label="Open Boolean Algebra Guide">
@@ -49,20 +51,20 @@ export default function BooleanAlgebraLayout({ children }: BooleanAlgebraLayoutP
               <span className="sr-only">Open Guide</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="min-w-3xl max-h-[80vh] overflow-y-auto no-scrollbar">
             <DialogHeader>
-              <DialogTitle>Boolean Algebra Guide</DialogTitle>
-              <DialogDescription>Learn about boolean algebra operators and laws</DialogDescription>
-            </DialogHeader>
-            <div className="mt-4">
-              <Guide />
-            </div>
+              <DialogTitle className="text-[--color-foreground]">Boolean Algebra Guide</DialogTitle>
+              <DialogDescription className="text-[--color-muted-foreground]">
+                Learn about boolean algebra operators and laws
+              </DialogDescription>
+            </DialogHeader>{' '}
+            <Guide />
           </DialogContent>
         </Dialog>
       </header>
       <main className="w-full overflow-auto flex-1">{children}</main>
-      <footer className="py-1 sm:py-2 mt-auto bg-background">
-        <p className="text-balance text-xs sm:text-sm text-center text-muted-foreground">
+      <footer className="py-1 sm:py-2 mt-auto bg-[--color-background]">
+        <p className="text-balance text-xs sm:text-sm text-center text-[--color-muted-foreground]">
           This is a basic Boolean algebra simplifier. For complex expressions, consider using
           advanced simplification algorithms.
         </p>

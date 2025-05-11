@@ -81,7 +81,7 @@ export function ExpressionInput({
       if (!expr.trim()) return
 
       // Auto-detect the input format
-      const detectedFormat = detectInputFormat(expr)
+      // const detectedFormat = detectInputFormat(expr) // detectedFormat is not strictly needed here anymore for preview logic
 
       // Parse with silent error handling and auto-format detection
       const result = parse(expr, {
@@ -89,19 +89,15 @@ export function ExpressionInput({
       })
 
       if (result.success && result.expression) {
-        // Show alternative format in preview
-        if (detectedFormat === 'standard') {
-          setAlternativePreview(formatLatex(result.expression))
-        } else {
-          setAlternativePreview(formatBoolean(result.expression))
-        }
+        // Always show LaTeX in the preview
+        setAlternativePreview(formatLatex(result.expression))
         setError('')
       } else if (result.error) {
         // Only show errors in the UI, don't toast during typing
         setError(result.error)
       }
     },
-    [parse, formatLatex, formatBoolean]
+    [parse, formatLatex] // formatBoolean removed from dependencies
   )
 
   useEffect(() => {

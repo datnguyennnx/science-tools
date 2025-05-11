@@ -62,7 +62,13 @@ export default function BooleanAlgebraPage() {
         <Card className="w-full h-fit col-span-1 md:col-span-6 xl:col-span-6">
           <CardHeader className="pb-2">
             <CardTitle>Simplification</CardTitle>
-            <CardDescription>Step-by-step resolution</CardDescription>
+            <CardDescription>
+              Step-by-step resolution.{' '}
+              <strong className="text-warning-foreground">
+                Important: Always double-check the simplification results. Automated systems may not
+                always be perfect, so verify the output for critical applications.
+              </strong>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {isSimplified && submittedExpression.trim() ? (
