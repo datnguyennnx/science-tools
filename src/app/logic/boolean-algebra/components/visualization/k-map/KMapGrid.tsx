@@ -21,8 +21,8 @@ export const KMapGrid = ({
   const { rowHeaders, colHeaders, rowVarLabel, colVarLabel, kMapOrder } = config
 
   return (
-    <div className={`flex justify-center overflow-x-auto ${className}`}>
-      <div className="relative mt-8 ml-8">
+    <div className={`flex justify-center ${className}`}>
+      <div className="relative mt-2">
         {/* Column Headers Label (CD) */}
         <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 font-bold text-sm flex items-center">
           <p className="mr-1">

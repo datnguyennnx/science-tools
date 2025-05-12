@@ -31,36 +31,44 @@ export default function BooleanAlgebraPage() {
 
   return (
     <div className="w-full max-w-full">
-      <div className={`grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-4`}>
-        {/* Input Section */}
-        <Card className="w-full h-fit col-span-1 md:col-span-6 xl:col-span-3">
-          <CardHeader className="pb-2">
-            <CardTitle>Boolean Algebra Input</CardTitle>
-            <CardDescription className="flex flex-col space-y-1">
-              <p>Supported notation formats:</p>
-              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs pl-1">
-                <div className="font-medium">Standard:</div>
-                <div>A+B (OR), A*B (AND), !A (NOT)</div>
-                <div className="font-medium">LaTeX:</div>
-                <div>A\lor B, A\land B, \lnot A</div>
-              </div>
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ExpressionInput
-              defaultExpression={currentExpressionInput}
-              onExpressionChange={handleExpressionChange}
-              onSimplificationStart={handleSimplificationStart}
-              onResultChange={handleSimplificationComplete}
-              isProcessing={isProcessing}
-              hideResult={true}
-            />
-          </CardContent>
-        </Card>
+      {/* Main grid: single column by default, 3 columns on large screens */}
+      <div className={`grid grid-cols-1 lg:grid-cols-8 gap-4`}>
+        {/* Column 1 (Large Screens): Input and Truth Table */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          {/* Input Section */}
+          <Card className="w-full h-fit">
+            <CardHeader className="pb-2">
+              <CardTitle>Boolean Algebra Input</CardTitle>
+              <CardDescription className="flex flex-col space-y-1">
+                <p>Supported notation formats:</p>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs pl-1">
+                  <div className="font-medium">Standard:</div>
+                  <div>A+B (OR), A*B (AND), !A (NOT)</div>
+                  <div className="font-medium">LaTeX:</div>
+                  <div>A\lor B, A\land B, \lnot A</div>
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExpressionInput
+                defaultExpression={currentExpressionInput}
+                onExpressionChange={handleExpressionChange}
+                onSimplificationStart={handleSimplificationStart}
+                onResultChange={handleSimplificationComplete}
+                isProcessing={isProcessing}
+                hideResult={true}
+              />
+            </CardContent>
+          </Card>
 
-        {/* Simplification Section */}
-        <Card className="w-full h-fit col-span-1 md:col-span-6 xl:col-span-6">
-          <CardHeader className="pb-2">
+          {/* Truth Table is now inside the first column */}
+          <TruthTable expression={submittedExpression} />
+        </div>
+
+        {/* Column 2 (Large Screens): Simplification */}
+        {/* Simplification Section is now in the second column */}
+        <Card className="w-full h-fit lg:col-span-4">
+          <CardHeader className="pb-2 ">
             <CardTitle>Simplification</CardTitle>
             <CardDescription>
               Step-by-step resolution.{' '}
@@ -90,9 +98,8 @@ export default function BooleanAlgebraPage() {
           </CardContent>
         </Card>
 
-        {/* Truth Table Section & K-Map Section Group */}
-        <div className="col-span-1 md:col-span-6 xl:col-span-3 flex flex-col gap-4">
-          <TruthTable expression={submittedExpression} />
+        {/* Column 3 (Large Screens): K-Map and Venn Diagram */}
+        <div className="lg:col-span-2 flex flex-col  gap-4">
           <KarnaughMap expression={submittedExpression} />
           <VennDiagram expression={submittedExpression} />
         </div>
