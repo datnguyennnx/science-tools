@@ -56,6 +56,7 @@ export default function RootLayout({
           integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP"
           crossOrigin="anonymous"
         />
+        <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <SpeedInsights />
