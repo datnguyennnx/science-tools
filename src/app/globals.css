@@ -52,6 +52,14 @@
   --pomodoro-upcoming-light: var(--pomodoro-upcoming);
   --pomodoro-icon-current-light: var(--pomodoro-icon-current);
   --pomodoro-icon-completed-light: var(--pomodoro-icon-completed);
+  /* Venn Diagram Colors */
+  --venn-border: oklch(0.3 0 0); /* strong dark neutral for border */
+  --venn-border-inside: oklch(0.3 0 0 / 60%); /* semi-transparent for inside border */
+  --venn-bg: var(--color-muted);
+  --venn-region-a: var(--color-chart-1);
+  --venn-region-b: var(--color-chart-2);
+  --venn-region-c: var(--color-chart-3);
+  --venn-region-intersection: var(--color-chart-4);
 }
 
 :root {
@@ -140,6 +148,14 @@
   --pomodoro-upcoming: oklch(0.35 0.03 270);
   --pomodoro-icon-current: oklch(0.95 0 0);
   --pomodoro-icon-completed: oklch(0.95 0 0);
+  /* Venn Diagram Colors (dark) */
+  --venn-border: oklch(0.95 0 0); /* strong light neutral for border in dark mode */
+  --venn-border-inside: oklch(0.95 0 0 / 60%); /* semi-transparent for inside border in dark mode */
+  --venn-bg: var(--color-muted);
+  --venn-region-a: var(--color-chart-1);
+  --venn-region-b: var(--color-chart-2);
+  --venn-region-c: var(--color-chart-3);
+  --venn-region-intersection: var(--color-chart-4);
 }
 
 @layer utilities {

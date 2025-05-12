@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 // Import the components
 import { ExpressionInput } from './components/input'
-import { TruthTable, KarnaughMap } from './components/visualization'
+import { TruthTable, KarnaughMap, VennDiagram } from './components/visualization'
 import { StepByStepSimplification } from './components/simplification'
 
 export default function BooleanAlgebraPage() {
@@ -94,6 +94,7 @@ export default function BooleanAlgebraPage() {
         <div className="col-span-1 md:col-span-6 xl:col-span-3 flex flex-col gap-4">
           <TruthTable expression={submittedExpression} />
           <KarnaughMap expression={submittedExpression} />
+          <VennDiagram expression={submittedExpression} />
         </div>
       </div>
     </div>
