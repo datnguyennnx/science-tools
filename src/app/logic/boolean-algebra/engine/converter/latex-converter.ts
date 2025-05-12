@@ -16,39 +16,51 @@ export function latexToBoolean(latex: string): string {
     // Subsequent steps will handle specific LaTeX command conversions.
     let processedLatex = latex.replace(/\s+/g, ' ').trim()
 
-    // Step 2: Handle LaTeX constants and basic commands
-    // Convert LaTeX operators to standard operators WITH SPACES first
-    processedLatex = processedLatex
-      .replace(/\\text{T}/g, '1')
-      .replace(/\\text{F}/g, '0')
-      .replace(/\\text{TRUE}/gi, '1')
-      .replace(/\\text{FALSE}/gi, '0')
-      .replace(/\\mathrm{T}/g, '1')
-      .replace(/\\mathrm{F}/g, '0')
-      .replace(/\\lnot/g, ' NOT_TEMP ')
-      .replace(/\\neg/g, ' NOT_TEMP ')
-      .replace(/\\overline{([^}]*)}/g, ' NOT_TEMP ($1) ')
-      .replace(/\\land/g, ' * ') // Converted to * with spaces
-      .replace(/\\lor/g, ' + ') // Converted to + with spaces
-      .replace(/\\wedge/g, ' * ')
-      .replace(/\\vee/g, ' + ')
-      .replace(/\\cdot/g, ' * ')
-      .replace(/∧/g, ' * ')
-      .replace(/∨/g, ' + ')
-      .replace(/¬/g, ' NOT_TEMP ')
+    // Step 2: Handle LaTeX constants and basic commands sequentially
+    // Constants
+    processedLatex = processedLatex.replace(/\\text{T}/g, '1')
+    processedLatex = processedLatex.replace(/\\text{F}/g, '0')
+    processedLatex = processedLatex.replace(/\\text{TRUE}/gi, '1')
+    processedLatex = processedLatex.replace(/\\text{FALSE}/gi, '0')
+    processedLatex = processedLatex.replace(/\\mathrm{T}/g, '1')
+    processedLatex = processedLatex.replace(/\\mathrm{F}/g, '0')
+
+    // Operators (ensure commands with overlapping prefixes are ordered carefully if needed)
+    // Using NOT_TEMP placeholder for negation to handle precedence later
+    processedLatex = processedLatex.replace(/\\lnot/g, ' NOT_TEMP ')
+    processedLatex = processedLatex.replace(/\\neg/g, ' NOT_TEMP ')
+    processedLatex = processedLatex.replace(/\\overline{([^}]*)}/g, ' NOT_TEMP ($1) ') // Specific overline handling
+    processedLatex = processedLatex.replace(/\\land/g, ' * ')
+    processedLatex = processedLatex.replace(/\\lor/g, ' + ')
+    processedLatex = processedLatex.replace(/\\wedge/g, ' * ')
+    processedLatex = processedLatex.replace(/\\vee/g, ' + ')
+    processedLatex = processedLatex.replace(/\\cdot/g, ' * ')
+    processedLatex = processedLatex.replace(/\\oplus/g, ' ^ ')
+    processedLatex = processedLatex.replace(/\\uparrow/g, ' @ ') // Corrected regex
+    processedLatex = processedLatex.replace(/\\downarrow/g, ' # ')
+    processedLatex = processedLatex.replace(/\\leftrightarrow/g, ' <=> ')
+
+    // Unicode symbols
+    processedLatex = processedLatex.replace(/∧/g, ' * ')
+    processedLatex = processedLatex.replace(/∨/g, ' + ')
+    processedLatex = processedLatex.replace(/¬/g, ' NOT_TEMP ')
 
     // Step 2.5: NOW check for invalid AND/OR operations using standard ops but WITH SPACES
     // These checks are now more effective as they see '*' and '+'.
-    if (processedLatex.match(/\*\s*(\)|$)/)) {
+    if (/\*\s*(\)|$)/.test(processedLatex)) {
+      // Missing right operand for AND
       throw new Error('Invalid AND operation: missing right operand')
     }
-    if (processedLatex.match(/(^|\()\s*\*/)) {
+    if (/(^|\()\s*\*/.test(processedLatex)) {
+      // Missing left operand for AND - Use test()
       throw new Error('Invalid AND operation: missing left operand')
     }
-    if (processedLatex.match(/\+\s*(\)|$)/)) {
+    if (/\+\s*(\)|$)/.test(processedLatex)) {
+      // Missing right operand for OR
       throw new Error('Invalid OR operation: missing right operand')
     }
-    if (processedLatex.match(/(^|\()\s*\+/)) {
+    if (/(^|\()\s*\+/.test(processedLatex)) {
+      // Missing left operand for OR
       throw new Error('Invalid OR operation: missing left operand')
     }
 
@@ -65,10 +77,14 @@ export function latexToBoolean(latex: string): string {
     // Step 4: Remove all remaining spaces to prepare for implicit multiplication and final parsing
     processedLatex = processedLatex.replace(/\s+/g, '')
 
-    // Handle potentially empty parentheses if they weren't part of an overline or other structure
+    // Step 5: Convert all variables to uppercase *after* removing spaces
+    // This ensures variable names are consistently uppercase before implicit multiplication
+    processedLatex = processedLatex.replace(/[a-zA-Z]+/g, match => match.toUpperCase())
+
+    // Step 6: Handle potentially empty parentheses if they weren't part of an overline or other structure
     processedLatex = processedLatex.replace(/\(\)/g, '0')
 
-    // Step 5: Handle implicit multiplication
+    // Step 7: Handle implicit multiplication
     // Order is important here to avoid conflicts
     const insertImplicitMultiplication = (text: string): string => {
       let newText = text
@@ -90,7 +106,7 @@ export function latexToBoolean(latex: string): string {
       if (beforeIteration === processedLatex) break // Optimization: stop if no changes
     }
 
-    // Step 6: Final cleanup
+    // Step 8: Final cleanup
     processedLatex = processedLatex.replace(/\*{2,}/g, '*').replace(/\+{2,}/g, '+')
     // Double negation: !!X -> X. This was removed from preprocessing.
     // The main parser (fixProblematicPatterns) also had this, which was removed.
@@ -99,7 +115,7 @@ export function latexToBoolean(latex: string): string {
     // Handle expressions like !()+X which could be produced by complex LaTeX, now !(0)+X
     processedLatex = processedLatex.replace(/!\(0\)/g, '1')
 
-    // Step 7: Check for unbalanced parentheses (simple check, parser will do more)
+    // Step 9: Check for unbalanced parentheses (simple check, parser will do more)
     const openParenCount = (processedLatex.match(/\(/g) || []).length
     const closeParenCount = (processedLatex.match(/\)/g) || []).length
 
@@ -112,8 +128,7 @@ export function latexToBoolean(latex: string): string {
       )
     }
 
-    // Check for missing operands again after all transformations (spaces removed)
-    // This regex is for space-less strings.
+    // Step 10: Check for missing operands again after all transformations (spaces removed)
     if (processedLatex.match(/(\*|\+)($|\))|(^|\()(\*|\+)/)) {
       const problemMatch = processedLatex.match(/(\*|\+)($|\))|(^|\()(\*|\+)/)
       const problemSegment = problemMatch ? problemMatch[0] : 'unknown segment'
@@ -122,14 +137,18 @@ export function latexToBoolean(latex: string): string {
       )
     }
 
-    // Ensure no leftover LaTeX commands (backslashes) remain
-    if (processedLatex.includes('\\')) {
-      // console.warn('LaTeX conversion may be incomplete, LaTeX commands remain:', processedLatex)
-      // Optionally, throw an error if strict conversion is required
-      // throw new Error(`Incomplete LaTeX conversion. Leftover commands in: ${processedLatex}`)
+    // Step 10.5: Add general cleanup for unknown commands and braces before the final backslash check
+    processedLatex = processedLatex.replace(/\\\\[a-zA-Z]+/g, '') // Corrected regex for unknown commands (e.g., \\unknown)
+    processedLatex = processedLatex.replace(/[{}]/g, '') // Remove any stray braces
+
+    // Step 11: Ensure no leftover LaTeX commands (backslashes) remain
+    if (processedLatex.includes('\\\\')) {
+      throw new Error(
+        `Incomplete LaTeX conversion. Leftover commands found in processed string: "${processedLatex}". Original: "${latex}"`
+      )
     }
 
-    // Final undefined check
+    // Step 12: Final undefined check
     if (processedLatex.includes('undefined') || processedLatex.includes('null')) {
       throw new Error('The processed expression contains invalid JavaScript values')
     }

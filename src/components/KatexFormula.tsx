@@ -1,8 +1,6 @@
 'use client'
 
 import { InlineMath, BlockMath } from 'react-katex'
-import { toast } from 'sonner'
-
 interface KatexFormulaProps {
   formula: string
   block?: boolean
@@ -31,8 +29,6 @@ export function KatexFormula({ formula, block = false, className = '' }: KatexFo
       </div>
     )
   } catch (error) {
-    // If KaTeX fails to render, fall back to plain text
-    toast.error(`Error rendering LaTeX: ${error instanceof Error ? error.message : String(error)}`)
     return (
       <div className={`${className} p-2 bg-red-50 text-red-500 rounded font-mono text-sm `}>
         Error: {(error as Error).message || 'Invalid LaTeX syntax'}
@@ -61,6 +57,10 @@ export function booleanToLatex(expression: string): string {
   return expression
     .replace(/\*/g, '\\land ') // AND operator
     .replace(/\+/g, '\\lor ') // OR operator
+    .replace(/<=>/g, '\\leftrightarrow ') // XNOR
+    .replace(/\^/g, '\\oplus ') // XOR
+    .replace(/@/g, '\\uparrow ') // NAND
+    .replace(/#/g, '\\downarrow ') // NOR
     .replace(/!/g, '\\lnot ') // NOT operator
     .replace(/0/g, '\\text{F}') // False
     .replace(/1/g, '\\text{T}') // True
@@ -70,58 +70,73 @@ export function booleanToLatex(expression: string): string {
 export function latexToBoolean(latex: string): string {
   if (!latex.trim()) return ''
 
-  // First, normalize spacing to make processing more consistent
-  let processedLatex = latex.replace(/\\s+/g, ' ').trim()
+  // Step 1: Normalize spacing
+  let processedLatex = latex.replace(/\s+/g, ' ').trim()
 
-  // Step 1: Handle LaTeX commands with consistent replacements
-  // Replace commands that don't need parentheses added
+  // Step 2: Replace known LaTeX commands and text constants
+  // Replace commands WITHOUT adding extra spaces around operators initially
   processedLatex = processedLatex
-    .replace(/\\text{F}/g, '0') // False
-    .replace(/\\text{T}/g, '1') // True
-    // Replace LaTeX logic symbols *before* complex regex checks
-    .replace(/\\lnot/g, '!') // Basic NOT replacement
-    .replace(/\\land/g, '*') // AND operator (fixed double backslash)
-    .replace(/\\lor/g, '+') // OR operator (fixed double backslash)
-    .replace(/\\overline\\s*\\{([^}]*)\\}/g, '!($1)') // Overline (fixed double backslash)
+    .replace(/\text{F}/gi, '0')
+    .replace(/\text{T}/gi, '1')
+    .replace(/\mathrm{F}/gi, '0')
+    .replace(/\mathrm{T}/gi, '1')
+    .replace(/\lnot|\neg/g, '!') // NOT
+    .replace(/\land|\wedge/g, '*') // AND
+    .replace(/\lor|\vee/g, '+') // OR
+    .replace(/\oplus/g, '^') // XOR
+    .replace(/\\uparrow/g, '@') // NAND - Escaped backslash in regex
+    .replace(/\downarrow/g, '#') // NOR
+    .replace(/\leftrightarrow/g, '<=>') // XNOR
+    // Handle overline recursively
+    .replace(/\overline\s*\{([^}]*)\}/g, (match, content) => `!(${latexToBoolean(content)})`)
 
-  // Step 2: Cleanup potentially problematic patterns left by simple replacement
-  // (The complex regexes for \\lnot are removed as the simple replacement above is usually sufficient
-  // and less error-prone before parsing. The boolean parser should handle precedence.)
+  // Step 3: Force remaining alphabetic characters (variables) to uppercase
+  processedLatex = processedLatex.replace(/[a-z]+/gi, match => match.toUpperCase()) // Ensure ALL letters become uppercase
 
-  // Step 3: Clean up any leftover spaces and other symbols
-  processedLatex = processedLatex.replace(/\\s+/g, '')
+  // Step 4: Aggressive cleanup of leftover LaTeX commands/artifacts
+  processedLatex = processedLatex.replace(/\\[a-zA-Z]+/g, '') // Remove command words like \textit etc.
+  processedLatex = processedLatex.replace(/[\\{}]/g, '') // Remove stray backslashes or braces
 
-  // Handle potentially empty parentheses introduced by replacements like !{}
-  processedLatex = processedLatex.replace(/\\(\\)/g, '') // Replace () possibly left by !{}
+  // Step 5: Remove ALL whitespace (critical before implicit multiplication)
+  processedLatex = processedLatex.replace(/\s+/g, '')
 
-  // Step 4: Handle implicit multiplication
+  // Step 6: Handle potentially empty parentheses from cleanup
+  processedLatex = processedLatex.replace(/\(\)/g, '') // Remove ()
+
+  // Step 7: Handle implicit multiplication
   const insertImplicitMultiplication = (text: string): string => {
-    // Add * between two variables or a variable and a parenthesis
+    // Add * between two variables/constants or a variable/constant and a parenthesis
+    // (Ensure this logic only targets A-Z and 0-1 now)
     return text
-      .replace(/([A-Z01])([A-Z01])/g, '$1*$2') // Add * between variables: AB -> A*B
-      .replace(/([A-Z01])\(/g, '$1*(') // Add * between a variable and a parenthesis: A( -> A*(
-      .replace(/\)([A-Z01])/g, ')*$1') // Add * after a parenthesis: )A -> )*A
-      .replace(/\)\(/g, ')*(') // Add * between parentheses: )( -> )*(
+      .replace(/([A-Z01])([A-Z01])/g, '$1*$2') // AB -> A*B, 1A -> 1*A, A1 -> A*1
+      .replace(/([A-Z01])\(/g, '$1*(') // A( -> A*( , 1( -> 1*(
+      .replace(/\)([A-Z01])/g, ')*$1') // )A -> )*A , )1 -> )*1
+      .replace(/\)\(/g, ')*(') // )( -> )*(
   }
 
-  // Apply multiplication rules multiple times to handle complex cases
-  for (let i = 0; i < 3; i++) {
+  // Apply multiplication rules multiple times
+  let previousText
+  for (let i = 0; i < 5; i++) {
+    // Increase iterations slightly just in case
+    previousText = processedLatex
     processedLatex = insertImplicitMultiplication(processedLatex)
+    if (processedLatex === previousText) break // Optimization
   }
 
-  // Step 5: Final cleanup
+  // Step 8: Final cleanup of operators and constants
   processedLatex = processedLatex
-    .replace(/\*{2,}/g, '*') // Replace multiple * with a single *
-    .replace(/\+{2,}/g, '+') // Replace multiple + with a single +
-    .replace(/!!/g, '') // Double negation: !!X -> X
+    .replace(/\*{2,}/g, '*') // Replace multiple * with single *
+    .replace(/\+{2,}/g, '+') // Replace multiple + with single +
+  // Parser handles !!
 
-  // Handle expressions like !0 which could be produced
-  processedLatex = processedLatex.replace(/!0/g, '1') // !0 -> 1 (NOT false is true)
-  processedLatex = processedLatex.replace(/!1/g, '0') // !1 -> 0 (NOT true is false)
+  // Handle constants simplification only after all structure is set
+  processedLatex = processedLatex.replace(/!0/g, '1') // !0 -> 1
+  processedLatex = processedLatex.replace(/!1/g, '0') // !1 -> 0
 
-  // Ensure no leftover LaTeX commands remain
-  if (processedLatex.includes('\\')) {
-    toast.warning('LaTeX conversion may be incomplete')
+  // Final validation check (optional)
+  if (/[^A-Z01*+!^@#<=>()]/.test(processedLatex)) {
+    console.warn('Potential invalid characters remain after LaTeX conversion:', processedLatex)
+    // throw new Error(`Invalid characters detected after LaTeX conversion: ${processedLatex}`);
   }
 
   return processedLatex

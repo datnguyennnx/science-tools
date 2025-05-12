@@ -19,14 +19,20 @@ import {
 import { Button } from '@/components/ui/button'
 import { Maximize, Minimize } from 'lucide-react'
 
-// --- Engine Imports ---
-import { ExpressionParser as EngineExpressionParser, type BooleanExpression } from '../../../engine' // Adjusted path
-import { evaluateExpression as engineEvaluateExpression } from '../../../engine/evaluator' // Adjusted path
-import { latexToBoolean as engineLatexToBoolean } from '../../../engine/converter/latex-converter' // Adjusted path
-// --- End Engine Imports ---
+import { ExpressionParser as EngineExpressionParser } from '../../../engine'
+import { evaluateExpression as engineEvaluateExpression } from '../../../engine/evaluator'
+import { latexToBoolean as engineLatexToBoolean } from '../../../engine/converter/latex-converter'
 
-import type { TruthTableProps, SubExpressionStep } from './types' // Import from local types
-import { getAllSubExpressions, extractVariables } from './TrueTableEngine' // Import from local engine
+import type {
+  TruthTableProps,
+  SubExpressionStep,
+  TruthTableResult,
+  TruthTableResultWaiting,
+  TruthTableResultError,
+  TruthTableResultSuccess,
+  TruthTableRowData,
+} from './types'
+import { getAllSubExpressions, extractVariablesFromTree } from './TruthTableEngine'
 
 export function TruthTable({ expression, variables: propVariables }: TruthTableProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -35,103 +41,122 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
     setIsFullscreen(prev => !prev)
   }, [])
 
-  const memoizedTableData = useMemo(() => {
-    let errorOccurred = false
-    let errorMessage = ''
+  const memoizedTableData = useMemo<TruthTableResult>(() => {
     const rawInput = expression
     let processedForParsing = ''
-    let mainAst: BooleanExpression | null = null
 
-    // Check for empty expression FIRST - this is an initial state, not necessarily an error for display purposes.
     if (!expression || !expression.trim()) {
       return {
-        variablesToUse: [] as string[],
-        subExpressionStepsForColumns: [] as SubExpressionStep[],
-        rows: [] as Array<{
-          variableValues: Record<string, boolean>
-          stepResults: Record<string, boolean>
-        }>,
-        errorOccurred: false, // Treat as not an error for display, but an initial state.
-        errorMessage: 'Enter an expression and click Simplify to generate a Truth Table.', // New message
-        isInitialEmptyState: true, // Flag for initial empty state
-        rawInput: expression,
-        processedExpressionForDisplay: '',
-      }
+        status: 'waiting',
+        message: 'Enter an expression and click Simplify to generate a Truth Table.',
+      } satisfies TruthTableResultWaiting
     }
 
-    // Try-catch for actual parsing and processing errors
     try {
       processedForParsing = engineLatexToBoolean(rawInput)
       if (!processedForParsing && rawInput.trim()) {
-        throw new Error('Expression became empty after LaTeX conversion. Check syntax.')
+        // This specific error is about LaTeX conversion failure
+        return {
+          status: 'error',
+          message: 'Expression became empty after LaTeX conversion.',
+          details: 'Please check your LaTeX syntax or ensure the expression is not trivial.',
+          rawInput,
+        } satisfies TruthTableResultError
       }
-      mainAst = EngineExpressionParser.parse(processedForParsing)
+
+      const mainAst = EngineExpressionParser.parse(processedForParsing)
       if (!mainAst) {
-        throw new Error('Failed to parse the expression into an AST.')
+        // This error is about parsing the (potentially converted) boolean string
+        return {
+          status: 'error',
+          message: 'Failed to parse the expression.',
+          details:
+            'The expression string is invalid. This could be due to incorrect operators, unbalanced parentheses, or other syntax issues.',
+          rawInput,
+        } satisfies TruthTableResultError
       }
 
-      const astBasedVariables = extractVariables(EngineExpressionParser.toBooleanString(mainAst))
-      const initialVars =
+      const astBasedVariables = extractVariablesFromTree(mainAst)
+      const localVariablesToUse =
         propVariables && propVariables.length > 0 ? propVariables : astBasedVariables
-      const localVariablesToUse = initialVars.length > 0 ? initialVars : extractVariables(rawInput)
 
-      const steps: SubExpressionStep[] = mainAst // Explicitly type steps
-        ? getAllSubExpressions(mainAst, EngineExpressionParser.toBooleanString)
-        : []
-      if (steps.length === 0 && mainAst) {
+      const steps: SubExpressionStep[] = getAllSubExpressions(
+        mainAst,
+        EngineExpressionParser.toBooleanString
+      )
+
+      // If no steps were found (e.g. for a single variable or constant expression)
+      // and it wasn't caught as an error, ensure the main expression is a step.
+      if (steps.length === 0) {
         steps.push({
           str: EngineExpressionParser.toBooleanString(mainAst),
           ast: mainAst,
           isFinal: true,
         })
       }
-      const subExpressionStepsForColumns: SubExpressionStep[] = steps // Assign typed steps
+      // Ensure the final main expression is correctly marked
+      const mainExpressionStr = EngineExpressionParser.toBooleanString(mainAst)
+      const mainIndex = steps.findIndex(step => step.str === mainExpressionStr)
+      if (mainIndex > -1) {
+        steps[mainIndex].isFinal = true
+        if (mainIndex !== steps.length - 1) {
+          const mainStep = steps.splice(mainIndex, 1)[0]
+          steps.push(mainStep)
+        }
+      } else {
+        // This case should be rare if getAllSubExpressions includes the main expression
+        steps.push({ str: mainExpressionStr, ast: mainAst, isFinal: true })
+      }
 
-      const localRows: Array<{
-        variableValues: Record<string, boolean>
-        stepResults: Record<string, boolean>
-      }> = []
+      const localRows: TruthTableRowData[] = []
       const numVars = localVariablesToUse.length
       const numRows = Math.pow(2, numVars)
-      for (let i = 0; i < numRows; i++) {
+
+      // Handle 0-variable case (constant expression)
+      if (numVars === 0) {
         const currentVariableValues: Record<string, boolean> = {}
-        for (let j = 0; j < numVars; j++) {
-          currentVariableValues[localVariablesToUse[j]] = Boolean((i >> (numVars - j - 1)) & 1)
-        }
         const currentStepResults: Record<string, boolean> = {}
-        for (const step of subExpressionStepsForColumns) {
+        for (const step of steps) {
           currentStepResults[step.str] = engineEvaluateExpression(step.ast, currentVariableValues)
         }
         localRows.push({ variableValues: currentVariableValues, stepResults: currentStepResults })
+      } else {
+        for (let i = 0; i < numRows; i++) {
+          const currentVariableValues: Record<string, boolean> = {}
+          for (let j = 0; j < numVars; j++) {
+            currentVariableValues[localVariablesToUse[j]] = Boolean((i >> (numVars - j - 1)) & 1)
+          }
+          const currentStepResults: Record<string, boolean> = {}
+          for (const step of steps) {
+            currentStepResults[step.str] = engineEvaluateExpression(step.ast, currentVariableValues)
+          }
+          localRows.push({ variableValues: currentVariableValues, stepResults: currentStepResults })
+        }
       }
+
       return {
-        variablesToUse: localVariablesToUse,
-        subExpressionStepsForColumns: subExpressionStepsForColumns,
+        status: 'success',
+        variables: localVariablesToUse,
+        subExpressionSteps: steps,
         rows: localRows,
-        errorOccurred: false,
-        errorMessage: '',
-        isInitialEmptyState: false,
         rawInput,
-        processedExpressionForDisplay: mainAst
-          ? EngineExpressionParser.toBooleanString(mainAst)
-          : processedForParsing || rawInput,
-      }
+        processedExpression: EngineExpressionParser.toBooleanString(mainAst),
+      } satisfies TruthTableResultSuccess
     } catch (err) {
-      errorOccurred = true
-      errorMessage = err instanceof Error ? err.message : 'TEST: Failed to generate truth table.'
-      return {
-        variablesToUse: [] as string[],
-        subExpressionStepsForColumns: [] as SubExpressionStep[],
-        rows: [] as Array<{
-          variableValues: Record<string, boolean>
-          stepResults: Record<string, boolean>
-        }>,
-        errorOccurred,
-        errorMessage,
-        isInitialEmptyState: false, // This is a true error state
-        rawInput,
-        processedExpressionForDisplay: processedForParsing || rawInput,
+      // This is a general catch-all for unexpected errors during processing
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.'
+      let errorDetails = 'Failed to generate truth table due to an unexpected issue.'
+      if (err instanceof Error && err.stack) {
+        // console.error("Truth Table Error:", err) // Optional: for debugging
+        errorDetails = `Details: ${errorMessage}`
       }
+
+      return {
+        status: 'error',
+        message: 'Error generating Truth Table.',
+        details: errorDetails,
+        rawInput,
+      } satisfies TruthTableResultError
     }
   }, [expression, propVariables])
 
@@ -142,85 +167,112 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
   const fullscreenContentClasses = isFullscreen ? 'flex-grow overflow-y-auto pt-0' : ''
 
   const renderContent = () => {
-    // Handle initial empty state (not an error, but placeholder)
-    if (memoizedTableData.isInitialEmptyState) {
+    if (memoizedTableData.status === 'waiting') {
       return (
         <div
-          className={`w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed rounded-md`}
+          className={`w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed rounded-md min-h-[10rem]`}
         >
           <p
             className={`text-sm mt-2 ${isFullscreen ? 'text-foreground' : 'text-muted-foreground'}`}
           >
-            {memoizedTableData.errorMessage}
+            {memoizedTableData.message}
           </p>
         </div>
       )
     }
 
-    // Handle actual errors
-    if (memoizedTableData.errorOccurred) {
+    if (memoizedTableData.status === 'error') {
       return (
         <div
-          className={`w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed rounded-md`}
+          className={`w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed border-border rounded-md min-h-[10rem]`}
         >
-          <h2
-            className={`text-xl font-bold ${isFullscreen ? 'text-foreground' : 'text-destructive'}`}
-          >
-            Truth Table Error
-          </h2>
           <p
             className={`text-sm mt-2 ${isFullscreen ? 'text-foreground' : 'text-muted-foreground'}`}
           >
-            {memoizedTableData.errorMessage}
+            {memoizedTableData.message.includes('LaTeX conversion')
+              ? 'Please check the LaTeX syntax in your expression.'
+              : memoizedTableData.message.includes('parse the expression')
+                ? 'Please check the expression syntax (operators, parentheses, etc.).'
+                : 'Could not generate the truth table. Please check your expression.'}
           </p>
-          {memoizedTableData.rawInput && (
-            <p
-              className={`mt-1 text-sm ${isFullscreen ? 'text-gray-200' : 'text-muted-foreground'}`}
-            >
-              Input: {memoizedTableData.rawInput}
-            </p>
+        </div>
+      )
+    }
+
+    // status === 'success'
+    const { variables, subExpressionSteps, rows, rawInput } = memoizedTableData
+
+    if (variables.length === 0 && subExpressionSteps.length === 1 && rows.length === 1) {
+      // This is a constant expression case (e.g. "1", "0", "A*!A")
+      // Display a simplified version or just the result.
+      const constantStep = subExpressionSteps[0]
+      const constantValue = rows[0].stepResults[constantStep.str]
+      return (
+        <div className="space-y-2">
+          {!isFullscreen && (
+            <div className="mb-2">
+              <h3 className="font-medium text-sm">Truth Table for:</h3>
+              <div className="bg-muted p-2 rounded my-1 overflow-x-auto no-scrollbar">
+                <KatexFormula formula={booleanToLatex(rawInput)} block={true} />
+              </div>
+            </div>
+          )}
+          <div className="overflow-x-auto w-full">
+            <Table className="w-full min-w-max table-auto">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center px-1 py-2 text-xs sm:text-sm">
+                    <div className="overflow-x-auto max-w-[150px] sm:max-w-none mx-auto no-scrollbar">
+                      <KatexFormula formula={booleanToLatex(constantStep.str)} />
+                    </div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="text-center p-1 text-xs sm:text-sm">
+                    <KatexFormula formula={constantValue ? '\\text{T}' : '\\text{F}'} />
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            The expression evaluates to a constant value.
+          </p>
+        </div>
+      )
+    }
+
+    if (rows.length === 0) {
+      // Should be caught by error states, but as a fallback:
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed rounded-md min-h-[10rem]">
+          <h2 className={`text-xl font-semibold ${isFullscreen ? 'text-foreground' : ''}`}>
+            Truth Table Status
+          </h2>
+          <p className={`mt-1 ${isFullscreen ? 'text-foreground' : 'text-muted-foreground'}`}>
+            Could not generate truth table rows.
+          </p>
+          {rawInput && (
+            <div className="mt-3 text-xs bg-muted p-2 rounded w-full max-w-md overflow-x-auto no-scrollbar">
+              <span className={`${isFullscreen ? 'text-gray-200' : 'text-muted-foreground'} mr-1`}>
+                Input:
+              </span>
+              <KatexFormula formula={booleanToLatex(rawInput)} />
+            </div>
           )}
         </div>
       )
     }
 
-    // Handle no variables/steps state (after processing, not an error but specific outcome)
-    if (
-      memoizedTableData.variablesToUse.length === 0 &&
-      memoizedTableData.subExpressionStepsForColumns.length === 0 &&
-      !memoizedTableData.errorOccurred // Already handled above
-    ) {
-      if (
-        memoizedTableData.rows.length === 0 ||
-        (memoizedTableData.rows.length === 1 &&
-          Object.keys(memoizedTableData.rows[0].stepResults).length === 0)
-      ) {
-        return (
-          <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
-            <h2 className={`text-xl font-semibold ${isFullscreen ? 'text-foreground' : ''}`}>
-              Truth Table Status
-            </h2>
-            <p className={`mt-1 ${isFullscreen ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Could not determine variables or meaningful steps.
-            </p>
-            <p
-              className={`mt-1 text-sm ${isFullscreen ? 'text-gray-200' : 'text-muted-foreground'}`}
-            >
-              Input: {booleanToLatex(memoizedTableData.rawInput)}
-            </p>
-          </div>
-        )
-      }
-    }
-
-    // Actual table rendering (structure remains the same)
     return (
       <div className="space-y-2">
         {!isFullscreen && (
           <div className="mb-2">
             <h3 className="font-medium text-sm">Truth Table for:</h3>
             <div className="bg-muted p-2 rounded my-1 overflow-x-auto no-scrollbar">
-              <KatexFormula formula={booleanToLatex(memoizedTableData.rawInput)} block={true} />
+              <KatexFormula formula={booleanToLatex(rawInput)} block={true} />
             </div>
           </div>
         )}
@@ -228,7 +280,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
           <Table className="w-full min-w-max table-auto">
             <TableHeader>
               <TableRow>
-                {memoizedTableData.variablesToUse.map((variable: string) => (
+                {variables.map((variable: string) => (
                   <TableHead
                     key={`var-${variable}`}
                     className="text-center px-1 py-2 text-xs sm:text-sm whitespace-nowrap"
@@ -236,7 +288,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
                     <KatexFormula formula={variable} />
                   </TableHead>
                 ))}
-                {memoizedTableData.subExpressionStepsForColumns.map((step: SubExpressionStep) => (
+                {subExpressionSteps.map((step: SubExpressionStep) => (
                   <TableHead
                     key={`step-${step.str}`}
                     className="text-center px-1 py-2 text-xs sm:text-sm"
@@ -249,14 +301,14 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
               </TableRow>
             </TableHeader>
             <TableBody>
-              {memoizedTableData.rows.map(row => {
-                const rowKeyPart = memoizedTableData.variablesToUse
+              {rows.map(row => {
+                const rowKeyPart = variables
                   .map((v: string) => (row.variableValues[v] ? '1' : '0'))
                   .join('')
                 const stableRowKey = `row-${rowKeyPart}`
                 return (
                   <TableRow key={stableRowKey}>
-                    {memoizedTableData.variablesToUse.map((variable: string) => (
+                    {variables.map((variable: string) => (
                       <TableCell
                         key={`cell-${stableRowKey}-var-${variable}`}
                         className="text-center p-1 text-xs sm:text-sm"
@@ -266,18 +318,16 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
                         />
                       </TableCell>
                     ))}
-                    {memoizedTableData.subExpressionStepsForColumns.map(
-                      (step: SubExpressionStep) => (
-                        <TableCell
-                          key={`cell-${stableRowKey}-step-${step.str}`}
-                          className="text-center p-1 text-xs sm:text-sm"
-                        >
-                          <KatexFormula
-                            formula={row.stepResults[step.str] ? '\\text{T}' : '\\text{F}'}
-                          />
-                        </TableCell>
-                      )
-                    )}
+                    {subExpressionSteps.map((step: SubExpressionStep) => (
+                      <TableCell
+                        key={`cell-${stableRowKey}-step-${step.str}`}
+                        className="text-center p-1 text-xs sm:text-sm"
+                      >
+                        <KatexFormula
+                          formula={row.stepResults[step.str] ? '\\text{T}' : '\\text{F}'}
+                        />
+                      </TableCell>
+                    ))}
                   </TableRow>
                 )
               })}
@@ -298,11 +348,13 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
             Truth Table
           </CardTitle>
           <CardDescription className={isFullscreen ? 'text-muted-foreground' : ''}>
-            {memoizedTableData.isInitialEmptyState
+            {memoizedTableData.status === 'waiting'
               ? 'Shows outputs for all input combinations.'
-              : isFullscreen
-                ? `For: ${booleanToLatex(memoizedTableData.rawInput)}`
-                : 'Evaluation for all possible inputs'}
+              : memoizedTableData.status === 'error'
+                ? 'Cannot generate table. Check expression syntax.' // Updated error description
+                : isFullscreen && memoizedTableData.status === 'success'
+                  ? `For: ${booleanToLatex(memoizedTableData.rawInput)}`
+                  : 'Evaluation for all possible inputs'}
           </CardDescription>
           <CardAction>
             <Button

@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Guide } from './components/common' // Assuming Guide is in a common components directory
-import { Toaster } from '@/components/ui/sonner'
 
 export const metadata: Metadata = {
   title: 'Boolean Algebra Simplifier',
@@ -69,7 +68,6 @@ export default function BooleanAlgebraLayout({ children }: BooleanAlgebraLayoutP
           advanced simplification algorithms.
         </p>
       </footer>
-      <Toaster />
     </section>
   )
 }

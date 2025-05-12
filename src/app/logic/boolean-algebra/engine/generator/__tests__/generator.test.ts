@@ -5,6 +5,7 @@ import {
   generateLatexExpression,
   generatePatternedExpression,
   type ExpressionPattern,
+  OperatorType,
 } from '../generator'
 
 // Import the deprecated function to test it
@@ -22,16 +23,18 @@ describe('Boolean Expression Generator', () => {
 
     test('generateStandardExpression uses standard notation', () => {
       const result = generateStandardExpression()
-      // Standard notation uses *, +, and ! operators
-      expect(result).toMatch(/[*+!]/)
-      expect(result).not.toMatch(/\\land|\\lor|\\lnot/)
+      // Standard notation uses *, +, !, ^, @, #, <=>
+      expect(result).toMatch(/[*+!^@#]|<=>/)
+      expect(result).not.toMatch(
+        /\\land|\\lor|\\lnot|\\oplus|\\uparrow|\\downarrow|\\leftrightarrow/
+      )
     })
 
     test('generateLatexExpression uses LaTeX notation', () => {
       const result = generateLatexExpression()
-      // LaTeX notation uses \land, \lor, and \lnot operators
-      expect(result).toMatch(/\\land|\\lor|\\lnot/)
-      expect(result).not.toMatch(/[*+]/)
+      // LaTeX notation uses \land, \lor, \lnot, \oplus, \uparrow, \downarrow, \leftrightarrow
+      expect(result).toMatch(/\\land|\\lor|\\lnot|\\oplus|\\uparrow|\\downarrow|\\leftrightarrow/)
+      expect(result).not.toMatch(/[*+!^@#]|<=>/)
     })
   })
 
@@ -43,8 +46,9 @@ describe('Boolean Expression Generator', () => {
         const result = generateRandomExpression(complexity)
         // Higher complexity should generally lead to longer expressions
         if (complexity > 1) {
-          // At minimum, higher complexity should include at least one operation
-          expect(result).toMatch(/[*+]/)
+          // At minimum, higher complexity should include at least one operation symbol
+          // Updated regex to include all possible standard operator symbols
+          expect(result).toMatch(/[*+!^@#]|<=>/)
         }
       }
     })
@@ -53,8 +57,11 @@ describe('Boolean Expression Generator', () => {
       const standardResult = generateRandomExpression(3, { outputFormat: 'standard' })
       const latexResult = generateRandomExpression(3, { outputFormat: 'latex' })
 
-      expect(standardResult).toMatch(/[*+!]/)
-      expect(latexResult).toMatch(/\\land|\\lor|\\lnot/)
+      // Updated regex to include all standard operators: *, +, !, ^, @, #, <=>
+      expect(standardResult).toMatch(/[*+!^@#]|<=>/)
+      expect(latexResult).toMatch(
+        /\\land|\\lor|\\lnot|\\oplus|\\uparrow|\\downarrow|\\leftrightarrow/
+      )
     })
   })
 
@@ -102,7 +109,8 @@ describe('Boolean Expression Generator', () => {
       const result = generateRandomExpression(3)
 
       // Medium complexity should have a reasonable number of operators and parentheses
-      expect(result).toMatch(/[*+]/)
+      // Updated regex to include all possible standard operator symbols
+      expect(result).toMatch(/[*+^@#]|<=>/)
     })
 
     test('high complexity (4-5) generates complex expressions', () => {
@@ -113,8 +121,9 @@ describe('Boolean Expression Generator', () => {
 
       // Higher complexity should have operations and structure
       // We can't guarantee parenthesized expressions in every run due to randomness
-      expect(result4).toMatch(/[*+]/) // Should at least have operators
-      expect(result5).toMatch(/[*+]/)
+      // Updated regex to include all possible standard operator symbols
+      expect(result4).toMatch(/[*+^@#]|<=>/) // Should at least have operators
+      expect(result5).toMatch(/[*+^@#]|<=>/)
 
       // Test multiple expressions to increase chance of finding parenthesized expressions
       let foundParenthesized = false
@@ -161,16 +170,21 @@ describe('Boolean Expression Generator', () => {
       // Test with extreme probability values (0 and 1)
       const resultZero = generateRandomExpression(3, {
         negationProbability: 0,
-        andProbability: 0,
         nestedProbability: 0,
         expressionNegationProbability: 0,
+        // Ensure some operators are allowed for generation
+        allowedOperators: ['AND', 'OR'],
       })
 
       const resultOne = generateRandomExpression(3, {
         negationProbability: 1,
-        andProbability: 1,
         nestedProbability: 1,
         expressionNegationProbability: 1,
+        allowedOperators: ['AND', 'NOT'], // Force only AND and NOT
+      })
+
+      const resultOnlyOrNot = generateRandomExpression(3, {
+        allowedOperators: ['OR', 'NOT'], // Force only OR and NOT
       })
 
       expect(typeof resultZero).toBe('string')
@@ -178,9 +192,13 @@ describe('Boolean Expression Generator', () => {
       expect(resultZero.length).toBeGreaterThan(0)
       expect(resultOne.length).toBeGreaterThan(0)
 
-      // With andProbability=1, we should see * operators but no + operators
-      expect(resultOne).toMatch(/[*]/)
-      expect(resultOne).not.toMatch(/[+]/)
+      // Test resultOne (only AND, NOT allowed)
+      expect(resultOne).toMatch(/[*!]/) // Should only contain * or !
+      expect(resultOne).not.toMatch(/[+^@#]|<=>/) // Should not contain other ops
+
+      // Test resultOnlyOrNot (only OR, NOT allowed)
+      expect(resultOnlyOrNot).toMatch(/[+!]/) // Should only contain + or !
+      expect(resultOnlyOrNot).not.toMatch(/[*^@#]|<=>/) // Should not contain other ops
     })
   })
 
@@ -299,23 +317,33 @@ describe('Boolean Expression Generator', () => {
     })
 
     test('respects various probability settings', () => {
-      // Since expressionNegationProbability can add negations regardless of negationProbability,
-      // we need to set both to zero
-      const noNegations = generateRandomExpression(3, {
-        negationProbability: 0,
-        expressionNegationProbability: 0,
-        // Force at least one operation
-        nestedProbability: 1,
-      })
+      // Test negationProbability
+      const manyNots = generateRandomExpression(3, { negationProbability: 1.0 })
+      // A simple check: expect more NOTs than variables in a complex expression
+      expect((manyNots.match(/!/g) || []).length).toBeGreaterThan(0) // Check for at least one NOT
 
-      // Check for absence of negation by examining for !(,
-      // as that's how negations are formatted in standard notation
-      expect(noNegations).not.toMatch(/!\(/)
+      // Test allowedOperators instead of deprecated andProbability
+      const onlyAndAllowed = ['AND', 'NOT'] as OperatorType[] // Allow AND and NOT
+      const onlyAndExpr = generateRandomExpression(3, { allowedOperators: onlyAndAllowed })
+      const onlyAndOperators = onlyAndExpr.match(/[*+^@#]|<=>/g) || []
+      // Check that only '*' (AND) appears among the binary operators
+      expect(onlyAndOperators.every(op => op === '*' || op === '!')).toBe(true)
 
-      // Only AND operations (no OR)
-      const onlyAnd = generateRandomExpression(3, { andProbability: 1 })
-      const operators = onlyAnd.match(/[*+]/g) || []
-      expect(operators.every(op => op === '*')).toBe(true)
+      const onlyOrAllowed = ['OR', 'NOT'] as OperatorType[] // Allow OR and NOT
+      const onlyOrExpr = generateRandomExpression(3, { allowedOperators: onlyOrAllowed })
+      const onlyOrOperators = onlyOrExpr.match(/[*+^@#]|<=>/g) || []
+      // Check that only '+' (OR) appears among the binary operators
+      expect(onlyOrOperators.every(op => op === '+' || op === '!')).toBe(true)
+
+      // Test nestedProbability
+      const highlyNested = generateRandomExpression(5, { nestedProbability: 1.0 })
+      // Expect more parentheses for highly nested expressions
+      expect((highlyNested.match(/\(/g) || []).length).toBeGreaterThanOrEqual(3) // Expect deep nesting
+
+      // Test expressionNegationProbability
+      const oftenNegated = generateRandomExpression(3, { expressionNegationProbability: 1.0 })
+      // Expect the outer part of the expression to likely start with NOT
+      expect(oftenNegated.startsWith('!')).toBe(true)
     })
   })
 

@@ -1,3 +1,5 @@
+import { detectFormat } from '../parser'
+
 /**
  * Common patterns used for fixing expressions
  */
@@ -156,19 +158,24 @@ export function validateExpression(
     }
   }
 
-  // Validate LaTeX expressions differently
-  if (
-    input.includes('\\land') ||
-    input.includes('\\lor') ||
-    input.includes('\\lnot') ||
-    input.includes('\\overline') ||
-    input.includes('\\vee') ||
-    input.includes('\\wedge') ||
-    input.includes('\\neg')
-  ) {
-    // We're more lenient with LaTeX because it has its own conversion process
+  // --- Detect format to decide on validation rules ---
+  const format = detectFormat(input)
+
+  // --- Skip most pattern checks for LaTeX as it has its own normalization ---
+  if (format === 'latex') {
+    // For LaTeX, only check for clearly invalid things like unbalanced parens or undefined/null
+    const unbalanced = hasUnbalancedParentheses(input)
+    if (unbalanced) {
+      return {
+        valid: false,
+        error: `Unbalanced parentheses in expression: "${input}".`,
+      }
+    }
+    // Assume LaTeX is valid enough for the normalizer to handle, unless fundamentally broken (like unbalanced parens)
     return { valid: true }
   }
+
+  // --- Continue with standard format validation rules ---
 
   // Check for missing operands only if we're not skipping that check
   if (!skipOperandCheck) {
@@ -220,20 +227,20 @@ export function validateExpression(
     }
   }
 
-  // Check for invalid variable names
-  // This check should ideally happen *after* confirming it's not a known keyword or operator.
-  // The current PATTERNS.INVALID_VARIABLE might misidentify parts of valid LaTeX or keywords if not careful.
-  // However, fixProblematicPatterns already does a more nuanced check before calling validateExpression.
-  // For direct calls to validateExpression, this could be an issue.
-  // The existing logic in fixProblematicPatterns tries to mitigate this.
+  // Check for invalid variable names ONLY for standard format
   const invalidVariableMatches = input.match(PATTERNS.INVALID_VARIABLE)
   if (invalidVariableMatches) {
-    // A more robust check here might involve ensuring the matched "invalid variable" isn't part of a known operator/keyword
-    // that wasn't caught by earlier LaTeX checks or isn't a pre-defined keyword.
-    // For now, relying on the fact that `fixProblematicPatterns` does a pre-validation.
-    return {
-      valid: false,
-      error: `Invalid variable name: "${invalidVariableMatches[0]}". Only uppercase letters A-Z are allowed for variables. Examples of valid expressions: ${getValidExamples().slice(0, 3).join(', ')}`,
+    // Check if the match is actually a keyword (case-insensitive)
+    const potentialKeywords = ['AND', 'OR', 'NOT', 'XOR', 'NAND', 'NOR', 'XNOR']
+    const filteredMatches = invalidVariableMatches.filter(
+      match => !potentialKeywords.includes(match.toUpperCase())
+    )
+
+    if (filteredMatches.length > 0) {
+      return {
+        valid: false,
+        error: `Invalid variable name: "${filteredMatches[0]}". Only uppercase letters A-Z are allowed for variables. Examples of valid expressions: ${getValidExamples().slice(0, 3).join(', ')}`,
+      }
     }
   }
 

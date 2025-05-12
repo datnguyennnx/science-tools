@@ -5,7 +5,6 @@ import { Loader2, Shuffle } from 'lucide-react'
 import { simplifyExpression, generateRandomExpression, BooleanExpression } from '../../engine'
 import { InputFormat, ParserOptions } from '../../engine/parser/types'
 import { KatexFormula, booleanToLatex } from '@/components/KatexFormula'
-import { toast } from 'sonner'
 import { detectFormat, parseBoolean } from '../../engine/parser/parser'
 import {
   formatToBoolean as toBooleanString,
@@ -135,7 +134,6 @@ export function ExpressionInput({
     if (!parseResult.success || !parseResult.expression) {
       // If parseResult itself indicates failure, set error and return
       setError(parseResult.error || 'Failed to parse expression for simplification.')
-      if (parseResult.error) toast.error(parseResult.error) // Toast if parse failed
       onResultChange?.(false)
       return
     }
@@ -151,7 +149,6 @@ export function ExpressionInput({
       const errorMessage =
         err instanceof Error ? err.message : 'Invalid expression or unable to simplify.'
       setError(errorMessage)
-      toast.error(errorMessage)
       onResultChange?.(false)
     }
   }

@@ -20,6 +20,10 @@ export function detectFormat(input: string): InputFormat {
     input.includes('\\vee') ||
     input.includes('\\wedge') ||
     input.includes('\\neg') ||
+    input.includes('\\oplus') ||
+    input.includes('\\uparrow') ||
+    input.includes('\\downarrow') ||
+    input.includes('\\leftrightarrow') ||
     // Unicode symbols commonly used in LaTeX
     input.includes('∨') ||
     input.includes('∧') ||

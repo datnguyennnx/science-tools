@@ -162,38 +162,44 @@ function addImplicitLatexOperators(input: string): string {
  * Convert LaTeX operators to standard boolean operators (*, +, !).
  */
 export function normalizeLatexOperators(input: string): string {
-  // First, ensure we have spaces around LaTeX commands for easier processing
-  let normalized = ' ' + input.replace(/\\/g, ' \\') + ' '
+  // Ensure we have spaces around potential operators for easier processing
+  // Avoid replacing \ in the middle of words or escaped chars
+  let normalized = ' ' + input + ' ' // Add padding
 
-  // Handle LaTeX logical operators with proper spacing to avoid partial matches
+  // Handle \overline notation first recursively, replacing with NOT(...)
+  let prevNormalized
+  do {
+    prevNormalized = normalized
+    // Replace \overline{...} with NOT(...) - handle nested braces
+    normalized = normalized.replace(/\\overline\s*\{([^{}]*(?:{[^{}]*}[^{}]*)*)\}/g, ' NOT($1) ')
+    // Also handle simple case of \overline X (without braces)
+    normalized = normalized.replace(/\\overline\s+([A-Za-z0-9])/g, ' NOT($1) ')
+  } while (normalized !== prevNormalized) // Repeat until no more replacements
+
+  // Handle LaTeX logical operators - replace with spaced keywords
   normalized = normalized.replace(/\\lnot\b/g, ' NOT ')
   normalized = normalized.replace(/\\neg\b/g, ' NOT ')
   normalized = normalized.replace(/\\land\b/g, ' AND ')
   normalized = normalized.replace(/\\wedge\b/g, ' AND ')
   normalized = normalized.replace(/\\lor\b/g, ' OR ')
   normalized = normalized.replace(/\\vee\b/g, ' OR ')
+  normalized = normalized.replace(/\\oplus\b/g, ' XOR ') // Use XOR keyword
+  normalized = normalized.replace(/\\uparrow\b/g, ' NAND ') // Use NAND keyword
+  normalized = normalized.replace(/\\downarrow\b/g, ' NOR ') // Use NOR keyword
+  normalized = normalized.replace(/\\leftrightarrow\b/g, ' XNOR ') // Use XNOR keyword
 
-  // Handle Unicode mathematical operators
+  // Handle Unicode mathematical operators - replace with spaced keywords
   normalized = normalized.replace(/∧/g, ' AND ')
   normalized = normalized.replace(/∨/g, ' OR ')
   normalized = normalized.replace(/¬/g, ' NOT ')
 
-  // Handle \overline notation for NOT - the most complex case
-  // First, replace all \overline{X} with NOT(X) where X can be any content
-  let prevNormalized
-  do {
-    prevNormalized = normalized
-    // Replace \overline{X} with NOT(X) - handle content with braces
-    normalized = normalized.replace(/\\overline\s*{([^{}]*(?:{[^{}]*}[^{}]*)*)}/g, ' NOT($1) ')
-    // Also handle simple case of \overline X (without braces)
-    normalized = normalized.replace(/\\overline\s+([A-Za-z0-9])/g, ' NOT($1) ')
-  } while (normalized !== prevNormalized) // Repeat until no more replacements
-
   // Textual constants
-  normalized = normalized.replace(/\\text\s*{\s*(?:TRUE|T)\s*}/gi, '1')
-  normalized = normalized.replace(/\\text\s*{\s*(?:FALSE|F)\s*}/gi, '0')
+  normalized = normalized.replace(/\\text\s*{\s*(?:TRUE|T)\s*}/gi, ' 1 ')
+  normalized = normalized.replace(/\\text\s*{\s*(?:FALSE|F)\s*}/gi, ' 0 ')
+  normalized = normalized.replace(/\\mathrm\s*{\s*(?:TRUE|T)\s*}/gi, ' 1 ')
+  normalized = normalized.replace(/\\mathrm\s*{\s*(?:FALSE|F)\s*}/gi, ' 0 ')
 
-  // Normalize keywords to symbols and remove whitespace
+  // Normalize keywords (AND, OR, NOT, XOR, NAND, NOR, XNOR) to symbols (*, +, !, ^, @, #, <=>) and remove whitespace
   normalized = normalizeStandardOperators(normalized.trim())
 
   return normalized

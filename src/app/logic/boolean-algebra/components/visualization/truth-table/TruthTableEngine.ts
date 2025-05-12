@@ -1,5 +1,10 @@
 import type { BooleanExpression } from '../../../engine'
 import type { SubExpressionStep } from './types'
+// Import the correct function from utils
+import { extractVariablesFromTree as utilExtractVariablesFromTree } from '../utils/ExpressionUtils'
+
+// Re-export the correct function
+export const extractVariablesFromTree = utilExtractVariablesFromTree
 
 // --- Helper to get all sub-expressions from AST ---
 export const getAllSubExpressions = (
@@ -65,24 +70,3 @@ export const getAllSubExpressions = (
   return steps
 }
 // --- End Helper ---
-
-// Extract all variables from an expression string (can be simplified or derived from AST later if needed)
-export const extractVariables = (expression: string): string[] => {
-  const uniqueVars = new Set<string>()
-  // Regex to find uppercase letters not part of common logic words like TRUE, FALSE, NOT, AND, OR etc.
-  // This is a simplified approach; a robust solution would parse or use AST.
-  // const variableRegex = /([A-Z])(?<!TRU)(?<!FALS)(?<!NO)(?<!AN)(?<!O)/g // improved regex to avoid matching parts of keywords
-
-  // Simpler regex for variables if the above is too complex or restrictive for some cases
-  const simplerVarRegex = /[A-Z]/g
-  const tempExpression = expression.replace(/TRUE|FALSE|NOT|AND|OR|XOR|NAND|NOR|XNOR/g, '') // Remove keywords
-
-  let match
-  while ((match = simplerVarRegex.exec(tempExpression)) !== null) {
-    if (match[0].length === 1) {
-      // Ensure it's a single uppercase letter
-      uniqueVars.add(match[0])
-    }
-  }
-  return Array.from(uniqueVars).sort()
-}
