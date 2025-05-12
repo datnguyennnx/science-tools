@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import {
   Card,
   CardContent,
@@ -16,9 +16,13 @@ import { ExpressionParser } from '../../../engine' // Adjusted path
 import { latexToBoolean } from '@/components/KatexFormula'
 
 import {
-  extractVariablesFromTree, // Reused from KMapEngine via VennDiagramEngine
-  generateVennData,
+  extractVariablesFromTree,
+  evaluate2VarVenn,
+  evaluate3VarVenn,
+  evaluate4VarVenn,
+  evaluate5VarVenn,
   VennData,
+  VennData5Vars,
 } from './VennDiagramEngine'
 import { VennDiagramSVG } from './VennDiagramSVG'
 import type { BooleanExpression } from '../../../engine' // Type import
@@ -55,22 +59,46 @@ export type VennDiagramResultType = // Renamed from VennDiagramResult to avoid c
   VennDiagramResultWaiting | VennDiagramResultError | VennDiagramResultSuccess
 
 function VennLegend({ variables, numVars }: { variables: string[]; numVars: number }) {
-  const legendData =
-    numVars === 2
-      ? [
-          { color: 'var(--venn-region-a)', label: `${variables[0]} only` },
-          { color: 'var(--venn-region-b)', label: `${variables[1]} only` },
-          { color: 'var(--venn-region-intersection)', label: `${variables[0]} ∩ ${variables[1]}` },
-        ]
-      : [
-          { color: 'var(--venn-region-a)', label: `${variables[0]} only` },
-          { color: 'var(--venn-region-b)', label: `${variables[1]} only` },
-          { color: 'var(--venn-region-c)', label: `${variables[2]} only` },
-          {
-            color: 'var(--venn-region-intersection)',
-            label: `${variables[0]} ∩ ${variables[1]} ∩ ${variables[2]}`,
-          },
-        ]
+  // Define base legend data for different variable counts
+  let legendData: { color: string; label: string }[] = []
+
+  if (numVars === 2) {
+    legendData = [
+      { color: 'var(--venn-region-a)', label: `${variables[0]} only` },
+      { color: 'var(--venn-region-b)', label: `${variables[1]} only` },
+      { color: 'var(--venn-region-intersection)', label: `${variables[0]} ∩ ${variables[1]}` },
+    ]
+  } else if (numVars === 3) {
+    legendData = [
+      { color: 'var(--venn-region-a)', label: `${variables[0]} only` },
+      { color: 'var(--venn-region-b)', label: `${variables[1]} only` },
+      { color: 'var(--venn-region-c)', label: `${variables[2]} only` },
+      {
+        color: 'var(--venn-region-intersection)',
+        label: `${variables[0]} ∩ ${variables[1]} ∩ ${variables[2]}`,
+      },
+    ]
+  } else if (numVars === 4 || numVars === 5) {
+    // For 4 and 5 variables (which use the same color scheme for the 4-var diagram part)
+    const colorLabels = [
+      { color: 'var(--color-chart-1)', label: 'Region A' },
+      { color: 'var(--color-chart-2)', label: 'Region B' },
+      { color: 'var(--color-chart-3)', label: 'Region C' },
+      { color: 'var(--color-chart-4)', label: 'Region D' },
+      { color: 'var(--color-chart-5)', label: 'Intersections' },
+    ]
+
+    legendData = colorLabels
+
+    // For 5 variables, add a note about the dual diagram approach
+    if (numVars === 5) {
+      legendData.push({
+        color: 'var(--venn-border)',
+        label: `Diagram split by ${variables[4]} value`,
+      })
+    }
+  }
+
   return (
     <div className="flex flex-row flex-wrap gap-3 items-center justify-center mt-2 mb-1 text-xs">
       {legendData.map(item => (
@@ -95,7 +123,7 @@ function VennLegend({ variables, numVars }: { variables: string[]; numVars: numb
   )
 }
 
-export const VennDiagram: React.FC<VennDiagramProps> = ({ expression, className = '' }) => {
+export const VennDiagram = ({ expression, className = '' }: VennDiagramProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const toggleFullscreen = useCallback(() => {
@@ -110,6 +138,8 @@ export const VennDiagram: React.FC<VennDiagramProps> = ({ expression, className 
       }
     }
 
+    const originalExpression = expression // Keep original for display - Use const
+
     try {
       const booleanExprStr = latexToBoolean(expression) // Convert LaTeX to standard string first
       const expressionTree = ExpressionParser.parse(booleanExprStr)
@@ -117,41 +147,46 @@ export const VennDiagram: React.FC<VennDiagramProps> = ({ expression, className 
       const numVars = variables.length
 
       if (numVars === 0) {
-        // Handle constant expressions like "1" or "0"
-        // For "1", all regions including Neither are true. For "0", all are false.
-        // This is a special case for Venn diagrams.
-        // Let's treat "1" as universal set active, "0" as empty set.
-        // This requires careful thought on how generateVennData handles it.
-        // For now, we can return an error or a specific message for constants.
         return {
           status: 'error',
           variables,
-          message: `Constant expression \'${expression}\' found.`,
+          message: `Constant expression found.`,
           details:
-            'Venn diagrams visualize variable relationships. Constant expressions (like 0 or 1) do not have variables to depict in this way. The truth value is either always true or always false across the entire domain.',
+            'Venn diagrams require variables. Constant expressions (0 or 1) are always true or false.',
         }
       }
 
-      if (numVars < 2 || numVars > 3) {
-        // K-Map supports 2-4, Venn is best for 2-3.
+      if (numVars < 2 || numVars > 5) {
         return {
           status: 'error',
           variables,
-          message: `Venn Diagrams support 2 or 3 variables. Detected ${numVars}.`,
-          details: `Variables found: ${variables.join(', ') || 'None'}. Please use an expression with 2 or 3 unique variables (A-Z).`,
+          message: `Venn Diagrams support 2 to 5 variables. Detected ${numVars}.`,
+          details:
+            variables.length > 0
+              ? `Variables found: ${variables.join(', ')}. Use 2-5 unique variables [A-Z].`
+              : `No variables found. Use a valid boolean expression with 2-5 variables [A-Z].`,
         }
       }
 
-      const vennData = generateVennData(expressionTree, variables)
+      let vennData: VennData
 
-      if (!vennData) {
-        // Should not happen if numVars is 2 or 3, but as a safeguard
+      try {
+        if (numVars === 2) {
+          vennData = evaluate2VarVenn(expressionTree, variables)
+        } else if (numVars === 3) {
+          vennData = evaluate3VarVenn(expressionTree, variables)
+        } else if (numVars === 4) {
+          vennData = evaluate4VarVenn(expressionTree, variables)
+        } else {
+          // numVars === 5
+          vennData = evaluate5VarVenn(expressionTree, variables)
+        }
+      } catch (error) {
         return {
           status: 'error',
           variables,
           message: 'Failed to generate data for Venn Diagram.',
-          details:
-            'The number of variables might be unsupported by the current engine configuration.',
+          details: error instanceof Error ? error.message : 'Evaluation process failed.',
         }
       }
 
@@ -161,96 +196,159 @@ export const VennDiagram: React.FC<VennDiagramProps> = ({ expression, className 
         expressionTree,
         vennData,
         numVars,
-        originalExpression: expression, // Store it
-      } as VennDiagramResultSuccess // Ensure type assertion if all fields are present
+        originalExpression, // Store original expression
+      } as VennDiagramResultSuccess
     } catch (error) {
       return {
         status: 'error',
-        message: 'Error processing expression for Venn Diagram.',
+        message: 'Error processing expression.',
         details:
           error instanceof Error ? error.message : 'Invalid expression format or internal error.',
       }
     }
   }, [expression])
 
-  const fullscreenCardClasses = isFullscreen
-    ? `fixed inset-0 z-[9999] w-screen h-screen bg-background p-4 sm:p-6 flex flex-col ${className}`.trim()
-    : `${className} w-full h-fit`.trim()
-  const fullscreenContentClasses = isFullscreen ? 'flex-grow overflow-y-auto pt-0' : ''
+  // Define base and fullscreen classes
+  const baseCardClasses = `${className} w-full h-fit`
+  const fullscreenCardClasses =
+    `fixed inset-0 z-[9999] w-screen h-screen bg-background p-4 sm:p-6 flex flex-col ${className}`.trim()
+
+  // Define base and fullscreen classes for the content area
+  const baseContentClasses = 'pt-4' // Basic padding for normal mode
+  const fullscreenContentClasses = 'flex-grow pt-0 flex items-center justify-center' // Removed overflow-y-auto
 
   const cardTitle = 'Venn Diagram'
-  const defaultCardDescription = 'Visual representation of boolean sets (2-3 variables).'
 
   const renderHeaderContent = () => (
     <>
       <CardTitle className={isFullscreen ? 'text-foreground font-bold' : ''}>{cardTitle}</CardTitle>
+      {/* Simplified Description - Expression moved below */}
       <CardDescription className={isFullscreen ? 'text-muted-foreground' : ''}>
-        {vennDiagramResult.status === 'success'
-          ? `For expression: ${vennDiagramResult.originalExpression}` // Show original for clarity
-          : vennDiagramResult.message || defaultCardDescription}
+        {
+          vennDiagramResult.status === 'success'
+            ? `Visual representation for ${vennDiagramResult.numVars} variables: ${vennDiagramResult.variables.join(', ')}`
+            : vennDiagramResult.status === 'error'
+              ? vennDiagramResult.message // Show error message here
+              : 'Enter an expression to generate.' // Waiting message
+        }
       </CardDescription>
     </>
   )
 
   const renderVennDiagramContent = () => {
-    if (vennDiagramResult.status === 'waiting') {
-      return (
-        <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed rounded-md min-h-[15rem]">
-          <p className={`text-sm ${isFullscreen ? 'text-foreground' : 'text-muted-foreground'}`}>
-            {vennDiagramResult.message}
-          </p>
-        </div>
-      )
-    }
+    // Define classes based on fullscreen state
+    const rootContentDivClass = isFullscreen
+      ? 'w-full max-w-6xl max-h-[calc(100vh-10rem)] flex flex-col items-center justify-center ' // Fullscreen: constrained, centered, padding inside
+      : 'w-full h-full flex flex-col items-center justify-start ' // Normal: fill container, start alignment, top padding
 
-    if (vennDiagramResult.status === 'error') {
+    if (vennDiagramResult.status === 'waiting' || vennDiagramResult.status === 'error') {
+      // Keep existing waiting/error states rendering as before
+      if (vennDiagramResult.status === 'waiting') {
+        return (
+          <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 border-2 border-dashed rounded-md min-h-[15rem]">
+            <p className="text-sm">Enter an expression to generate a Venn Diagram.</p>
+            <p className="text-sm mt-2">Venn Diagrams support 2 to 5 variables.</p>
+          </div>
+        )
+      }
+      // Error state rendering
       return (
-        <div className="border border-dashed border-destructive rounded-md flex flex-col items-center justify-center h-full p-6 min-h-[15rem]">
-          <p
-            className={`mb-1 text-sm font-medium ${isFullscreen ? 'text-destructive-foreground' : 'text-destructive'}`}
-          >
+        <div className="border-2 border-dashed rounded-md flex flex-col items-center justify-center h-full p-6 min-h-[15rem] text-center">
+          <p className="mb-2 text-base font-medium">
+            {/* Display specific error message from result */}
             {vennDiagramResult.message}
           </p>
+          {vennDiagramResult.details && (
+            <p className="text-sm mt-1 text-muted-foreground">{vennDiagramResult.details}</p>
+          )}
           {vennDiagramResult.variables && vennDiagramResult.variables.length > 0 && (
-            <p
-              className={`text-xs mt-1 ${isFullscreen ? 'text-destructive-foreground/70' : 'text-muted-foreground'}`}
-            >
+            <p className="text-sm mt-2">
               Detected variables: {vennDiagramResult.variables.join(', ')}
             </p>
           )}
-          {vennDiagramResult.details && (
-            <p
-              className={`text-xs mt-1 ${isFullscreen ? 'text-destructive-foreground/80' : 'text-muted-foreground'}`}
-            >
-              {vennDiagramResult.details}
-            </p>
-          )}
         </div>
       )
     }
 
-    // Success state
-    const { variables, vennData, numVars } = vennDiagramResult as VennDiagramResultSuccess
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center">
-        <VennDiagramSVG variables={variables} vennData={vennData} />
+    // --- Success State Rendering ---
+    const { variables, vennData, numVars /*, originalExpression */ } =
+      vennDiagramResult as VennDiagramResultSuccess // Removed originalExpression
+
+    // Common structure for success state
+    const renderSuccessContent = (diagramContent: React.ReactNode) => (
+      <div className={rootContentDivClass}>
+        {/* Diagram(s) */}
+        {diagramContent}
+
+        {/* Legend */}
         <VennLegend variables={variables} numVars={numVars} />
-        {/* Optional: Footer for legend or additional info */}
-        <CardFooter className="mt-4 pt-4 border-t w-full flex flex-col items-center">
-          <p className="text-xs text-muted-foreground">
-            Diagram for {numVars} variables: {variables.join(', ')}. Highlighted regions represent
-            areas where the expression is true.
+
+        {/* Footer */}
+        <CardFooter className="mt-auto pt-4 border-t w-full flex flex-col items-center">
+          <p className="text-xs text-muted-foreground text-center">
+            {numVars === 5
+              ? `Diagram for ${numVars} variables: ${variables.join(', ')}. Displaying two 4-variable diagrams, one for each value of ${(vennData as VennData5Vars).E_name}.`
+              : `Diagram for ${numVars} variables: ${variables.join(', ')}. Highlighted regions represent areas where the expression is true.`}
           </p>
-          {/* Add more details if needed, e.g. specific region labels */}
         </CardFooter>
       </div>
     )
+
+    // --- Specific Diagram Layouts ---
+
+    if (numVars === 5) {
+      const fiveVarData = vennData as VennData5Vars
+      const diagramContent = (
+        <div className="w-full flex-grow flex flex-col items-center justify-center">
+          <div className="w-full pb-2 text-center">
+            <p className="text-sm font-medium">5-Variable Venn Diagram</p>
+          </div>
+          <div
+            className={`flex ${isFullscreen ? 'flex-row space-x-4' : 'flex-col space-y-4'} w-full max-w-4xl mx-auto flex-grow`}
+          >
+            {/* Diagram E=1 */}
+            <div className="flex-1 border rounded-md p-2 flex flex-col items-center min-w-0">
+              <h4 className="text-sm font-medium text-center mb-2">
+                When {fiveVarData.E_name} = 1
+              </h4>
+              <div className="w-full h-full">
+                <VennDiagramSVG
+                  variables={variables.slice(0, 4)}
+                  vennData={fiveVarData.whenEIsTrue}
+                />
+              </div>
+            </div>
+            {/* Diagram E=0 */}
+            <div className="flex-1 border rounded-md p-2 flex flex-col items-center min-w-0">
+              <h4 className="text-sm font-medium text-center mb-2">
+                When {fiveVarData.E_name} = 0
+              </h4>
+              <div className="w-full h-full">
+                <VennDiagramSVG
+                  variables={variables.slice(0, 4)}
+                  vennData={fiveVarData.whenEIsFalse}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+      return renderSuccessContent(diagramContent)
+    } else {
+      // Layout for 2-4 variables
+      const diagramContent = (
+        <div className="w-full flex-grow flex items-center justify-center">
+          <VennDiagramSVG variables={variables} vennData={vennData} />
+        </div>
+      )
+      return renderSuccessContent(diagramContent)
+    }
   }
 
   return (
     <>
       {isFullscreen && <div className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm"></div>}
-      <Card className={fullscreenCardClasses}>
+      <Card className={isFullscreen ? fullscreenCardClasses : baseCardClasses}>
         <CardHeader className="pb-2">
           {renderHeaderContent()}
           <CardAction>
@@ -265,9 +363,7 @@ export const VennDiagram: React.FC<VennDiagramProps> = ({ expression, className 
             </Button>
           </CardAction>
         </CardHeader>
-        <CardContent
-          className={`${fullscreenContentClasses} ${vennDiagramResult.status !== 'success' ? 'flex items-center justify-center' : ''} pt-4`}
-        >
+        <CardContent className={isFullscreen ? fullscreenContentClasses : baseContentClasses}>
           {renderVennDiagramContent()}
         </CardContent>
       </Card>

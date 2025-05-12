@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { CellPosition, KMapGroup } from './types'
 import { getCellBorderStyles } from './KMapGroupDetector'
 
@@ -13,14 +12,14 @@ interface KMapCellProps {
   showMintermNumbers?: boolean
 }
 
-export const KMapCell: React.FC<KMapCellProps> = ({
+export const KMapCell = ({
   cell,
   rowHeaders,
   colHeaders,
   hasMinterm,
   groups,
   showMintermNumbers = true,
-}) => {
+}: KMapCellProps) => {
   const { row, col, minterm } = cell
 
   // Get border styles for the cell

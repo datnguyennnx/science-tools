@@ -45,6 +45,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
   /* Venn Diagram Colors */
   --venn-border: oklch(0.3 0 0); /* strong dark neutral for border */
   --venn-border-inside: oklch(0.3 0 0 / 60%); /* semi-transparent for inside border */
@@ -53,6 +54,18 @@
   --venn-region-b: var(--color-chart-2);
   --venn-region-c: var(--color-chart-3);
   --venn-region-intersection: var(--color-chart-4);
+
+  /* Venn Diagram Semantic Colors */
+  --venn-set-a: var(--chart-1); /* Example: Assign chart-1 to set A */
+  --venn-set-b: var(--chart-2); /* Example: Assign chart-2 to set B */
+  --venn-set-c: var(--chart-3); /* Example: Assign chart-3 to set C */
+  --venn-set-d: var(--chart-4); /* Example: Assign chart-4 to set D */
+  --venn-intersection: var(--chart-5); /* Example: Assign chart-5 for intersections */
+  /* K-Map Semantic Colors */
+  --kmap-group-octet: var(--chart-1); /* Example: Assign chart-1 to octets */
+  --kmap-group-quad: var(--chart-2); /* Example: Assign chart-2 to quads */
+  --kmap-group-pair: var(--chart-3); /* Example: Assign chart-3 to pairs */
+  --kmap-group-single: var(--chart-4); /* Example: Assign chart-4 to singles */
 }
 
 :root {
@@ -128,14 +141,21 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 
-  /* Venn Diagram Colors (dark) */
+  /* Venn Diagram Semantic Colors (Dark) */
   --venn-border: oklch(0.95 0 0); /* strong light neutral for border in dark mode */
   --venn-border-inside: oklch(0.95 0 0 / 60%); /* semi-transparent for inside border in dark mode */
-  --venn-bg: var(--color-muted);
-  --venn-region-a: var(--color-chart-1);
-  --venn-region-b: var(--color-chart-2);
-  --venn-region-c: var(--color-chart-3);
-  --venn-region-intersection: var(--color-chart-4);
+  --venn-bg: var(--muted);
+  --venn-set-a: var(--chart-1);
+  --venn-set-b: var(--chart-2);
+  --venn-set-c: var(--chart-3);
+  --venn-set-d: var(--chart-4);
+  --venn-intersection: var(--chart-5);
+
+  /* K-Map Semantic Colors (Dark) */
+  --kmap-group-octet: var(--chart-1);
+  --kmap-group-quad: var(--chart-2);
+  --kmap-group-pair: var(--chart-3);
+  --kmap-group-single: var(--chart-4);
 }
 
 @layer utilities {

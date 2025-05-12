@@ -51,6 +51,7 @@ export interface CellStyle {
 export interface KarnaughMapProps {
   expression: string
   className?: string
+  maxVariablesToShow?: number // Maximum variables to show in a single K-Map (2-6)
 }
 
 /**
@@ -72,16 +73,26 @@ export type KMapResultError = {
 }
 
 /**
+ * Definition of a single K-Map within a potential multi-map result
+ */
+export interface KMapDefinition {
+  variables: string[]
+  mintermSet: Set<number>
+  kMapConfig: KMapConfig
+  groups: KMapGroup[]
+  title: string
+  fixedVariables: Record<string, boolean>
+}
+
+/**
  * KMap result type for success state
  */
 export type KMapResultSuccess = {
   status: 'success'
-  variables: string[]
+  allVariables: string[] // All variables in the original expression
   expressionTree: BooleanExpression
-  mintermSet: Set<number>
-  kMapConfig: KMapConfig
-  groups: KMapGroup[]
-  numVars: number
+  maps: KMapDefinition[] // One or more K-Maps (multiple for expressions with many variables)
+  isMultiMap: boolean // Whether this is a multi-map result
 }
 
 /**

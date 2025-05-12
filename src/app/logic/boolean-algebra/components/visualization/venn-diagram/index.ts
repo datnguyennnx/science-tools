@@ -4,4 +4,10 @@ export type {
   VennDiagramResultStatus,
   VennDiagramResultType,
 } from './VennDiagram'
-export type { VennData, VennData2Vars, VennData3Vars } from './VennDiagramEngine'
+export type {
+  VennData,
+  VennData2Vars,
+  VennData3Vars,
+  VennData4Vars,
+  VennData5Vars,
+} from './VennDiagramEngine'

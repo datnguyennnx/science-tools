@@ -1,6 +1,5 @@
 'use client'
 
-import 'katex/dist/katex.min.css'
 import { InlineMath, BlockMath } from 'react-katex'
 import { toast } from 'sonner'
 
@@ -72,36 +71,30 @@ export function latexToBoolean(latex: string): string {
   if (!latex.trim()) return ''
 
   // First, normalize spacing to make processing more consistent
-  let processedLatex = latex.replace(/\s+/g, ' ').trim()
+  let processedLatex = latex.replace(/\\s+/g, ' ').trim()
 
   // Step 1: Handle LaTeX commands with consistent replacements
   // Replace commands that don't need parentheses added
   processedLatex = processedLatex
     .replace(/\\text{F}/g, '0') // False
     .replace(/\\text{T}/g, '1') // True
+    // Replace LaTeX logic symbols *before* complex regex checks
+    .replace(/\\lnot/g, '!') // Basic NOT replacement
+    .replace(/\\land/g, '*') // AND operator (fixed double backslash)
+    .replace(/\\lor/g, '+') // OR operator (fixed double backslash)
+    .replace(/\\overline\\s*\\{([^}]*)\\}/g, '!($1)') // Overline (fixed double backslash)
 
-  // Step 2: Handle negations carefully - replace \lnot and \overline
-  // Process one at a time to avoid nested replacement issues
-  // Replace \lnot X with !(X) - adding parentheses for clarity
-  processedLatex = processedLatex.replace(/\\lnot\s*(\S)(?!\S*\})/g, '!($1)')
-  // Replace \lnot{X} with !(X)
-  processedLatex = processedLatex.replace(/\\lnot\s*\{([^}]*)\}/g, '!($1)')
-  // Replace \overline{X} with !(X)
-  processedLatex = processedLatex.replace(/\\overline\s*\{([^}]*)\}/g, '!($1)')
+  // Step 2: Cleanup potentially problematic patterns left by simple replacement
+  // (The complex regexes for \\lnot are removed as the simple replacement above is usually sufficient
+  // and less error-prone before parsing. The boolean parser should handle precedence.)
 
-  // Step 3: Replace binary operators
-  processedLatex = processedLatex
-    .replace(/\\land/g, '*') // AND operator
-    .replace(/\\lor/g, '+') // OR operator
+  // Step 3: Clean up any leftover spaces and other symbols
+  processedLatex = processedLatex.replace(/\\s+/g, '')
 
-  // Step 4: Clean up any leftover spaces and other symbols
-  processedLatex = processedLatex.replace(/\s+/g, '')
+  // Handle potentially empty parentheses introduced by replacements like !{}
+  processedLatex = processedLatex.replace(/\\(\\)/g, '') // Replace () possibly left by !{}
 
-  // Handle potentially empty parentheses
-  processedLatex = processedLatex.replace(/\(\)/g, '0') // Replace () with 0 (FALSE)
-
-  // Step 5: Handle implicit multiplication
-  // Note: We do this after the operators are standardized
+  // Step 4: Handle implicit multiplication
   const insertImplicitMultiplication = (text: string): string => {
     // Add * between two variables or a variable and a parenthesis
     return text
@@ -116,14 +109,15 @@ export function latexToBoolean(latex: string): string {
     processedLatex = insertImplicitMultiplication(processedLatex)
   }
 
-  // Remove any duplicate operators that may have been introduced
+  // Step 5: Final cleanup
   processedLatex = processedLatex
     .replace(/\*{2,}/g, '*') // Replace multiple * with a single *
     .replace(/\+{2,}/g, '+') // Replace multiple + with a single +
     .replace(/!!/g, '') // Double negation: !!X -> X
 
-  // Handle expressions like !()+X which could be produced by complex LaTeX
-  processedLatex = processedLatex.replace(/!\(0\)/g, '1') // !() -> 1 (NOT false is true)
+  // Handle expressions like !0 which could be produced
+  processedLatex = processedLatex.replace(/!0/g, '1') // !0 -> 1 (NOT false is true)
+  processedLatex = processedLatex.replace(/!1/g, '0') // !1 -> 0 (NOT true is false)
 
   // Ensure no leftover LaTeX commands remain
   if (processedLatex.includes('\\')) {

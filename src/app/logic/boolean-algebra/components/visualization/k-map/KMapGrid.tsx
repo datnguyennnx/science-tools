@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { KMapConfig, KMapGroup } from './types'
 import { KMapCell } from './KMapCell'
 
@@ -12,13 +11,13 @@ interface KMapGridProps {
   className?: string
 }
 
-export const KMapGrid: React.FC<KMapGridProps> = ({
+export const KMapGrid = ({
   config,
   mintermSet,
   groups,
   showMintermNumbers = true,
   className = '',
-}) => {
+}: KMapGridProps) => {
   const { rowHeaders, colHeaders, rowVarLabel, colVarLabel, kMapOrder } = config
 
   return (

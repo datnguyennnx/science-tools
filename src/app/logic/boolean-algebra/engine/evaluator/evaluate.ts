@@ -78,6 +78,16 @@ export function evaluateExpression(
       )
     }
 
+    case 'XNOR': {
+      if (!expr.left || !expr.right) {
+        throw new Error('Invalid XNOR expression: missing operands')
+      }
+      return (
+        evaluateExpression(expr.left, variableValues) ===
+        evaluateExpression(expr.right, variableValues)
+      )
+    }
+
     case 'NOT': {
       if (!expr.left) {
         throw new Error('Invalid NOT expression: missing operand')

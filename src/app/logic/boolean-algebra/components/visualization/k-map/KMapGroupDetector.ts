@@ -1,30 +1,13 @@
 import { CellPosition, CellStyle, KMapGroup } from './types'
-
-// Colors for different group sizes - using chart colors from globals.css
-export const GROUP_COLORS = {
-  8: 'var(--color-chart-1)', // Octet (was blue)
-  4: 'var(--color-chart-2)', // Quad (was red)
-  2: 'var(--color-chart-3)', // Pair (was green)
-  1: 'var(--color-chart-4)', // Single (was yellow)
-}
-
-// Color names for the legend
-export const GROUP_COLOR_NAMES: Record<number, string> = {
-  8: 'Octet',
-  4: 'Quad',
-  2: 'Pair',
-  1: 'Single',
-}
-
-// Opacity values for cell backgrounds
-const CELL_BG_OPACITY = '25' // 25% opacity
-
-// Border styles for groups
-const BORDER_STYLE = 'dashed' // Use dashed borders for the groups
-const BORDER_WIDTH = '2px' // Border width
+import {
+  KMAP_GROUP_COLORS,
+  KMAP_CELL_BG_OPACITY,
+  KMAP_GROUP_BORDER_STYLE,
+  KMAP_GROUP_BORDER_WIDTH,
+} from '../utils/colors'
 
 /**
- * Detects groups in a Karnaugh Map
+ * Detects groups in a Karnaugh Map with improved performance for large k-maps
  */
 export function detectGroups(
   mintermSet: Set<number>,
@@ -54,150 +37,68 @@ export function detectGroups(
     { size: 1 }, // Single (1 cell)
   ]
 
+  // First, create a map of minterm indices to their positions for faster lookup
+  const mintermPositions = new Map<number, CellPosition>()
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cell = kMapOrder[r][c]
+      if (mintermSet.has(cell.minterm)) {
+        mintermPositions.set(cell.minterm, cell)
+      }
+    }
+  }
+
   // Find groups of different sizes
   for (const { size } of maxGroups) {
     if (size === 8 && numVars !== 4) continue // Only 4-var K-Maps can have octets
 
-    // For 4 variables, octets can be in various forms
+    // Handle size 8 groups (octets) - only for 4-variable K-Maps
     if (size === 8 && numVars === 4) {
-      // Horizontal strip across entire map (2 rows x 4 cols)
-      for (let r = 0; r < rows; r += 2) {
-        const strip: CellPosition[] = []
-        for (let c = 0; c < cols; c++) {
-          strip.push(kMapOrder[r][c], kMapOrder[(r + 1) % rows][c])
-        }
-        if (isValidGroup(strip) && strip.some(cell => !assignedCells.has(cell.minterm))) {
-          result.push({ cells: strip, color: GROUP_COLORS[8], size })
-          strip.forEach(cell => assignedCells.add(cell.minterm))
-        }
-      }
+      // Try to find octets quickly using pre-defined octet patterns
+      const octetPatterns = generateOctetPatterns(rows, cols)
 
-      // Vertical strip across entire map (4 rows x 2 cols)
-      for (let c = 0; c < cols; c += 2) {
-        const strip: CellPosition[] = []
-        for (let r = 0; r < rows; r++) {
-          strip.push(kMapOrder[r][c], kMapOrder[r][(c + 1) % cols])
-        }
-        if (isValidGroup(strip) && strip.some(cell => !assignedCells.has(cell.minterm))) {
-          result.push({ cells: strip, color: GROUP_COLORS[8], size })
-          strip.forEach(cell => assignedCells.add(cell.minterm))
-        }
-      }
+      for (const octetCells of octetPatterns) {
+        // Convert pattern cells to actual CellPosition objects
+        const octet = octetCells.map(([r, c]) => kMapOrder[r][c])
 
-      // 2x4 blocks
-      for (let r = 0; r < rows; r += 2) {
-        for (let c = 0; c < cols; c += 2) {
-          const block: CellPosition[] = []
-          for (let dr = 0; dr < 2; dr++) {
-            for (let dc = 0; dc < 2; dc++) {
-              block.push(
-                kMapOrder[(r + dr) % rows][c + dc],
-                kMapOrder[(r + dr) % rows][(c + dc + 2) % cols]
-              )
-            }
-          }
-          if (isValidGroup(block) && block.some(cell => !assignedCells.has(cell.minterm))) {
-            result.push({ cells: block, color: GROUP_COLORS[8], size })
-            block.forEach(cell => assignedCells.add(cell.minterm))
-          }
-        }
-      }
-
-      // 4x2 blocks
-      for (let r = 0; r < rows; r += 2) {
-        for (let c = 0; c < cols; c += 2) {
-          const block: CellPosition[] = []
-          for (let dr = 0; dr < 2; dr++) {
-            for (let dc = 0; dc < 2; dc++) {
-              block.push(kMapOrder[(r + dr) % rows][c + dc], kMapOrder[(r + dr + 2) % rows][c + dc])
-            }
-          }
-          if (isValidGroup(block) && block.some(cell => !assignedCells.has(cell.minterm))) {
-            result.push({ cells: block, color: GROUP_COLORS[8], size })
-            block.forEach(cell => assignedCells.add(cell.minterm))
-          }
+        // Check if this octet is valid (all cells have minterms) and not already assigned
+        if (isValidGroup(octet) && octet.some(cell => !assignedCells.has(cell.minterm))) {
+          result.push({ cells: octet, color: KMAP_GROUP_COLORS[8], size })
+          octet.forEach(cell => assignedCells.add(cell.minterm))
         }
       }
     }
 
-    // For quads (4 cells)
+    // For size 4 groups (quads)
     if (size === 4) {
-      // 2x2 quads
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const quad: CellPosition[] = [
-            kMapOrder[r][c],
-            kMapOrder[r][(c + 1) % cols],
-            kMapOrder[(r + 1) % rows][c],
-            kMapOrder[(r + 1) % rows][(c + 1) % cols],
-          ]
+      // Pre-generate all possible quad patterns
+      const quadPatterns = generateQuadPatterns(rows, cols)
 
-          if (isValidGroup(quad) && quad.some(cell => !assignedCells.has(cell.minterm))) {
-            result.push({ cells: quad, color: GROUP_COLORS[4], size })
-            quad.forEach(cell => assignedCells.add(cell.minterm))
-          }
-        }
-      }
+      for (const quadCells of quadPatterns) {
+        // Convert pattern cells to actual CellPosition objects
+        const quad = quadCells.map(([r, c]) => kMapOrder[r][c])
 
-      // Horizontal 1x4 strips (handling wrap-around)
-      for (let r = 0; r < rows; r++) {
-        const strip: CellPosition[] = []
-        for (let c = 0; c < cols; c++) {
-          strip.push(kMapOrder[r][c])
-        }
-        if (isValidGroup(strip) && strip.some(cell => !assignedCells.has(cell.minterm))) {
-          result.push({ cells: strip, color: GROUP_COLORS[4], size })
-          strip.forEach(cell => assignedCells.add(cell.minterm))
-        }
-      }
-
-      // Vertical 4x1 strips (handling wrap-around)
-      for (let c = 0; c < cols; c++) {
-        const strip: CellPosition[] = []
-        for (let r = 0; r < rows; r++) {
-          strip.push(kMapOrder[r][c])
-        }
-        if (isValidGroup(strip) && strip.some(cell => !assignedCells.has(cell.minterm))) {
-          result.push({ cells: strip, color: GROUP_COLORS[4], size })
-          strip.forEach(cell => assignedCells.add(cell.minterm))
+        // Check if this quad is valid and not already assigned
+        if (isValidGroup(quad) && quad.some(cell => !assignedCells.has(cell.minterm))) {
+          result.push({ cells: quad, color: KMAP_GROUP_COLORS[4], size })
+          quad.forEach(cell => assignedCells.add(cell.minterm))
         }
       }
     }
 
     // For pairs (2 cells), check all adjacent cells including wrapping
     if (size === 2) {
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const currentCell = kMapOrder[r][c]
-          if (!isCellMinterm(currentCell) || assignedCells.has(currentCell.minterm)) continue
+      // Pre-generate all possible pair patterns
+      const pairPatterns = generatePairPatterns(rows, cols)
 
-          // Check horizontal neighbor (right)
-          const rightCol = (c + 1) % cols
-          const rightCell = kMapOrder[r][rightCol]
-          if (isCellMinterm(rightCell) && !assignedCells.has(rightCell.minterm)) {
-            result.push({
-              cells: [currentCell, rightCell],
-              color: GROUP_COLORS[2],
-              size,
-            })
-            assignedCells.add(currentCell.minterm)
-            assignedCells.add(rightCell.minterm)
-            continue
-          }
+      for (const pairCells of pairPatterns) {
+        // Convert pattern cells to actual CellPosition objects
+        const pair = pairCells.map(([r, c]) => kMapOrder[r][c])
 
-          // Check vertical neighbor (down)
-          const bottomRow = (r + 1) % rows
-          const bottomCell = kMapOrder[bottomRow][c]
-          if (isCellMinterm(bottomCell) && !assignedCells.has(bottomCell.minterm)) {
-            result.push({
-              cells: [currentCell, bottomCell],
-              color: GROUP_COLORS[2],
-              size,
-            })
-            assignedCells.add(currentCell.minterm)
-            assignedCells.add(bottomCell.minterm)
-            continue
-          }
+        // Check if this pair is valid and not already assigned
+        if (isValidGroup(pair) && pair.every(cell => !assignedCells.has(cell.minterm))) {
+          result.push({ cells: pair, color: KMAP_GROUP_COLORS[2], size })
+          pair.forEach(cell => assignedCells.add(cell.minterm))
         }
       }
     }
@@ -210,7 +111,7 @@ export function detectGroups(
       if (isCellMinterm(cell) && !assignedCells.has(cell.minterm)) {
         result.push({
           cells: [cell],
-          color: GROUP_COLORS[1],
+          color: KMAP_GROUP_COLORS[1],
           size: 1,
         })
         assignedCells.add(cell.minterm)
@@ -219,6 +120,161 @@ export function detectGroups(
   }
 
   return result
+}
+
+/**
+ * Generate all possible octet (size 8) patterns for a K-map of given dimensions
+ * This pre-computes patterns for better performance
+ */
+function generateOctetPatterns(rows: number, cols: number): Array<Array<[number, number]>> {
+  const patterns: Array<Array<[number, number]>> = []
+
+  // Only valid for 4x4 K-maps (4 variables)
+  if (rows !== 4 || cols !== 4) return patterns
+
+  // Horizontal strips (2 rows x 4 cols)
+  for (let r = 0; r < rows; r += 2) {
+    const strip: Array<[number, number]> = []
+    for (let c = 0; c < cols; c++) {
+      strip.push([r, c], [(r + 1) % rows, c])
+    }
+    patterns.push(strip)
+  }
+
+  // Vertical strips (4 rows x 2 cols)
+  for (let c = 0; c < cols; c += 2) {
+    const strip: Array<[number, number]> = []
+    for (let r = 0; r < rows; r++) {
+      strip.push([r, c], [r, (c + 1) % cols])
+    }
+    patterns.push(strip)
+  }
+
+  // 2x4 blocks (wrapping around)
+  for (let r = 0; r < rows; r += 2) {
+    for (let c = 0; c < cols; c += 2) {
+      const block: Array<[number, number]> = []
+      for (let dr = 0; dr < 2; dr++) {
+        for (let dc = 0; dc < 2; dc++) {
+          block.push([(r + dr) % rows, c + dc], [(r + dr) % rows, (c + dc + 2) % cols])
+        }
+      }
+      patterns.push(block)
+    }
+  }
+
+  // 4x2 blocks (wrapping around)
+  for (let r = 0; r < rows; r += 2) {
+    for (let c = 0; c < cols; c += 2) {
+      const block: Array<[number, number]> = []
+      for (let dr = 0; dr < 2; dr++) {
+        for (let dc = 0; dc < 2; dc++) {
+          block.push([(r + dr) % rows, c + dc], [(r + dr + 2) % rows, c + dc])
+        }
+      }
+      patterns.push(block)
+    }
+  }
+
+  return patterns
+}
+
+/**
+ * Generate all possible quad (size 4) patterns for a K-map of given dimensions
+ * This pre-computes patterns for better performance
+ */
+function generateQuadPatterns(rows: number, cols: number): Array<Array<[number, number]>> {
+  const patterns: Array<Array<[number, number]>> = []
+
+  // 2x2 quads
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      patterns.push([
+        [r, c],
+        [r, (c + 1) % cols],
+        [(r + 1) % rows, c],
+        [(r + 1) % rows, (c + 1) % cols],
+      ])
+    }
+  }
+
+  // Horizontal 1x4 strips (handling wrap-around)
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c += 4) {
+      const remainingCols = Math.min(4, cols - c)
+      if (remainingCols === 4) {
+        patterns.push([
+          [r, c],
+          [r, c + 1],
+          [r, c + 2],
+          [r, c + 3],
+        ])
+      } else if (cols === 4) {
+        // Special handling for 4-column maps where strips wrap around
+        patterns.push([
+          [r, 0],
+          [r, 1],
+          [r, 2],
+          [r, 3],
+        ])
+      }
+    }
+  }
+
+  // Vertical 4x1 strips (handling wrap-around)
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r += 4) {
+      const remainingRows = Math.min(4, rows - r)
+      if (remainingRows === 4) {
+        patterns.push([
+          [r, c],
+          [r + 1, c],
+          [r + 2, c],
+          [r + 3, c],
+        ])
+      } else if (rows === 4) {
+        // Special handling for 4-row maps where strips wrap around
+        patterns.push([
+          [0, c],
+          [1, c],
+          [2, c],
+          [3, c],
+        ])
+      }
+    }
+  }
+
+  return patterns
+}
+
+/**
+ * Generate all possible pair (size 2) patterns for a K-map of given dimensions
+ * This pre-computes patterns for better performance
+ */
+function generatePairPatterns(rows: number, cols: number): Array<Array<[number, number]>> {
+  const patterns: Array<Array<[number, number]>> = []
+
+  // Horizontal pairs
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      patterns.push([
+        [r, c],
+        [r, (c + 1) % cols],
+      ])
+    }
+  }
+
+  // Vertical pairs
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      patterns.push([
+        [r, c],
+        [(r + 1) % rows, c],
+      ])
+    }
+  }
+
+  return patterns
 }
 
 /**
@@ -246,8 +302,8 @@ export function getCellBorderStyles(
   // For a single cell, show all borders
   if (group.size === 1) {
     return {
-      border: `${BORDER_WIDTH} ${BORDER_STYLE} ${color}`,
-      backgroundColor: `${color}${CELL_BG_OPACITY}`,
+      border: `${KMAP_GROUP_BORDER_WIDTH} ${KMAP_GROUP_BORDER_STYLE} ${color}`,
+      backgroundColor: `${color}${KMAP_CELL_BG_OPACITY}`,
     }
   }
 
@@ -294,14 +350,18 @@ export function getCellBorderStyles(
   }
 
   return {
-    borderTop: borders.top ? `${BORDER_WIDTH} ${BORDER_STYLE} ${color}` : '1px solid transparent',
+    borderTop: borders.top
+      ? `${KMAP_GROUP_BORDER_WIDTH} ${KMAP_GROUP_BORDER_STYLE} ${color}`
+      : '1px solid transparent',
     borderRight: borders.right
-      ? `${BORDER_WIDTH} ${BORDER_STYLE} ${color}`
+      ? `${KMAP_GROUP_BORDER_WIDTH} ${KMAP_GROUP_BORDER_STYLE} ${color}`
       : '1px solid transparent',
     borderBottom: borders.bottom
-      ? `${BORDER_WIDTH} ${BORDER_STYLE} ${color}`
+      ? `${KMAP_GROUP_BORDER_WIDTH} ${KMAP_GROUP_BORDER_STYLE} ${color}`
       : '1px solid transparent',
-    borderLeft: borders.left ? `${BORDER_WIDTH} ${BORDER_STYLE} ${color}` : '1px solid transparent',
-    backgroundColor: `${color}${CELL_BG_OPACITY}`,
+    borderLeft: borders.left
+      ? `${KMAP_GROUP_BORDER_WIDTH} ${KMAP_GROUP_BORDER_STYLE} ${color}`
+      : '1px solid transparent',
+    backgroundColor: `${color}${KMAP_CELL_BG_OPACITY}`,
   }
 }

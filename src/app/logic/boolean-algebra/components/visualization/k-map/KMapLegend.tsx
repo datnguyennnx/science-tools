@@ -1,19 +1,18 @@
 'use client'
 
-import React from 'react'
-import { GROUP_COLORS, GROUP_COLOR_NAMES } from './KMapGroupDetector'
+import { KMAP_GROUP_COLORS, KMAP_GROUP_COLOR_NAMES } from '../utils/colors'
 
 interface KMapLegendProps {
   className?: string
 }
 
-export const KMapLegend: React.FC<KMapLegendProps> = ({ className = '' }) => {
+export const KMapLegend = ({ className = '' }: KMapLegendProps) => {
   // Get the colors and names from the exported constants
-  const entries = Object.entries(GROUP_COLORS)
+  const entries = Object.entries(KMAP_GROUP_COLORS)
     .map(([size, color]) => ({
       size: parseInt(size),
       color,
-      name: GROUP_COLOR_NAMES[parseInt(size) as keyof typeof GROUP_COLOR_NAMES],
+      name: KMAP_GROUP_COLOR_NAMES[parseInt(size) as keyof typeof KMAP_GROUP_COLOR_NAMES],
     }))
     .sort((a, b) => b.size - a.size) // Sort by size (largest first)
 
