@@ -131,7 +131,7 @@ const StageItem = memo(
           <div className="flex justify-between items-center">
             <h3
               className={cn(
-                'font-semibold text-base',
+                'font-semibold text-sm',
                 status === 'completed'
                   ? 'text-muted-foreground'
                   : status === 'current'
@@ -237,12 +237,9 @@ export function CurrentSectionDisplay({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={cn('fixed top-16 right-6 w-80', 'z-50')}
+            className={cn('fixed top-16 right-2 w-64', 'z-50')}
           >
-            <div
-              className="max-h-[80vh] overflow-y-auto pr-2 no-scrollbar"
-              ref={timelineContainerRef}
-            >
+            <div className="max-h-[80vh] overflow-y-auto no-scrollbar" ref={timelineContainerRef}>
               <div className="p-2">
                 {timelineStages.map((stage, index) => {
                   const status: StageStatus =
