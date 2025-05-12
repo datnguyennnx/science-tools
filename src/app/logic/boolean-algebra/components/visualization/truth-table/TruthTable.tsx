@@ -20,107 +20,13 @@ import { Button } from '@/components/ui/button'
 import { Maximize, Minimize } from 'lucide-react'
 
 // --- Engine Imports ---
-import { ExpressionParser as EngineExpressionParser, type BooleanExpression } from '../../engine'
-import { evaluateExpression as engineEvaluateExpression } from '../../engine/evaluator'
-import { latexToBoolean as engineLatexToBoolean } from '../../engine/converter/latex-converter'
+import { ExpressionParser as EngineExpressionParser, type BooleanExpression } from '../../../engine' // Adjusted path
+import { evaluateExpression as engineEvaluateExpression } from '../../../engine/evaluator' // Adjusted path
+import { latexToBoolean as engineLatexToBoolean } from '../../../engine/converter/latex-converter' // Adjusted path
 // --- End Engine Imports ---
 
-interface TruthTableProps {
-  expression: string
-  variables?: string[]
-}
-
-// --- Helper to get all sub-expressions from AST ---
-interface SubExpressionStep {
-  str: string // String representation for display and key
-  ast: BooleanExpression // AST node for evaluation
-  isFinal: boolean // True if this is the main (final) expression
-}
-
-const getAllSubExpressions = (
-  mainAstNode: BooleanExpression,
-  exprToString: (ast: BooleanExpression) => string
-): SubExpressionStep[] => {
-  const collectedExpressions = new Map<string, BooleanExpression>()
-
-  function visit(currentNode: BooleanExpression) {
-    if (!currentNode) return
-
-    if (currentNode.left) {
-      visit(currentNode.left)
-    }
-    if (currentNode.right) {
-      visit(currentNode.right)
-    }
-
-    // Collect operator nodes and the main node itself
-    if (currentNode.type !== 'VARIABLE' && currentNode.type !== 'CONSTANT') {
-      const strRepresentation = exprToString(currentNode)
-      if (!collectedExpressions.has(strRepresentation)) {
-        collectedExpressions.set(strRepresentation, currentNode)
-      }
-    }
-  }
-
-  visit(mainAstNode)
-
-  const mainExpressionStr = exprToString(mainAstNode)
-  // Ensure the main expression is always included
-  if (!collectedExpressions.has(mainExpressionStr)) {
-    collectedExpressions.set(mainExpressionStr, mainAstNode)
-  }
-
-  let steps = Array.from(collectedExpressions.entries()).map(([str, ast]) => ({
-    str,
-    ast,
-    isFinal: false,
-  }))
-
-  // Sort by string length as a proxy for complexity, shorter expressions first.
-  steps.sort((a, b) => a.str.length - b.str.length)
-
-  // Ensure the main expression is the last one and marked as final.
-  // Remove it from its current position if it exists and append it.
-  const mainIndex = steps.findIndex(step => step.str === mainExpressionStr)
-  if (mainIndex > -1) {
-    const mainStep = steps.splice(mainIndex, 1)[0]
-    steps.push({ ...mainStep, isFinal: true })
-  } else {
-    // This case should ideally not happen if main expression was added correctly
-    steps.push({ str: mainExpressionStr, ast: mainAstNode, isFinal: true })
-  }
-
-  // Filter out single variables or constants if they are not the main expression itself,
-  // as variables are already columns.
-  steps = steps.filter(step => {
-    if (step.isFinal) return true // Always keep the final expression
-    return step.ast.type !== 'VARIABLE' && step.ast.type !== 'CONSTANT'
-  })
-
-  return steps
-}
-// --- End Helper ---
-
-// Extract all variables from an expression string (can be simplified or derived from AST later if needed)
-const extractVariables = (expression: string): string[] => {
-  const uniqueVars = new Set<string>()
-  // Regex to find uppercase letters not part of common logic words like TRUE, FALSE, NOT, AND, OR etc.
-  // This is a simplified approach; a robust solution would parse or use AST.
-  // const variableRegex = /([A-Z])(?<!TRU)(?<!FALS)(?<!NO)(?<!AN)(?<!O)/g // improved regex to avoid matching parts of keywords
-
-  // Simpler regex for variables if the above is too complex or restrictive for some cases
-  const simplerVarRegex = /[A-Z]/g
-  const tempExpression = expression.replace(/TRUE|FALSE|NOT|AND|OR|XOR|NAND|NOR|XNOR/g, '') // Remove keywords
-
-  let match
-  while ((match = simplerVarRegex.exec(tempExpression)) !== null) {
-    if (match[0].length === 1) {
-      // Ensure it's a single uppercase letter
-      uniqueVars.add(match[0])
-    }
-  }
-  return Array.from(uniqueVars).sort()
-}
+import type { TruthTableProps, SubExpressionStep } from './types' // Import from local types
+import { getAllSubExpressions, extractVariables } from './TrueTableEngine' // Import from local engine
 
 export function TruthTable({ expression, variables: propVariables }: TruthTableProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -139,9 +45,12 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
     // Check for empty expression FIRST - this is an initial state, not necessarily an error for display purposes.
     if (!expression || !expression.trim()) {
       return {
-        variablesToUse: [],
-        subExpressionStepsForColumns: [],
-        rows: [],
+        variablesToUse: [] as string[],
+        subExpressionStepsForColumns: [] as SubExpressionStep[],
+        rows: [] as Array<{
+          variableValues: Record<string, boolean>
+          stepResults: Record<string, boolean>
+        }>,
         errorOccurred: false, // Treat as not an error for display, but an initial state.
         errorMessage: 'Enter an expression and click Simplify to generate a Truth Table.', // New message
         isInitialEmptyState: true, // Flag for initial empty state
@@ -166,7 +75,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
         propVariables && propVariables.length > 0 ? propVariables : astBasedVariables
       const localVariablesToUse = initialVars.length > 0 ? initialVars : extractVariables(rawInput)
 
-      const steps = mainAst
+      const steps: SubExpressionStep[] = mainAst // Explicitly type steps
         ? getAllSubExpressions(mainAst, EngineExpressionParser.toBooleanString)
         : []
       if (steps.length === 0 && mainAst) {
@@ -176,7 +85,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
           isFinal: true,
         })
       }
-      const subExpressionStepsForColumns = steps
+      const subExpressionStepsForColumns: SubExpressionStep[] = steps // Assign typed steps
 
       const localRows: Array<{
         variableValues: Record<string, boolean>
@@ -211,9 +120,12 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
       errorOccurred = true
       errorMessage = err instanceof Error ? err.message : 'TEST: Failed to generate truth table.'
       return {
-        variablesToUse: [],
-        subExpressionStepsForColumns: [],
-        rows: [],
+        variablesToUse: [] as string[],
+        subExpressionStepsForColumns: [] as SubExpressionStep[],
+        rows: [] as Array<{
+          variableValues: Record<string, boolean>
+          stepResults: Record<string, boolean>
+        }>,
         errorOccurred,
         errorMessage,
         isInitialEmptyState: false, // This is a true error state
@@ -316,7 +228,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
           <Table className="w-full min-w-max table-auto">
             <TableHeader>
               <TableRow>
-                {memoizedTableData.variablesToUse.map(variable => (
+                {memoizedTableData.variablesToUse.map((variable: string) => (
                   <TableHead
                     key={`var-${variable}`}
                     className="text-center px-1 py-2 text-xs sm:text-sm whitespace-nowrap"
@@ -324,7 +236,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
                     <KatexFormula formula={variable} />
                   </TableHead>
                 ))}
-                {memoizedTableData.subExpressionStepsForColumns.map(step => (
+                {memoizedTableData.subExpressionStepsForColumns.map((step: SubExpressionStep) => (
                   <TableHead
                     key={`step-${step.str}`}
                     className="text-center px-1 py-2 text-xs sm:text-sm"
@@ -339,12 +251,12 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
             <TableBody>
               {memoizedTableData.rows.map(row => {
                 const rowKeyPart = memoizedTableData.variablesToUse
-                  .map(v => (row.variableValues[v] ? '1' : '0'))
+                  .map((v: string) => (row.variableValues[v] ? '1' : '0'))
                   .join('')
                 const stableRowKey = `row-${rowKeyPart}`
                 return (
                   <TableRow key={stableRowKey}>
-                    {memoizedTableData.variablesToUse.map(variable => (
+                    {memoizedTableData.variablesToUse.map((variable: string) => (
                       <TableCell
                         key={`cell-${stableRowKey}-var-${variable}`}
                         className="text-center p-1 text-xs sm:text-sm"
@@ -354,16 +266,18 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
                         />
                       </TableCell>
                     ))}
-                    {memoizedTableData.subExpressionStepsForColumns.map(step => (
-                      <TableCell
-                        key={`cell-${stableRowKey}-step-${step.str}`}
-                        className="text-center p-1 text-xs sm:text-sm"
-                      >
-                        <KatexFormula
-                          formula={row.stepResults[step.str] ? '\\text{T}' : '\\text{F}'}
-                        />
-                      </TableCell>
-                    ))}
+                    {memoizedTableData.subExpressionStepsForColumns.map(
+                      (step: SubExpressionStep) => (
+                        <TableCell
+                          key={`cell-${stableRowKey}-step-${step.str}`}
+                          className="text-center p-1 text-xs sm:text-sm"
+                        >
+                          <KatexFormula
+                            formula={row.stepResults[step.str] ? '\\text{T}' : '\\text{F}'}
+                          />
+                        </TableCell>
+                      )
+                    )}
                   </TableRow>
                 )
               })}

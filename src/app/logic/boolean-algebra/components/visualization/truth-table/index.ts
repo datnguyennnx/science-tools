@@ -1,0 +1,1 @@
+export { TruthTable } from './TruthTable'
