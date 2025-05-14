@@ -54,24 +54,64 @@ export function AlgorithmInfoDisplay({
   const displayImgSrc = img && img.trim() !== '' ? img : '/unknow-person.png'
 
   return (
-    <Card className="w-full h-full flex flex-col ">
+    <Card className="w-full h-full flex flex-col overflow-hidden ">
       <CardHeader>
         <CardTitle>{name}</CardTitle>
         <CardDescription>{randomQuote}</CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-x-6 gap-y-4 flex-grow overflow-y-auto pt-0 text-sm">
-        {/* Left Column: Description & Complexity (md:col-span-2) */}
-        <div className="md:col-span-3 space-y-4 ">
-          <div>
-            <h3 className="text-md font-semibold text-foreground">Description</h3>
-            <p className="text-muted-foreground leading-relaxed text-xs whitespace-pre-line">
-              {description}
-            </p>
+      <CardContent className="flex-grow overflow-y-auto pt-0 text-sm flex flex-col space-y-6 no-scrollbar">
+        {/* Upper Section: Description, Image, Info */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-x-6 gap-y-4">
+          {/* Left Column: Description */}
+          <div className="md:col-span-3">
+            <div>
+              <h3 className="text-md font-semibold text-foreground">Description</h3>
+              <p className="text-muted-foreground leading-relaxed text-xs whitespace-pre-line">
+                {description}
+              </p>
+            </div>
           </div>
 
-          {complexity && (
-            <div>
-              <h2 className="text-md font-semibold mb-2 text-foreground ">Complexity Analysis</h2>
+          {/* Right Column: Image and Origin */}
+          <div className="md:col-span-2 space-y-4">
+            {displayImgSrc && (
+              <div className="relative h-48 aspect-square md:h-60 md:w-full md:aspect-none rounded-md shadow-sm">
+                <Image
+                  src={displayImgSrc}
+                  alt={`${name} visualization`}
+                  fill={true}
+                  className="rounded-md object-cover"
+                  priority
+                />
+              </div>
+            )}
+            {origin && (
+              <div>
+                <h3 className="text-md font-semibold overflow-hidden text-foreground">
+                  Information
+                </h3>
+                <div className="space-y-1 text-xs">
+                  <div className="flex space-x-2">
+                    <h2 className="font-medium text-foreground/80 shrink-0">Authors: </h2>
+                    <h2>{origin.name}</h2>
+                  </div>
+                  {origin.year && (
+                    <div className="flex space-x-2">
+                      <h2 className="font-medium text-foreground/80  shrink-0">Year:</h2>
+                      <h2>{typeof origin.year === 'number' ? `c. ${origin.year}` : origin.year}</h2>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Lower Section: Complexity Analysis */}
+        {complexity && (
+          <div className="space-y-2">
+            <h2 className="text-md font-semibold text-foreground ">Complexity Analysis</h2>
+            <div className="overflow-x-auto rounded-md border">
               <Table className="text-xs">
                 <TableHeader>
                   <TableRow>
@@ -95,40 +135,8 @@ export function AlgorithmInfoDisplay({
                 </TableBody>
               </Table>
             </div>
-          )}
-        </div>
-
-        {/* Right Column: Image and Origin (md:col-span-1) */}
-        <div className="md:col-span-2 space-y-4">
-          {displayImgSrc && (
-            <div className="relative h-48 aspect-square md:h-60 md:w-full md:aspect-none rounded-md overflow-hidden shadow-sm">
-              <Image
-                src={displayImgSrc}
-                alt={`${name} visualization`}
-                fill={true}
-                className="rounded-md object-cover"
-                priority
-              />
-            </div>
-          )}
-          {origin && (
-            <div>
-              <h3 className="text-md font-semibold mb-2 text-foreground">Information</h3>
-              <div className="space-y-1 text-xs">
-                <div className="flex">
-                  <h2 className="font-medium text-foreground/80 w-20 shrink-0">Authors: </h2>
-                  <h2>{origin.name}</h2>
-                </div>
-                {origin.year && (
-                  <div className="flex">
-                    <h2 className="font-medium text-foreground/80 w-20 shrink-0">Year:</h2>
-                    <h2>{typeof origin.year === 'number' ? `c. ${origin.year}` : origin.year}</h2>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
