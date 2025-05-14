@@ -17,7 +17,6 @@ import {
   pancakeSortGenerator,
   timSortGenerator,
   gnomeSortGenerator,
-  bitonicSortGenerator,
   pigeonholeSortGenerator,
   cycleSortGenerator,
   treeSortGenerator,
@@ -337,19 +336,6 @@ const algorithms: SortAlgorithm[] = [
     complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
     origin: { name: 'Jacob E. Goodman', year: 1975 },
     img: 'https://www.navonarecords.com/nv/wp-content/uploads/2022/01/Jacob-Goodman.jpg',
-  },
-  {
-    id: 'bitonicSort',
-    name: 'Bitonic Sort',
-    description:
-      'Developed by Kenneth E. Batcher in 1968, Bitonic Sort is a parallel sorting algorithm that uses bitonic sequences and sorting networks. A bitonic sequence is a sequence that first monotonically increases and then monotonically decreases, or vice versa. The algorithm repeatedly merges bitonic sequences to create larger bitonic sequences until the entire sequence is sorted. It is particularly well-suited for implementation on parallel hardware due to its regular comparison structure.',
-    generator: bitonicSortGenerator,
-    complexity: {
-      time: { best: 'O(n log^2 n)', average: 'O(n log^2 n)', worst: 'O(n log^2 n)' },
-      space: 'O(n log^2 n)',
-    },
-    origin: { name: 'Kenneth E. Batcher', year: 1968 },
-    img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTEz0wn7EMxQ-yxtoeDEINcGtldHaIDfRCRWw&s',
   },
   {
     id: 'oddEvenSort',
