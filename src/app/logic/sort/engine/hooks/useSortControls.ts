@@ -3,7 +3,7 @@ import type { SortStep } from '../types'
 import type { SortAlgorithm } from '../algorithmRegistry'
 import type { SortStats } from '../../components/AuxiliaryVisualizer'
 
-const MIN_ARRAY_SIZE = 10
+const MIN_ARRAY_SIZE = 5
 const MAX_ARRAY_SIZE = 200
 const DEFAULT_ARRAY_SIZE = 20
 const MIN_VALUE = 10
@@ -88,6 +88,52 @@ export const useSortControls = ({
     return Math.max(MIN_DELAY_MS, delay)
   }, [speed])
 
+  const processActiveGeneratorStep = useCallback(
+    (
+      generatorStep: SortStep,
+      currentLiveStats: Partial<SortStats> | null,
+      visualStartTime: number | null,
+      delayMilliseconds: number
+    ): Partial<SortStats> => {
+      const newLiveStats: Partial<SortStats> = { ...(currentLiveStats || {}) }
+      if (generatorStep.currentStats) {
+        Object.assign(newLiveStats, generatorStep.currentStats)
+      }
+      newLiveStats.delay = `${delayMilliseconds.toFixed(1)} ms`
+      if (visualStartTime) {
+        const elapsedTime = Date.now() - visualStartTime
+        newLiveStats.visualTime = `${(elapsedTime / 1000).toFixed(2)} s`
+        newLiveStats.sortTime = newLiveStats.visualTime // Assuming sortTime mirrors visualTime during live updates
+      }
+      return newLiveStats
+    },
+    []
+  )
+
+  const calculateTimingStats = useCallback(
+    (
+      currentLiveStats: Partial<SortStats> | null,
+      visualStartTime: number | null,
+      delayMilliseconds: number,
+      isPausedForDisplay?: boolean // Specifically for stepForward's "Paused" delay display
+    ): Partial<SortStats> => {
+      const timingStats: Partial<SortStats> = {}
+      if (visualStartTime) {
+        const finalElapsedTime = Date.now() - visualStartTime
+        timingStats.visualTime = `${(finalElapsedTime / 1000).toFixed(2)} s`
+        timingStats.sortTime = timingStats.visualTime
+      } else {
+        timingStats.visualTime = currentLiveStats?.visualTime || '-'
+        timingStats.sortTime = currentLiveStats?.sortTime || '-'
+      }
+      timingStats.delay = isPausedForDisplay
+        ? 'Paused'
+        : currentLiveStats?.delay || `${delayMilliseconds.toFixed(1)} ms`
+      return timingStats
+    },
+    []
+  )
+
   const nextStep = useCallback(() => {
     if (isPaused) return
     if (!sortGeneratorRef.current) return
@@ -99,86 +145,111 @@ export const useSortControls = ({
       setSortSteps(prevSteps => [...prevSteps, currentStep])
       setCurrentStepIndex(prevIndex => prevIndex + 1)
 
-      const updatedLiveStats: Partial<SortStats> = { ...(liveSortStats || {}) }
-      if (currentStep.currentStats) {
-        Object.assign(updatedLiveStats, currentStep.currentStats)
-      }
-      updatedLiveStats.delay = `${calculateDelay().toFixed(1)} ms`
-      if (visualStartTimeRef.current) {
-        const currentElapsedTime = Date.now() - visualStartTimeRef.current
-        updatedLiveStats.visualTime = `${(currentElapsedTime / 1000).toFixed(2)} s`
-        updatedLiveStats.sortTime = updatedLiveStats.visualTime
-      }
+      const updatedLiveStats: Partial<SortStats> = processActiveGeneratorStep(
+        currentStep,
+        liveSortStats,
+        visualStartTimeRef.current,
+        calculateDelay()
+      )
       setLiveSortStats(updatedLiveStats)
 
       timeoutRef.current = setTimeout(nextStep, calculateDelay())
     } else {
       clearSortingTimeout()
-      let determinedFinalArray: ReadonlyArray<number>
-      let determinedStats: SortStats | Partial<SortStats> = { ...(liveSortStats || {}) }
 
+      const timingStats = calculateTimingStats(
+        liveSortStats,
+        visualStartTimeRef.current,
+        calculateDelay()
+      )
       if (visualStartTimeRef.current) {
-        const finalElapsedTime = Date.now() - visualStartTimeRef.current
-        determinedStats.visualTime = `${(finalElapsedTime / 1000).toFixed(2)} s`
-        determinedStats.sortTime = determinedStats.visualTime
-        visualStartTimeRef.current = null
-      } else {
-        determinedStats.visualTime = '-'
-        determinedStats.sortTime = '-'
+        visualStartTimeRef.current = null // Clear after use
       }
-      determinedStats.delay = `${calculateDelay().toFixed(1)} ms`
 
-      const genResultValue = result.value as unknown
+      let returnedStats: Partial<SortStats> = {}
+      // Ensure result.value and result.value.stats are properly typed and checked
+      const genResultValue = result.value as { finalArray?: number[]; stats?: Partial<SortStats> }
 
-      if (
-        typeof genResultValue === 'object' &&
-        genResultValue !== null &&
-        'finalArray' in genResultValue &&
-        Array.isArray((genResultValue as { finalArray: unknown }).finalArray)
-      ) {
-        determinedFinalArray = (genResultValue as { finalArray: ReadonlyArray<number> }).finalArray
-        if (
-          'stats' in genResultValue &&
-          typeof (genResultValue as { stats: unknown }).stats === 'object' &&
-          (genResultValue as { stats: unknown }).stats !== null
-        ) {
-          determinedStats = {
-            ...determinedStats,
-            ...(genResultValue as { stats: Partial<SortStats> }).stats,
-          }
+      if (typeof genResultValue === 'object' && genResultValue !== null && genResultValue.stats) {
+        returnedStats = genResultValue.stats
+      }
+
+      const lastYieldedStep = sortSteps[currentStepIndex]
+      // Use finalArray from generator result if available, otherwise fallback
+      const finalArrayFromGenerator = genResultValue?.finalArray
+      const arrayForStep = finalArrayFromGenerator
+        ? [...finalArrayFromGenerator]
+        : lastYieldedStep?.array
+          ? [...lastYieldedStep.array]
+          : [...array]
+
+      const lastYieldedStepCurrentStats = lastYieldedStep?.currentStats || {}
+
+      const finalCombinedStats: SortStats = {
+        ...(liveSortStats || {}), // Start with any existing live stats
+        ...lastYieldedStepCurrentStats, // Overlay stats from the last actual step
+        ...returnedStats, // Overlay stats directly returned by the generator
+        ...timingStats, // Overlay the calculated timing stats
+        numElements: arrayForStep.length, // Use the length of the determined final array
+      } as SortStats
+
+      if (lastYieldedStep || finalArrayFromGenerator) {
+        const stepToUpdateIndex = lastYieldedStep ? currentStepIndex : -1 // -1 if we need to add a new final step
+
+        const updatedStepData: SortStep = {
+          array: arrayForStep,
+          message:
+            returnedStats.algorithmName || lastYieldedStep?.message
+              ? `${returnedStats.algorithmName || finalCombinedStats.algorithmName || 'Algorithm'} Complete!`
+              : 'Sort Complete!',
+          sortedIndices: [...Array(arrayForStep.length).keys()],
+          highlightedIndices: lastYieldedStep?.highlightedIndices?.length
+            ? lastYieldedStep.highlightedIndices
+            : [],
+          comparisonIndices: lastYieldedStep?.comparisonIndices?.length
+            ? lastYieldedStep.comparisonIndices
+            : [],
+          swappingIndices:
+            lastYieldedStep?.swappingIndices !== undefined ? lastYieldedStep.swappingIndices : null,
+          activeRange: lastYieldedStep?.activeRange,
+          currentStats: finalCombinedStats, // Crucially, use the fully combined stats
         }
-      } else if (Array.isArray(genResultValue)) {
-        determinedFinalArray = genResultValue
-      } else {
-        if (sortSteps[currentStepIndex] && sortSteps[currentStepIndex].array) {
-          determinedFinalArray = [...sortSteps[currentStepIndex].array]
+
+        if (stepToUpdateIndex !== -1 && sortSteps[stepToUpdateIndex]) {
+          setSortSteps(prevSteps => {
+            const newSteps = [...prevSteps]
+            newSteps[stepToUpdateIndex] = {
+              ...prevSteps[stepToUpdateIndex], // Preserve other properties of the last yielded step
+              ...updatedStepData, // Overlay with new final data
+            }
+            return newSteps
+          })
         } else {
-          determinedFinalArray = [...array]
+          // This case should ideally not be hit if a sort was in progress,
+          // but as a fallback, add a new step.
+          setSortSteps(prevSteps => [...prevSteps, updatedStepData])
+          setCurrentStepIndex(prevIndex => prevIndex + 1)
         }
       }
+      // If lastYieldedStep was undefined (shouldn't happen if sorting started),
+      // no step update occurs, but stats and sorting state are still finalized.
 
-      const finalStepObject: SortStep = {
-        array: determinedFinalArray,
-        message: 'Sort Complete!',
-        sortedIndices: [...Array(determinedFinalArray.length).keys()],
-        currentStats: determinedStats as SortStats,
-      }
-
-      setSortSteps(prevSteps => [...prevSteps, finalStepObject])
-      setCurrentStepIndex(prevIndex => prevIndex + 1)
-      setFinalSortStats(determinedStats as SortStats)
+      setFinalSortStats(finalCombinedStats)
+      setLiveSortStats(null)
       setIsSorting(false)
       setIsPaused(false)
       sortGeneratorRef.current = null
     }
   }, [
     isPaused,
-    calculateDelay,
     clearSortingTimeout,
     sortSteps,
     currentStepIndex,
     array,
     liveSortStats,
+    calculateDelay,
+    processActiveGeneratorStep,
+    calculateTimingStats,
   ])
 
   const startSort = useCallback(() => {
@@ -239,75 +310,95 @@ export const useSortControls = ({
       setSortSteps(prevSteps => [...prevSteps, currentStep])
       setCurrentStepIndex(prevIndex => prevIndex + 1)
 
-      const updatedLiveStats: Partial<SortStats> = { ...(liveSortStats || {}) }
-      if (currentStep.currentStats) {
-        Object.assign(updatedLiveStats, currentStep.currentStats)
-      }
-      if (visualStartTimeRef.current) {
-        const currentElapsedTime = Date.now() - visualStartTimeRef.current
-        updatedLiveStats.visualTime = `${(currentElapsedTime / 1000).toFixed(2)} s`
-        updatedLiveStats.sortTime = updatedLiveStats.visualTime
-      }
+      const updatedLiveStats: Partial<SortStats> = processActiveGeneratorStep(
+        currentStep,
+        liveSortStats,
+        visualStartTimeRef.current,
+        calculateDelay()
+      )
       setLiveSortStats(updatedLiveStats)
     } else {
-      let determinedFinalArray: ReadonlyArray<number>
-      let determinedStats: SortStats | Partial<SortStats> = { ...(liveSortStats || {}) }
+      clearSortingTimeout() // Clear any pending timeout for autoplay
 
+      const baseStats = { ...(liveSortStats || {}) }
+      const timingPart = calculateTimingStats(
+        baseStats,
+        visualStartTimeRef.current,
+        calculateDelay(),
+        isPaused // Pass isPaused for the "Paused" delay display
+      )
       if (visualStartTimeRef.current) {
-        const finalElapsedTime = Date.now() - visualStartTimeRef.current
-        determinedStats.visualTime = `${(finalElapsedTime / 1000).toFixed(2)} s`
-        determinedStats.sortTime = determinedStats.visualTime
-        visualStartTimeRef.current = null
-      } else {
-        determinedStats.visualTime = '-'
-        determinedStats.sortTime = '-'
+        visualStartTimeRef.current = null // Clear after use
       }
-      determinedStats.delay = isPaused ? 'Paused' : `${calculateDelay().toFixed(1)} ms`
 
-      const genResultValue = result.value as unknown
+      let determinedFinalArray: ReadonlyArray<number>
+      let determinedStats: Partial<SortStats> = {
+        ...baseStats,
+        ...timingPart,
+      }
 
-      if (
-        typeof genResultValue === 'object' &&
-        genResultValue !== null &&
-        'finalArray' in genResultValue &&
-        Array.isArray((genResultValue as { finalArray: unknown }).finalArray)
-      ) {
-        determinedFinalArray = (genResultValue as { finalArray: ReadonlyArray<number> }).finalArray
-        if (
-          'stats' in genResultValue &&
-          typeof (genResultValue as { stats: unknown }).stats === 'object' &&
-          (genResultValue as { stats: unknown }).stats !== null
-        ) {
+      const genResultValue = result.value as {
+        finalArray?: ReadonlyArray<number>
+        stats?: Partial<SortStats>
+      }
+
+      if (genResultValue?.finalArray && Array.isArray(genResultValue.finalArray)) {
+        determinedFinalArray = genResultValue.finalArray
+        if (genResultValue.stats && typeof genResultValue.stats === 'object') {
           determinedStats = {
             ...determinedStats,
-            ...(genResultValue as { stats: Partial<SortStats> }).stats,
+            ...genResultValue.stats,
           }
         }
       } else if (Array.isArray(genResultValue)) {
+        // Fallback if generator directly returns an array (older convention)
         determinedFinalArray = genResultValue
       } else {
-        if (sortSteps[currentStepIndex] && sortSteps[currentStepIndex].array) {
-          determinedFinalArray = [...sortSteps[currentStepIndex].array]
-        } else {
-          determinedFinalArray = [...array]
-        }
+        // Fallback to the array from the last known step if generator result is unexpected
+        determinedFinalArray = sortSteps[currentStepIndex]?.array
+          ? [...sortSteps[currentStepIndex].array]
+          : [...array]
+      }
+
+      // Ensure numElements is set
+      determinedStats.numElements = determinedFinalArray.length
+      if (!determinedStats.algorithmName && selectedAlgorithm?.name) {
+        determinedStats.algorithmName = selectedAlgorithm.name
       }
 
       const finalStepObject: SortStep = {
         array: determinedFinalArray,
-        message: 'Sort Complete!',
+        message: `${determinedStats.algorithmName || 'Sort'} Complete! (Stepped)`,
         sortedIndices: [...Array(determinedFinalArray.length).keys()],
-        currentStats: determinedStats as SortStats,
+        currentStats: determinedStats as SortStats, // Cast as SortStats, assuming it's complete
+        // Clear other visual cues for the final step
+        highlightedIndices: [],
+        comparisonIndices: [],
+        swappingIndices: null,
+        activeRange: undefined,
       }
 
       setSortSteps(prevSteps => [...prevSteps, finalStepObject])
       setCurrentStepIndex(prevIndex => prevIndex + 1)
       setFinalSortStats(determinedStats as SortStats)
+      setLiveSortStats(null) // Clear live stats as we have final stats now
       setIsSorting(false)
       setIsPaused(false)
       sortGeneratorRef.current = null
     }
-  }, [isSorting, isPaused, clearSortingTimeout, sortSteps, currentStepIndex, array, liveSortStats])
+  }, [
+    isSorting,
+    isPaused,
+    clearSortingTimeout,
+    sortSteps,
+    currentStepIndex,
+    array,
+    liveSortStats,
+    selectedAlgorithm,
+    calculateDelay,
+    processActiveGeneratorStep,
+    calculateTimingStats,
+  ])
 
   useEffect(() => {
     if (isSorting && !isPaused && justResumedRef.current) {
