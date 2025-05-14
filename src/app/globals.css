@@ -66,6 +66,13 @@
   --kmap-group-quad: var(--chart-2); /* Example: Assign chart-2 to quads */
   --kmap-group-pair: var(--chart-3); /* Example: Assign chart-3 to pairs */
   --kmap-group-single: var(--chart-4); /* Example: Assign chart-4 to singles */
+
+  /* Sort Visualization Colors */
+  --color-sort-value: var(--sort-value);
+  --color-sort-highlight: var(--sort-highlight);
+  --color-sort-compare: var(--sort-compare);
+  --color-sort-sorted: var(--sort-sorted);
+  --color-sort-swap: var(--sort-swap); /* Added for swap state */
 }
 
 :root {
@@ -106,6 +113,13 @@
   --font-space-mono: 'Space Mono', monospace;
   --font-geist-sans: system-ui, sans-serif;
   --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Sort Visualization Colors */
+  --sort-value: oklch(0.7 0.1 260); /* More saturated blue */
+  --sort-highlight: oklch(0.8 0.18 90); /* Bright Yellow */
+  --sort-compare: oklch(0.65 0.22 25); /* Vibrant Red-Orange */
+  --sort-sorted: oklch(0.7 0.18 145); /* Clearer Green */
+  --sort-swap: oklch(0.65 0.22 310); /* New: Vibrant Magenta/Purple for swap */
 }
 
 .dark {
@@ -156,6 +170,13 @@
   --kmap-group-quad: var(--chart-2);
   --kmap-group-pair: var(--chart-3);
   --kmap-group-single: var(--chart-4);
+
+  /* Sort Visualization Colors (Dark) */
+  --sort-value: oklch(0.6 0.1 260); /* Deeper blue */
+  --sort-highlight: oklch(0.75 0.18 90); /* Slightly muted Yellow */
+  --sort-compare: oklch(0.6 0.22 25); /* Similar Red-Orange */
+  --sort-sorted: oklch(0.6 0.18 145); /* Deeper Green */
+  --sort-swap: oklch(0.6 0.22 310); /* New: Vibrant Magenta/Purple for swap (darker) */
 }
 
 @layer utilities {
@@ -177,5 +198,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
   }
 }
