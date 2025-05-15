@@ -54,51 +54,55 @@ export function AlgorithmInfoDisplay({
   const displayImgSrc = img && img.trim() !== '' ? img : '/unknow-person.png'
 
   return (
-    <Card className="w-full h-full flex flex-col overflow-hidden ">
+    <Card className="w-full h-full flex flex-col">
       <CardHeader>
         <CardTitle>{name}</CardTitle>
         <CardDescription>{randomQuote}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow overflow-y-auto pt-0 text-sm flex flex-col space-y-6 no-scrollbar">
         {/* Upper Section: Description, Image, Info */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-x-6 gap-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 w-full">
           {/* Left Column: Description */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-3 space-y-1">
             <div>
-              <h3 className="text-md font-semibold text-foreground">Description</h3>
-              <p className="text-muted-foreground leading-relaxed text-xs whitespace-pre-line">
+              <h3 className="text-lg font-semibold text-foreground mb-1">Description</h3>
+              <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-line">
                 {description}
               </p>
             </div>
           </div>
 
           {/* Right Column: Image and Origin */}
-          <div className="md:col-span-2 space-y-4">
+          <div className="flex flex-col items-center md:items-start md:col-span-2 space-y-4">
             {displayImgSrc && (
-              <div className="relative h-48 aspect-square md:h-60 md:w-full md:aspect-none rounded-md shadow-sm">
+              <div className="relative w-full max-w-[240px] sm:max-w-[280px] md:max-w-full aspect-[3/4] rounded-lg overflow-hidden shadow-lg group">
                 <Image
                   src={displayImgSrc}
-                  alt={`${name} visualization`}
-                  fill={true}
-                  className="rounded-md object-cover"
-                  priority
+                  alt={origin?.name ? `Photo of ${origin.name}` : `${name} author`}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 240px, (max-width: 768px) 280px, (max-width: 1024px) 30vw, 20vw"
                 />
               </div>
             )}
             {origin && (
-              <div>
-                <h3 className="text-md font-semibold overflow-hidden text-foreground">
-                  Information
-                </h3>
-                <div className="space-y-1 text-xs">
-                  <div className="flex space-x-2">
-                    <h2 className="font-medium text-foreground/80 shrink-0">Authors: </h2>
-                    <h2>{origin.name}</h2>
+              <div className="w-full pt-2">
+                <h3 className="text-lg font-semibold text-foreground mb-2">Information</h3>
+                <div className="space-y-1.5 text-sm">
+                  <div className="grid grid-cols-[min-content_1fr] items-start gap-x-2">
+                    <span className="font-medium text-foreground/80 whitespace-nowrap">
+                      Author(s):
+                    </span>
+                    <span className="text-foreground text-left">{origin.name}</span>
                   </div>
                   {origin.year && (
-                    <div className="flex space-x-2">
-                      <h2 className="font-medium text-foreground/80  shrink-0">Year:</h2>
-                      <h2>{typeof origin.year === 'number' ? `c. ${origin.year}` : origin.year}</h2>
+                    <div className="grid grid-cols-[min-content_1fr] items-start gap-x-2">
+                      <span className="font-medium text-foreground/80 whitespace-nowrap">
+                        Year:
+                      </span>
+                      <span className="text-foreground text-left">
+                        {typeof origin.year === 'number' ? `c. ${origin.year}` : origin.year}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -109,10 +113,10 @@ export function AlgorithmInfoDisplay({
 
         {/* Lower Section: Complexity Analysis */}
         {complexity && (
-          <div className="space-y-2">
-            <h2 className="text-md font-semibold text-foreground ">Complexity Analysis</h2>
+          <div className="space-y-2 pt-4">
+            <h2 className="text-lg font-semibold text-foreground mb-1">Complexity Analysis</h2>
             <div className="overflow-x-auto rounded-md border">
-              <Table className="text-xs">
+              <Table className="text-sm">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Aspect</TableHead>

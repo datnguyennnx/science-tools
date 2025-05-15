@@ -55,8 +55,8 @@ export default function SortPage(): React.JSX.Element {
   }, [selectedAlgorithmId, generateRandomArray])
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-8 gap-2 w-full min-h-[calc(100vh-6rem)]">
-      <div className="lg:col-span-5 xl:col-span-6">
+    <div className="grid grid-cols-1 xl:grid-cols-10 gap-2 w-full min-h-[calc(100vh-6rem)]">
+      <div className="lg:col-span-6 xl:col-span-7">
         <SortVisualizer
           currentSortStep={currentSortStep}
           arraySize={arraySize}
@@ -88,7 +88,7 @@ export default function SortPage(): React.JSX.Element {
         />
       </div>
 
-      <div className="lg:col-span-3 xl:col-span-2 flex flex-col gap-4 h-fit w-full">
+      <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-4 h-fit w-full">
         <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
         <AuxiliaryVisualizer
           sortStats={
