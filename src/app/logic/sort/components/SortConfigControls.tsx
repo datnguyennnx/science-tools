@@ -101,7 +101,7 @@ export function SortConfigControls({
           onValueChange={setSelectedAlgorithmId}
           name="algorithm-select-visualizer"
         >
-          <SelectTrigger className=" space-x-2">
+          <SelectTrigger className="space-x-2">
             <SelectValue placeholder="Select algorithm" />
           </SelectTrigger>
           <SelectContent>

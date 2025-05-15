@@ -25,7 +25,6 @@ export function SortChartDisplay({ currentSortStep }: SortChartDisplayProps): Re
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="flex items-center justify-center h-full text-muted-foreground text-sm w-full"
         >
           Array visualization will appear here.
         </motion.div>
@@ -36,9 +35,9 @@ export function SortChartDisplay({ currentSortStep }: SortChartDisplayProps): Re
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.3 }}
-          className="w-full h-full"
+          className="w-full p-2 border-2 rounded-md h-full"
         >
-          <ChartContainer config={chartConfig} className="w-full h-full">
+          <ChartContainer config={chartConfig} className="w-full min-h-[20rem] max-h-[35rem]">
             <BarChart
               accessibilityLayer
               data={currentSortStep.array.map((value, index) => ({
@@ -61,7 +60,7 @@ export function SortChartDisplay({ currentSortStep }: SortChartDisplayProps): Re
                 isAnimationActive={true}
                 animationDuration={300}
               >
-                {currentSortStep.array.map((_value, index) => {
+                {currentSortStep.array.map((value, index) => {
                   const isSorted = currentSortStep.sortedIndices?.includes(index)
                   const isHighlighted = currentSortStep.highlightedIndices?.includes(index)
                   const isCompared = currentSortStep.comparisonIndices?.includes(index)
@@ -98,7 +97,7 @@ export function SortChartDisplay({ currentSortStep }: SortChartDisplayProps): Re
 
                   return (
                     <Cell
-                      key={`cell-${index}`}
+                      key={`bar-${value}-${index}`}
                       fill={fill}
                       stroke={cellStroke}
                       strokeWidth={cellStrokeWidth}
@@ -110,7 +109,7 @@ export function SortChartDisplay({ currentSortStep }: SortChartDisplayProps): Re
               <Tooltip
                 content={<ChartTooltipContent indicator="dot" hideLabel />}
                 cursor={{ fill: 'var(--muted-foreground)', fillOpacity: 0.1 }}
-              />{' '}
+              />
             </BarChart>
           </ChartContainer>
         </motion.div>

@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   SORT_ALGORITHMS,
@@ -72,55 +74,36 @@ export const useAlgorithmSelection = ({
   }, [])
 
   useEffect(() => {
-    const isCurrentAlgorithmFilteredOut = !filteredAlgorithms.find(
-      algo => algo.id === selectedAlgorithmId
-    )
+    const isSelectedInFiltered = filteredAlgorithms.some(algo => algo.id === selectedAlgorithmId)
 
-    if (isCurrentAlgorithmFilteredOut) {
+    if (!isSelectedInFiltered) {
+      // Current selection is not in the filtered list
       if (filteredAlgorithms.length > 0) {
+        // If there are items in the filtered list, pick the first one
         handleSetSelectedAlgorithmId(filteredAlgorithms[0].id)
-      } else {
-        // Optional: Handle case where no algorithms match filters (e.g., show message or revert filters)
-        // For now, it will keep the last valid selectedAlgorithmId or become undefined if that was filtered out.
-        // If ALL_CATEGORIES, ensure a valid default is set if current is somehow invalid.
-        if (selectedTimeCategory !== ALL_CATEGORIES || selectedSpaceCategory !== ALL_CATEGORIES) {
-          // No action needed, it means filters are active and resulted in no matches.
+      }
+      // else: Filters are active and resulted in an empty list.
+      // The selectedAlgorithmId is now out of sync. We keep the stale ID to indicate no matches.
+    } else {
+      // Current selection IS in the filtered list.
+      // If filters are ALL_CATEGORIES (i.e., filteredAlgorithms === SORT_ALGORITHMS),
+      // ensure the selectedAlgorithmId is genuinely in SORT_ALGORITHMS (master list).
+      // This handles the case where an invalid initialSelectedAlgorithmId was provided.
+      const filtersAreOff =
+        selectedTimeCategory === ALL_CATEGORIES && selectedSpaceCategory === ALL_CATEGORIES
+      if (filtersAreOff) {
+        const isSelectedInMasterList = SORT_ALGORITHMS.some(algo => algo.id === selectedAlgorithmId)
+        if (!isSelectedInMasterList && SORT_ALGORITHMS.length > 0) {
+          handleSetSelectedAlgorithmId(SORT_ALGORITHMS[0].id)
         }
       }
-    } else if (
-      selectedTimeCategory === ALL_CATEGORIES &&
-      selectedSpaceCategory === ALL_CATEGORIES
-    ) {
-      // If filters are cleared, and current selected algorithm is not in full list (e.g. bad initial id), reset to default.
-      if (
-        !SORT_ALGORITHMS.find(algo => algo.id === selectedAlgorithmId) &&
-        SORT_ALGORITHMS.length > 0
-      ) {
-        handleSetSelectedAlgorithmId(SORT_ALGORITHMS[0].id)
-      }
     }
   }, [
+    selectedAlgorithmId,
     filteredAlgorithms,
-    selectedAlgorithmId,
+    handleSetSelectedAlgorithmId,
     selectedTimeCategory,
     selectedSpaceCategory,
-    handleSetSelectedAlgorithmId,
-  ])
-
-  // Effect to reset to a default algorithm if the current one becomes invalid and no filters are applied.
-  // This handles cases where selectedAlgorithmId might be stale or invalid for other reasons.
-  useEffect(() => {
-    if (selectedTimeCategory === ALL_CATEGORIES && selectedSpaceCategory === ALL_CATEGORIES) {
-      const currentExists = SORT_ALGORITHMS.some(algo => algo.id === selectedAlgorithmId)
-      if (!currentExists && SORT_ALGORITHMS.length > 0) {
-        handleSetSelectedAlgorithmId(SORT_ALGORITHMS[0].id)
-      }
-    }
-  }, [
-    selectedAlgorithmId,
-    selectedTimeCategory,
-    selectedSpaceCategory,
-    handleSetSelectedAlgorithmId,
   ])
 
   return {

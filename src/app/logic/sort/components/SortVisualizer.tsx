@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import type { SortStep } from '../engine/types'
+import type { SortStep, AuxiliaryStructure } from '../engine/types'
 import type {
   SortAlgorithm,
   TimeComplexityCategory,
@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SortConfigControls } from './SortConfigControls'
 import { SortActionButtons } from './SortActionButtons'
 import { SortChartDisplay } from './SortChartDisplay'
+import { AuxiliaryStructuresDisplay } from './AuxiliaryStructuresDisplay'
+import { SettingsControls } from './SettingsControls'
 
 interface SortVisualizerProps {
   currentSortStep: SortStep | null
@@ -40,6 +42,12 @@ interface SortVisualizerProps {
   spaceCategories: typeof SpaceComplexityCategory
   selectedSpaceCategory: string
   handleSpaceCategoryChange: (category: string) => void
+  auxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
+  maxValue: number
+  showAlgorithmInfo: boolean
+  onShowAlgorithmInfoChange: (checked: boolean) => void
+  showPseudoCode: boolean
+  onShowPseudoCodeChange: (checked: boolean) => void
 }
 
 export function SortVisualizer({
@@ -70,6 +78,12 @@ export function SortVisualizer({
   spaceCategories,
   selectedSpaceCategory,
   handleSpaceCategoryChange,
+  auxiliaryStructures,
+  maxValue,
+  showAlgorithmInfo,
+  onShowAlgorithmInfoChange,
+  showPseudoCode,
+  onShowPseudoCodeChange,
 }: SortVisualizerProps): React.JSX.Element {
   // Internal handlers remain for now, can be moved or simplified if props are passed directly
   const internalOnStart = () => {
@@ -104,36 +118,46 @@ export function SortVisualizer({
     handleSpaceCategoryChange(category)
   }
 
-  return (
-    <Card className="w-full h-full flex flex-col">
-      <CardHeader className="pb-2 space-y-4">
-        <CardTitle>Sort Visualization</CardTitle>
+  const hasAuxStructures = !!auxiliaryStructures && auxiliaryStructures.length > 0
 
-        <div className="flex flex-col lg:flex-row lg:items-start gap-6 pt-2">
-          <div className="w-full lg:flex-1">
-            <SortConfigControls
-              arraySize={arraySize}
-              setArraySize={setArraySize}
-              MIN_ARRAY_SIZE={MIN_ARRAY_SIZE}
-              MAX_ARRAY_SIZE={MAX_ARRAY_SIZE}
-              speed={speed}
-              setSpeed={setSpeed}
-              MIN_SPEED={MIN_SPEED}
-              MAX_SPEED={MAX_SPEED}
-              selectedAlgorithmId={selectedAlgorithmId}
-              setSelectedAlgorithmId={internalSetSelectedAlgorithmId}
-              algorithms={algorithms}
-              sortDirection={sortDirection}
-              setSortDirection={internalSetSortDirection}
-              timeCategories={timeCategories}
-              selectedTimeCategory={selectedTimeCategory}
-              handleTimeCategoryChange={internalHandleTimeCategoryChange}
-              spaceCategories={spaceCategories}
-              selectedSpaceCategory={selectedSpaceCategory}
-              handleSpaceCategoryChange={internalHandleSpaceCategoryChange}
+  return (
+    <Card>
+      <CardHeader className="space-y-8">
+        <CardTitle>Sort Visualization & Auxiliary Data</CardTitle>
+
+        <div className="flex flex-col xl:flex-row xl:items-start gap-6">
+          <SortConfigControls
+            arraySize={arraySize}
+            setArraySize={setArraySize}
+            MIN_ARRAY_SIZE={MIN_ARRAY_SIZE}
+            MAX_ARRAY_SIZE={MAX_ARRAY_SIZE}
+            speed={speed}
+            setSpeed={setSpeed}
+            MIN_SPEED={MIN_SPEED}
+            MAX_SPEED={MAX_SPEED}
+            selectedAlgorithmId={selectedAlgorithmId}
+            setSelectedAlgorithmId={internalSetSelectedAlgorithmId}
+            algorithms={algorithms}
+            sortDirection={sortDirection}
+            setSortDirection={internalSetSortDirection}
+            timeCategories={timeCategories}
+            selectedTimeCategory={selectedTimeCategory}
+            handleTimeCategoryChange={internalHandleTimeCategoryChange}
+            spaceCategories={spaceCategories}
+            selectedSpaceCategory={selectedSpaceCategory}
+            handleSpaceCategoryChange={internalHandleSpaceCategoryChange}
+          />
+
+          <div className="flex flex-col gap-4 xl:w-auto">
+            <SettingsControls
+              showAlgorithmInfo={showAlgorithmInfo}
+              onShowAlgorithmInfoChange={onShowAlgorithmInfoChange}
+              showPseudoCode={showPseudoCode}
+              onShowPseudoCodeChange={onShowPseudoCodeChange}
             />
           </div>
-          <div className="w-full lg:w-auto">
+
+          <div className="flex flex-col gap-4 xl:w-auto">
             <SortActionButtons
               onNewArray={internalOnNewArray}
               onStart={internalOnStart}
@@ -146,8 +170,15 @@ export function SortVisualizer({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-grow flex flex-col items-center justify-center">
+      <CardContent className="space-y-4">
         <SortChartDisplay currentSortStep={currentSortStep} />
+        {hasAuxStructures && (
+          <AuxiliaryStructuresDisplay
+            auxiliaryStructures={auxiliaryStructures}
+            maxValue={maxValue}
+            separateSection={false}
+          />
+        )}
       </CardContent>
     </Card>
   )

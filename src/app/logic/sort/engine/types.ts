@@ -49,6 +49,7 @@ export interface SortStats {
   sortTime?: string
   comparisons?: number
   swaps?: number
+  accesses?: number
   reversals?: number
   mainArrayWrites?: number
   auxiliaryArrayWrites?: number

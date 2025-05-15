@@ -38,12 +38,12 @@ export function AlgorithmInfoDisplay({
 
   if (!selectedAlgorithm) {
     return (
-      <Card className="w-full h-full flex flex-col">
+      <Card>
         <CardHeader>
           <CardTitle>Algorithm Details</CardTitle>
           <CardDescription>{randomQuote}</CardDescription>
         </CardHeader>
-        <CardContent className="flex-grow flex items-center justify-center">
+        <CardContent>
           <p className="text-muted-foreground">Select an algorithm to see its details.</p>
         </CardContent>
       </Card>
@@ -54,34 +54,63 @@ export function AlgorithmInfoDisplay({
   const displayImgSrc = img && img.trim() !== '' ? img : '/unknow-person.png'
 
   return (
-    <Card className="w-full h-full flex flex-col">
+    <Card>
       <CardHeader>
         <CardTitle>{name}</CardTitle>
         <CardDescription>{randomQuote}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow overflow-y-auto pt-0 text-sm flex flex-col space-y-6 no-scrollbar">
+      <CardContent>
         {/* Upper Section: Description, Image, Info */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {/* Left Column: Description */}
-          <div className="md:col-span-3 space-y-1">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground mb-1">Description</h3>
-              <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-line">
-                {description}
-              </p>
-            </div>
+          <div className="md:col-span-2 space-y-2">
+            <h3 className="text-lg font-semibold text-foreground mb-1">Description</h3>
+            <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-line">
+              {description}
+            </p>
+
+            {/* Lower Section: Complexity Analysis */}
+            {complexity && (
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-foreground mb-1">Complexity Analysis</h3>
+                <div className="overflow-x-auto rounded-md border">
+                  <Table className="text-sm">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Aspect</TableHead>
+                        <TableHead>Best</TableHead>
+                        <TableHead>Average</TableHead>
+                        <TableHead>Worst</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>Time Complexity</TableCell>
+                        <TableCell>{complexity.time.best}</TableCell>
+                        <TableCell>{complexity.time.average}</TableCell>
+                        <TableCell>{complexity.time.worst}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Space Complexity</TableCell>
+                        <TableCell colSpan={3}>{complexity.space}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column: Image and Origin */}
-          <div className="flex flex-col items-center md:items-start md:col-span-2 space-y-4">
+          <div className="flex flex-col items-center md:items-start md:col-span-1 space-y-4">
             {displayImgSrc && (
-              <div className="relative w-full max-w-[240px] sm:max-w-[280px] md:max-w-full aspect-[3/4] rounded-lg overflow-hidden shadow-lg group">
+              <div className="relative w-full max-w-[160px] sm:max-w-[180px] md:max-w-[200px] aspect-[3/4] rounded-lg overflow-hidden shadow-lg group">
                 <Image
                   src={displayImgSrc}
                   alt={origin?.name ? `Photo of ${origin.name}` : `${name} author`}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="(max-width: 640px) 240px, (max-width: 768px) 280px, (max-width: 1024px) 30vw, 20vw"
+                  sizes="(max-width: 640px) 160px, (max-width: 768px) 180px, 200px"
                 />
               </div>
             )}
@@ -110,37 +139,6 @@ export function AlgorithmInfoDisplay({
             )}
           </div>
         </div>
-
-        {/* Lower Section: Complexity Analysis */}
-        {complexity && (
-          <div className="space-y-2 pt-4">
-            <h2 className="text-lg font-semibold text-foreground mb-1">Complexity Analysis</h2>
-            <div className="overflow-x-auto rounded-md border">
-              <Table className="text-sm">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Aspect</TableHead>
-                    <TableHead>Best</TableHead>
-                    <TableHead>Average</TableHead>
-                    <TableHead>Worst</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Time Complexity</TableCell>
-                    <TableCell>{complexity.time.best}</TableCell>
-                    <TableCell>{complexity.time.average}</TableCell>
-                    <TableCell>{complexity.time.worst}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Space Complexity</TableCell>
-                    <TableCell colSpan={3}>{complexity.space}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )

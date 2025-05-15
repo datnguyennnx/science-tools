@@ -60,8 +60,9 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
     },
   ]
 
-  // Basic metrics (without timing metrics)
-  const basicMetrics = [
+  // Combined metrics (basic + advanced metrics)
+  const combinedMetrics = [
+    // Basic metrics
     {
       label: 'Num Elements',
       value: formatNum(stats.numElements),
@@ -82,10 +83,7 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
       value: formatNum(stats.swaps),
       description: descriptions.Swaps,
     },
-  ]
-
-  // Advanced metrics (unchanged)
-  const advancedMetrics = [
+    // Advanced metrics
     {
       label: 'Main Array Writes',
       value: formatNum(stats.mainArrayWrites),
@@ -119,14 +117,9 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
   ]
 
   const validTimingMetrics = timingMetrics.filter(metric => metric.value !== '-')
-  const validBasicMetrics = basicMetrics.filter(metric => metric.value !== '-')
-  const validAdvancedMetrics = advancedMetrics.filter(metric => metric.value !== '-')
+  const validCombinedMetrics = combinedMetrics.filter(metric => metric.value !== '-')
 
-  if (
-    validBasicMetrics.length === 0 &&
-    validAdvancedMetrics.length === 0 &&
-    validTimingMetrics.length === 0
-  ) {
+  if (validCombinedMetrics.length === 0 && validTimingMetrics.length === 0) {
     return (
       <section className="p-4 text-sm text-muted-foreground">
         No statistics available for this algorithm.
@@ -168,14 +161,14 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
         </>
       )}
 
-      {/* Basic Metrics Table */}
-      {validBasicMetrics.length > 0 && (
+      {/* Combined Metrics Table (Basic + Advanced) */}
+      {validCombinedMetrics.length > 0 && (
         <>
           <h3 className="text-sm font-medium mt-4 mb-2">Algorithm Performance</h3>
           <Table>
             <TableHeader>
               <TableRow>
-                {validBasicMetrics.map(metric => (
+                {validCombinedMetrics.map(metric => (
                   <TableHead key={metric.label}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -191,7 +184,7 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
             </TableHeader>
             <TableBody>
               <TableRow>
-                {validBasicMetrics.map(metric => (
+                {validCombinedMetrics.map(metric => (
                   <TableCell key={metric.label}>{metric.value}</TableCell>
                 ))}
               </TableRow>
@@ -200,45 +193,11 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
         </>
       )}
 
-      {/* Advanced Metrics Table */}
-      {validAdvancedMetrics.length > 0 && (
-        <>
-          <h3 className="text-sm font-medium mt-4 mb-2">Advanced Metrics</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {validAdvancedMetrics.map(metric => (
-                  <TableHead key={metric.label}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>{metric.label}</span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                {validAdvancedMetrics.map(metric => (
-                  <TableCell key={metric.label}>{metric.value}</TableCell>
-                ))}
-              </TableRow>
-            </TableBody>
-          </Table>
-        </>
+      {validCombinedMetrics.length === 0 && validTimingMetrics.some(m => m.value !== '-') && (
+        <div className="mt-4 p-4 text-center text-sm text-muted-foreground border-t border-dashed">
+          This algorithm does not utilize specific auxiliary data structures for visualization.
+        </div>
       )}
-
-      {validAdvancedMetrics.length === 0 &&
-        (validBasicMetrics.some(m => m.value !== '-') ||
-          validTimingMetrics.some(m => m.value !== '-')) && (
-          <div className="mt-4 p-4 text-center text-sm text-muted-foreground border-t border-dashed">
-            This algorithm does not utilize specific auxiliary data structures for visualization.
-          </div>
-        )}
     </section>
   )
 }

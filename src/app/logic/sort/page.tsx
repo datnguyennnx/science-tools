@@ -1,19 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  AlgorithmInfoDisplay,
-  AuxiliaryVisualizer,
-  SortVisualizer,
-  PseudoCodeDisplay,
-} from './components'
+import { AlgorithmInfoDisplay, SortVisualizer, PseudoCodeDisplay } from './components'
 import type { SupportedLanguages } from './components/PseudoCodeDisplay'
-import { useSortControls, useAlgorithmSelection } from './engine/hooks'
-import {
-  SORT_ALGORITHMS,
-  TimeComplexityCategory,
-  SpaceComplexityCategory,
-} from './engine/algorithmRegistry'
+import { useSortControls } from './engine/hooks'
+import { TimeComplexityCategory, SpaceComplexityCategory } from './engine/algorithmRegistry'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { useAlgorithmSelection } from './engine/hooks/useAlgorithmSelection'
 
 export default function SortPage(): React.JSX.Element {
   const {
@@ -48,30 +41,71 @@ export default function SortPage(): React.JSX.Element {
     pauseSort,
     resetSort,
     stepForward,
-    generateRandomArray,
     MAX_VALUE,
   } = useSortControls({
-    selectedAlgorithm: selectedAlgorithm || SORT_ALGORITHMS[0],
+    selectedAlgorithm: selectedAlgorithm || undefined,
   })
 
   const [currentPseudoCodeLanguage, setCurrentPseudoCodeLanguage] =
-    useState<SupportedLanguages>('plaintext')
+    useState<SupportedLanguages>('cpp')
+
+  const [activeTab, setActiveTab] = useState<'info' | 'code'>('info')
+  const [showAlgorithmInfo, setShowAlgorithmInfo] = useState<boolean>(true)
+  const [showPseudoCode, setShowPseudoCode] = useState<boolean>(true)
 
   useEffect(() => {
-    generateRandomArray()
-  }, [selectedAlgorithmId, arraySize, sortDirection])
+    resetSort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAlgorithmId, sortDirection])
+
+  // Effect to manage activeTab when visibility changes
+  useEffect(() => {
+    if (!showAlgorithmInfo && activeTab === 'info') {
+      if (showPseudoCode) {
+        setActiveTab('code')
+      } else {
+        // Both are hidden, no active tab or a default placeholder if needed
+        // For now, let's assume if both hidden, tabs might not render or show empty
+      }
+    } else if (!showPseudoCode && activeTab === 'code') {
+      if (showAlgorithmInfo) {
+        setActiveTab('info')
+      } else {
+        // Both are hidden
+      }
+    } else if (showAlgorithmInfo && activeTab === 'code' && !showPseudoCode) {
+      // If pseudo code was active and gets hidden, switch to info if available
+      setActiveTab('info')
+    } else if (showPseudoCode && activeTab === 'info' && !showAlgorithmInfo) {
+      // If info was active and gets hidden, switch to pseudo code if available
+      setActiveTab('code')
+    }
+  }, [showAlgorithmInfo, showPseudoCode, activeTab])
+
+  const displayedSortStats =
+    liveSortStats && Object.keys(liveSortStats).length > 0
+      ? liveSortStats
+      : (finalSortStats ?? undefined)
+
+  const mainPanelColSpan = showAlgorithmInfo || showPseudoCode ? 'xl:col-span-4' : 'xl:col-span-6'
+  const rightPanelVisible = showAlgorithmInfo || showPseudoCode
+
+  const visibleMobileTabs = [
+    showAlgorithmInfo && { value: 'info', label: 'Algorithm Info' },
+    showPseudoCode && { value: 'code', label: 'Code & Stats' },
+  ].filter(Boolean) as Array<{ value: 'info' | 'code'; label: string }>
 
   return (
-    <main className="flex-grow sm:px-4 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
-      {/* Main Visualization Area (SortVisualizer + AlgorithmInfoDisplay) */}
-      <div className="xl:col-span-9 h-full">
+    <main className="xl:grid xl:grid-cols-6 xl:gap-4">
+      {/* Left Panel: Sort Visualizer */}
+      <div className={`w-full ${mainPanelColSpan}`}>
         <SortVisualizer
           currentSortStep={currentSortStep}
           onStart={startSort}
           onPause={pauseSort}
           onReset={resetSort}
           onStepForward={stepForward}
-          onNewArray={generateRandomArray}
+          onNewArray={resetSort}
           isSorting={isSorting}
           isPaused={isPaused}
           arraySize={arraySize}
@@ -93,29 +127,74 @@ export default function SortPage(): React.JSX.Element {
           spaceCategories={SpaceComplexityCategory}
           selectedSpaceCategory={selectedSpaceCategory}
           handleSpaceCategoryChange={handleSpaceCategoryChange}
+          auxiliaryStructures={auxiliaryStructures}
+          maxValue={MAX_VALUE}
+          showAlgorithmInfo={showAlgorithmInfo}
+          onShowAlgorithmInfoChange={setShowAlgorithmInfo}
+          showPseudoCode={showPseudoCode}
+          onShowPseudoCodeChange={setShowPseudoCode}
         />
       </div>
 
-      {/* Right Sidebar Area */}
-      <div className="xl:col-span-3 space-y-4 lg:space-y-6 h-full flex flex-col">
-        <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
-        <PseudoCodeDisplay
-          algorithmName={selectedAlgorithm?.name}
-          pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
-          activeLine={currentSortStep?.currentPseudoCodeLine}
-          language={currentPseudoCodeLanguage}
-          onLanguageChange={setCurrentPseudoCodeLanguage}
-        />
-        <AuxiliaryVisualizer
-          sortStats={
-            liveSortStats && Object.keys(liveSortStats).length > 0
-              ? liveSortStats
-              : (finalSortStats ?? undefined)
-          }
-          auxiliaryStructures={auxiliaryStructures}
-          maxValue={MAX_VALUE}
-        />
-      </div>
+      {/* Mobile Tabs (Info and Code/Stats) */}
+      {visibleMobileTabs.length > 0 && (
+        <div className="mt-4 flex flex-col xl:hidden">
+          <Tabs
+            value={activeTab}
+            onValueChange={v => setActiveTab(v as 'info' | 'code')}
+            className="flex flex-col"
+          >
+            <TabsList
+              className={`grid ${visibleMobileTabs.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}
+            >
+              {showAlgorithmInfo && (
+                <TabsTrigger value="info" className="whitespace-nowrap">
+                  Algorithm Info
+                </TabsTrigger>
+              )}
+              {showPseudoCode && (
+                <TabsTrigger value="code" className="whitespace-nowrap">
+                  Code & Stats
+                </TabsTrigger>
+              )}
+            </TabsList>
+            {showAlgorithmInfo && (
+              <TabsContent value="info">
+                <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
+              </TabsContent>
+            )}
+            {showPseudoCode && (
+              <TabsContent value="code">
+                <PseudoCodeDisplay
+                  algorithmName={selectedAlgorithm?.name}
+                  pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
+                  activeLine={currentSortStep?.currentPseudoCodeLine}
+                  language={currentPseudoCodeLanguage}
+                  onLanguageChange={setCurrentPseudoCodeLanguage}
+                  sortStats={displayedSortStats}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
+        </div>
+      )}
+
+      {/* Desktop Right Panel (AlgorithmInfo top, PseudoCode/Stats bottom) */}
+      {rightPanelVisible && (
+        <div className="hidden xl:grid xl:col-span-2 h-fit gap-4">
+          {showAlgorithmInfo && <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />}
+          {showPseudoCode && (
+            <PseudoCodeDisplay
+              algorithmName={selectedAlgorithm?.name}
+              pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
+              activeLine={currentSortStep?.currentPseudoCodeLine}
+              language={currentPseudoCodeLanguage}
+              onLanguageChange={setCurrentPseudoCodeLanguage}
+              sortStats={displayedSortStats}
+            />
+          )}
+        </div>
+      )}
     </main>
   )
 }

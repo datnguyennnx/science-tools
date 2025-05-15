@@ -21,46 +21,46 @@ export function SortActionButtons({
   isSorting,
   isPaused,
 }: SortActionButtonsProps): React.JSX.Element {
+  console.log(
+    '[SortActionButtons] Rendering. isSorting:',
+    isSorting,
+    'isPaused:',
+    isPaused,
+    'Start button disabled:',
+    isSorting && !isPaused
+  )
   return (
-    <div className="flex-grow md:flex-grow-0 space-y-2">
-      <div className="text-sm font-bold text-foreground">Sort Control</div>
-      <div className="flex flex-col items-start sm:flex-row sm:items-center flex-wrap gap-2 pt-0.5">
-        <Button onClick={onNewArray} variant="outline" size="sm" className="text-xs">
-          <PlusSquare className="h-4 w-4 mr-1" />
+    <div className="flex flex-col space-y-2">
+      <p className="flex items-center text-sm leading-none">Sort Control</p>
+      <div className="flex flex-row flex-wrap gap-2">
+        <Button onClick={onNewArray} variant="outline" title="New Array">
+          <PlusSquare className="h-4 w-4" />
           New Array
         </Button>
-        <Button onClick={onStart} disabled={isSorting && !isPaused} size="sm" className="text-xs">
+        <Button onClick={onStart} disabled={isSorting && !isPaused} title="Start/Resume">
           {isPaused ? (
             <>
-              <Play className="h-4 w-4 mr-1" /> Resume
+              <Play className="h-4 w-4" /> Resume
             </>
           ) : (
             <>
-              <Play className="h-4 w-4 mr-1" /> Start
+              <Play className="h-4 w-4" /> Start
             </>
           )}
         </Button>
-        <Button
-          onClick={onPause}
-          disabled={!isSorting || isPaused}
-          variant="outline"
-          size="sm"
-          className="text-xs"
-        >
-          <Pause className="h-4 w-4 mr-1" />
+        <Button onClick={onPause} disabled={!isSorting || isPaused} variant="outline" title="Pause">
+          <Pause className="h-4 w-4" />
           Pause
         </Button>
         <Button
           onClick={onStepForward}
           disabled={!isSorting || !isPaused}
           variant="outline"
-          size="icon"
           title="Step Forward"
-          className="text-xs"
         >
           <SkipForward className="h-4 w-4" />
         </Button>
-        <Button onClick={onReset} variant="outline" size="icon" title="Reset" className="text-xs">
+        <Button onClick={onReset} variant="outline" size="icon" title="Reset">
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
