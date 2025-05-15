@@ -1,9 +1,19 @@
 'use client'
 
-import React from 'react'
-import { AlgorithmInfoDisplay, SortVisualizer, AuxiliaryVisualizer } from './components'
+import { useEffect, useState } from 'react'
+import {
+  AlgorithmInfoDisplay,
+  AuxiliaryVisualizer,
+  SortVisualizer,
+  PseudoCodeDisplay,
+} from './components'
+import type { SupportedLanguages } from './components/PseudoCodeDisplay'
 import { useSortControls, useAlgorithmSelection } from './engine/hooks'
-import { TimeComplexityCategory, SpaceComplexityCategory } from './engine/algorithmRegistry'
+import {
+  SORT_ALGORITHMS,
+  TimeComplexityCategory,
+  SpaceComplexityCategory,
+} from './engine/algorithmRegistry'
 
 export default function SortPage(): React.JSX.Element {
   const {
@@ -15,50 +25,55 @@ export default function SortPage(): React.JSX.Element {
     handleTimeCategoryChange,
     selectedSpaceCategory,
     handleSpaceCategoryChange,
-  } = useAlgorithmSelection({
-    onAlgorithmChange: newAlgorithmId => {
-      // The generateRandomArray in the useEffect below will handle array regeneration.
-      console.log('Algorithm changed to:', newAlgorithmId)
-    },
-  })
+  } = useAlgorithmSelection()
 
   const {
     arraySize,
     setArraySize,
-    sortDirection,
-    setSortDirection,
-    isSorting,
-    isPaused,
+    MIN_ARRAY_SIZE,
+    MAX_ARRAY_SIZE,
     speed,
     setSpeed,
+    MIN_SPEED,
+    MAX_SPEED,
+    sortDirection,
+    setSortDirection,
+    currentSortStep,
+    isSorting,
+    isPaused,
+    liveSortStats,
+    finalSortStats,
+    auxiliaryStructures,
     startSort,
     pauseSort,
-    resumeSort,
     resetSort,
     stepForward,
     generateRandomArray,
-    currentSortStep,
-    auxiliaryStructures,
-    finalSortStats,
-    liveSortStats,
-    MIN_ARRAY_SIZE,
-    MAX_ARRAY_SIZE,
-    MIN_SPEED,
-    MAX_SPEED,
     MAX_VALUE,
   } = useSortControls({
-    selectedAlgorithm: selectedAlgorithm,
+    selectedAlgorithm: selectedAlgorithm || SORT_ALGORITHMS[0],
   })
 
-  React.useEffect(() => {
+  const [currentPseudoCodeLanguage, setCurrentPseudoCodeLanguage] =
+    useState<SupportedLanguages>('plaintext')
+
+  useEffect(() => {
     generateRandomArray()
-  }, [selectedAlgorithmId, generateRandomArray])
+  }, [selectedAlgorithmId, arraySize, sortDirection])
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-10 gap-2 w-full min-h-[calc(100vh-6rem)]">
-      <div className="lg:col-span-6 xl:col-span-7">
+    <main className="flex-grow sm:px-4 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+      {/* Main Visualization Area (SortVisualizer + AlgorithmInfoDisplay) */}
+      <div className="xl:col-span-9 h-full">
         <SortVisualizer
           currentSortStep={currentSortStep}
+          onStart={startSort}
+          onPause={pauseSort}
+          onReset={resetSort}
+          onStepForward={stepForward}
+          onNewArray={generateRandomArray}
+          isSorting={isSorting}
+          isPaused={isPaused}
           arraySize={arraySize}
           setArraySize={setArraySize}
           MIN_ARRAY_SIZE={MIN_ARRAY_SIZE}
@@ -78,30 +93,29 @@ export default function SortPage(): React.JSX.Element {
           spaceCategories={SpaceComplexityCategory}
           selectedSpaceCategory={selectedSpaceCategory}
           handleSpaceCategoryChange={handleSpaceCategoryChange}
-          onStart={isPaused ? resumeSort : startSort}
-          onPause={pauseSort}
-          onReset={resetSort}
-          onStepForward={stepForward}
-          onNewArray={generateRandomArray}
-          isSorting={isSorting}
-          isPaused={isPaused}
         />
       </div>
 
-      <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-4 h-fit w-full">
+      {/* Right Sidebar Area */}
+      <div className="xl:col-span-3 space-y-4 lg:space-y-6 h-full flex flex-col">
         <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
+        <PseudoCodeDisplay
+          algorithmName={selectedAlgorithm?.name}
+          pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
+          activeLine={currentSortStep?.currentPseudoCodeLine}
+          language={currentPseudoCodeLanguage}
+          onLanguageChange={setCurrentPseudoCodeLanguage}
+        />
         <AuxiliaryVisualizer
           sortStats={
             liveSortStats && Object.keys(liveSortStats).length > 0
               ? liveSortStats
-              : finalSortStats === null
-                ? undefined
-                : finalSortStats
+              : (finalSortStats ?? undefined)
           }
           auxiliaryStructures={auxiliaryStructures}
           maxValue={MAX_VALUE}
         />
       </div>
-    </div>
+    </main>
   )
 }

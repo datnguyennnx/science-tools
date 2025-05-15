@@ -32,6 +32,7 @@ export const insertionSortGenerator: SortGenerator = function* (
       sortedIndices: Array.from(sortedIndices),
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 0, // function insertionSort(array, n) {
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -44,12 +45,39 @@ export const insertionSortGenerator: SortGenerator = function* (
     message: 'Starting Insertion Sort. Index 0 is initially considered sorted.',
     activeRange: { start: 0, end: 0 }, // Initially sorted range
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 0, // function insertionSort(array, n) {
   }
 
   // Iterate from the second element
   for (let i = 1; i < n; i++) {
+    yield {
+      array: [...arr],
+      message: `Outer loop: i = ${i}`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 1, // for (let i = 1; i < n; i++) {
+      activeRange: { start: 0, end: i - 1 },
+      sortedIndices: Array.from(sortedIndices),
+    }
     const key = arr[i]
+    yield {
+      array: [...arr],
+      message: `Key = ${key}`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 2, // let key = array[i];
+      activeRange: { start: 0, end: i - 1 },
+      sortedIndices: Array.from(sortedIndices),
+      highlightedIndices: [i],
+    }
     let j = i - 1
+    yield {
+      array: [...arr],
+      message: `j = ${j}`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 3, // let j = i - 1;
+      activeRange: { start: 0, end: i - 1 },
+      sortedIndices: Array.from(sortedIndices),
+      highlightedIndices: [i],
+    }
 
     // Yield state showing the element picked as 'key'
     yield {
@@ -60,12 +88,12 @@ export const insertionSortGenerator: SortGenerator = function* (
       activeRange: { start: 0, end: i - 1 }, // Current sorted range
       message: `Pass ${i}: Selecting element ${key} at index ${i} to insert into sorted portion [0...${i - 1}].`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 4, // Comment line / start of while logic
     }
 
     let comparedIndex = -1
     let firstComparisonMade = false
     if (j >= 0) {
-      // Check if at least one comparison will be made by the while loop condition
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
       firstComparisonMade = true
     }
@@ -74,7 +102,6 @@ export const insertionSortGenerator: SortGenerator = function* (
     // one position ahead of their current position
     while (j >= 0 && shouldInsertBefore(key, arr[j], direction)) {
       if (!firstComparisonMade) {
-        // If the first comparison was not made outside, count it now
         liveStats.comparisons = (liveStats.comparisons || 0) + 1
       }
       firstComparisonMade = false // Reset for subsequent iterations
@@ -89,10 +116,21 @@ export const insertionSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: i - 1 },
         message: `Comparing key ${key} with ${arr[j]} at index ${j}. Shift ${arr[j]} to index ${j + 1}.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 6, // while (j >= 0 && array[j] > key) {
       }
 
       arr[j + 1] = arr[j] // Shift element
       liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
+      yield {
+        array: [...arr],
+        message: `Shifted arr[j+1] = arr[j]`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 7, // array[j + 1] = array[j];
+        highlightedIndices: [j + 1],
+        comparisonIndices: [i],
+        sortedIndices: Array.from(sortedIndices),
+        activeRange: { start: 0, end: i - 1 },
+      }
 
       // Yield state after shift
       yield {
@@ -103,21 +141,40 @@ export const insertionSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: i - 1 },
         message: `Shifted ${arr[j + 1]} from index ${j} to ${j + 1}.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 7, // Still on array[j + 1] = array[j];
       }
       j = j - 1
-      if (j >= 0) {
-        // If another comparison will occur due to while condition
-        liveStats.comparisons = (liveStats.comparisons || 0) + 1
-        firstComparisonMade = true // Mark that the next comparison is pre-counted
+      yield {
+        array: [...arr],
+        message: `Decremented j to ${j}`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 8, // j = j - 1;
+        highlightedIndices: [j + 1],
+        comparisonIndices: [i],
+        sortedIndices: Array.from(sortedIndices),
+        activeRange: { start: 0, end: i - 1 },
       }
+      if (j >= 0) {
+        liveStats.comparisons = (liveStats.comparisons || 0) + 1
+        firstComparisonMade = true
+      }
+    } // End of while loop
+    yield {
+      array: [...arr],
+      message: `End of while loop for key ${key}.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 9, // Closing brace of while or start of array[j + 1] = key;
+      highlightedIndices: [i],
+      sortedIndices: Array.from(sortedIndices),
+      activeRange: { start: 0, end: i - 1 },
+      comparisonIndices: j >= 0 ? [i, j] : [i],
     }
 
     if (comparedIndex !== -1 && j !== comparedIndex) {
-      // If a shift happened, show the comparison that stopped the loop (or end of loop)
       yield {
         array: [...arr],
-        highlightedIndices: [i, j + 1], // Highlight key and its insertion point
-        comparisonIndices: j >= 0 ? [i, j] : [i], // Show comparison if j is valid
+        highlightedIndices: [i, j + 1],
+        comparisonIndices: j >= 0 ? [i, j] : [i],
         sortedIndices: Array.from(sortedIndices),
         activeRange: { start: 0, end: i - 1 },
         message:
@@ -125,17 +182,18 @@ export const insertionSortGenerator: SortGenerator = function* (
             ? `Key ${key} should be inserted before ${arr[j]} at index ${j + 1}.`
             : `Key ${key} is the smallest/largest so far, inserting at index 0.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 6, // Condition that broke while loop
       }
     } else if (comparedIndex === -1) {
-      // If no shift happened at all (key was already in sorted position relative to j=i-1)
       yield {
         array: [...arr],
-        highlightedIndices: [i, j], // Highlight key and element it was compared with
+        highlightedIndices: [i, j],
         comparisonIndices: [i, j],
         sortedIndices: Array.from(sortedIndices),
         activeRange: { start: 0, end: i - 1 },
         message: `Key ${key} is already in correct position relative to ${arr[j]}. No shifts needed in this pass.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 6, // while condition was false from start
       }
     }
 
@@ -153,7 +211,15 @@ export const insertionSortGenerator: SortGenerator = function* (
       activeRange: { start: 0, end: i }, // Update sorted range
       message: `Inserted key ${key} at index ${j + 1}. Sorted portion is now [0...${i}].`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 10, // array[j + 1] = key;
     }
+  } // End of for loop
+  yield {
+    array: [...arr],
+    message: `End of outer for loop.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 11, // Closing brace of for loop
+    sortedIndices: Array.from(sortedIndices),
   }
 
   // Final confirmation (all elements are sorted)
@@ -162,6 +228,7 @@ export const insertionSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()],
     message: 'Insertion Sort Complete!',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 12, // Closing brace of function
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

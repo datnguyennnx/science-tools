@@ -38,6 +38,31 @@ const heapifyGenerator = function* (
     message: `Heapifying subtree rooted at index ${i} (value ${arr[i]}) within heap size ${heapSize}.`,
     currentStats: { ...liveStats },
     swappingIndices: null,
+    currentPseudoCodeLine: 10, // heapify(array, n, i) {
+  }
+  yield {
+    array: [...arr],
+    message: `largest = ${i}`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 11, // largest = i
+    activeRange: activeHeapRange,
+    highlightedIndices: [i],
+  }
+  yield {
+    array: [...arr],
+    message: `left = 2 * ${i} + 1 = ${leftChild}`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 12, // left = 2 * i + 1
+    activeRange: activeHeapRange,
+    highlightedIndices: [i],
+  }
+  yield {
+    array: [...arr],
+    message: `right = 2 * ${i} + 2 = ${rightChild}`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 13, // right = 2 * i + 2
+    activeRange: activeHeapRange,
+    highlightedIndices: [i],
   }
 
   if (leftChild < heapSize) {
@@ -51,10 +76,28 @@ const heapifyGenerator = function* (
       message: `Comparing root (${arr[i]}) with left child (${arr[leftChild]}) at index ${leftChild}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
+      currentPseudoCodeLine: 14, // if (left < n && array[left] > array[largest]) {
     }
     if (shouldSwap(arr[largestOrSmallest], arr[leftChild], direction)) {
       largestOrSmallest = leftChild
+      yield {
+        array: [...arr],
+        message: `New largest/smallest is ${arr[largestOrSmallest]} at index ${largestOrSmallest}`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 15, // largest = left
+        activeRange: activeHeapRange,
+        highlightedIndices: [largestOrSmallest],
+      }
     }
+  }
+  // Yield for line 16 (closing brace of if left)
+  yield {
+    array: [...arr],
+    message: 'Checked left child.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 16,
+    activeRange: activeHeapRange,
+    highlightedIndices: [largestOrSmallest],
   }
 
   if (rightChild < heapSize) {
@@ -68,10 +111,28 @@ const heapifyGenerator = function* (
       message: `Comparing current ${direction === 'asc' ? 'max' : 'min'} (${arr[largestOrSmallest]}) with right child (${arr[rightChild]}) at index ${rightChild}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
+      currentPseudoCodeLine: 17, // if (right < n && array[right] > array[largest]) {
     }
     if (shouldSwap(arr[largestOrSmallest], arr[rightChild], direction)) {
       largestOrSmallest = rightChild
+      yield {
+        array: [...arr],
+        message: `New largest/smallest is ${arr[largestOrSmallest]} at index ${largestOrSmallest}`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 18, // largest = right
+        activeRange: activeHeapRange,
+        highlightedIndices: [largestOrSmallest],
+      }
     }
+  }
+  // Yield for line 19 (closing brace of if right)
+  yield {
+    array: [...arr],
+    message: 'Checked right child.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 19,
+    activeRange: activeHeapRange,
+    highlightedIndices: [largestOrSmallest],
   }
 
   if (largestOrSmallest !== i) {
@@ -84,6 +145,7 @@ const heapifyGenerator = function* (
       activeRange: activeHeapRange,
       message: `Preparing to swap root (${arr[i]}) with new ${direction === 'asc' ? 'max' : 'min'} (${arr[largestOrSmallest]}) at index ${largestOrSmallest}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 20, // if (largest != i) {
     }
     ;[arr[i], arr[largestOrSmallest]] = [arr[largestOrSmallest], arr[i]]
     liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -98,6 +160,7 @@ const heapifyGenerator = function* (
       activeRange: activeHeapRange,
       message: `Swapped. Heap property might be violated at index ${largestOrSmallest}. Recursively heapifying.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 21, // swap(array[i], array[largest])
     }
 
     yield* heapifyGenerator(
@@ -109,6 +172,14 @@ const heapifyGenerator = function* (
       heapSize,
       liveStats
     )
+    // After recursive call returns, conceptually we are at line 22 for that call
+    yield {
+      array: [...arr],
+      message: `Recursive heapify call for index ${largestOrSmallest} complete.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 22, // heapify(array, n, largest)
+      activeRange: activeHeapRange,
+    }
   } else {
     yield {
       array: [...arr],
@@ -119,7 +190,23 @@ const heapifyGenerator = function* (
       message: `Heap property maintained at root index ${i}. No swap needed.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
+      currentPseudoCodeLine: 20, // Condition largest != i is false
     }
+  }
+  yield {
+    array: [...arr],
+    message: `Heapify for index ${i} complete.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 23, // Closing brace of if (largest != i)
+    activeRange: activeHeapRange,
+  }
+  // Yield for line 24 (closing brace of heapify function)
+  yield {
+    array: [...arr],
+    message: `Exiting heapify for index ${i}.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 24,
+    activeRange: activeHeapRange,
   }
 }
 
@@ -149,6 +236,7 @@ export const heapSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
+      currentPseudoCodeLine: 0, // heapSort(array, n) {
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -160,13 +248,28 @@ export const heapSortGenerator: SortGenerator = function* (
     activeRange: { start: 0, end: n - 1 },
     currentStats: { ...liveStats },
     swappingIndices: null,
+    currentPseudoCodeLine: 0, // heapSort(array, n) {
   }
 
   const startIdx = Math.floor(n / 2) - 1
   for (let i = startIdx; i >= 0; i--) {
+    yield {
+      array: [...arr],
+      message: `Building heap: Calling heapify for index ${i}.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 1, // for (i = n / 2 - 1; i >= 0; i--) {
+      activeRange: { start: 0, end: n - 1 },
+      highlightedIndices: [i],
+    }
     yield* heapifyGenerator(arr, n, i, direction, sortedIndices, n, liveStats)
+    yield {
+      array: [...arr],
+      message: `Heapify for index ${i} (build phase) complete.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 2, // heapify(array, n, i)
+      activeRange: { start: 0, end: n - 1 },
+    }
   }
-  // Clear swapping state after heap build is complete before starting extraction
   yield {
     array: [...arr],
     sortedIndices: Array.from(sortedIndices),
@@ -174,18 +277,17 @@ export const heapSortGenerator: SortGenerator = function* (
     activeRange: { start: 0, end: n - 1 },
     currentStats: { ...liveStats },
     swappingIndices: null,
+    currentPseudoCodeLine: 3, // Closing brace of first for loop
   }
 
   for (let i = n - 1; i > 0; i--) {
     yield {
       array: [...arr],
-      highlightedIndices: [],
-      comparisonIndices: [],
-      swappingIndices: [0, i], // About to swap root with element at end of current heap
-      sortedIndices: Array.from(sortedIndices),
-      activeRange: { start: 0, end: i },
-      message: `Preparing to extract ${direction === 'asc' ? 'max' : 'min'} element (${arr[0]}) by swapping with element at index ${i} (${arr[i]}).`,
+      message: `Extracting max/min: Swapping root with element at index ${i}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 4, // for (i = n - 1; i > 0; i--) {
+      activeRange: { start: 0, end: i },
+      swappingIndices: [0, i], // About to swap
     }
     ;[arr[0], arr[i]] = [arr[i], arr[0]]
     liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -202,12 +304,18 @@ export const heapSortGenerator: SortGenerator = function* (
       activeRange: { start: 0, end: i - 1 },
       message: `Swapped. Index ${i} is now sorted. Heap size reduced to ${currentHeapSize}. Re-heapifying root.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 5, // swap(array[0], array[i])
     }
 
     yield* heapifyGenerator(arr, n, 0, direction, sortedIndices, currentHeapSize, liveStats)
-    // Clear swapping state after heapify completes for this extraction pass
+    yield {
+      array: [...arr],
+      message: `Heapify for index 0 (extraction phase for element at ${i}) complete.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 6, // heapify(array, i, 0)
+      activeRange: { start: 0, end: i - 1 },
+    }
     if (i - 1 > 0) {
-      // Only yield clear if more extractions are coming
       yield {
         array: [...arr],
         message: `Heap restored after extracting to index ${i}. Next extraction target: index ${i - 1}.`,
@@ -215,8 +323,16 @@ export const heapSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: i - 1 },
         swappingIndices: null,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 4, // Back to for loop condition for next iteration
       }
     }
+  }
+  yield {
+    array: [...arr],
+    message: 'Finished extraction loop.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 7, // Closing brace of second for loop
+    sortedIndices: Array.from(sortedIndices),
   }
 
   sortedIndices.add(0)
@@ -227,6 +343,7 @@ export const heapSortGenerator: SortGenerator = function* (
     message: 'Heap Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
+    currentPseudoCodeLine: 8, // Closing brace of heapSort function
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

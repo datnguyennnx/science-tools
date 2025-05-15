@@ -30,6 +30,7 @@ export const shellSortGenerator: SortGenerator = function* (
       sortedIndices: n === 1 ? [0] : [],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 0, // shellSort(array, n) {
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -38,6 +39,7 @@ export const shellSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: 'Starting Shell Sort.',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 0, // shellSort(array, n) {
   }
 
   // Start with a large gap, then reduce the gap (using n/2 sequence)
@@ -46,27 +48,29 @@ export const shellSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Starting pass with gap = ${gap}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 1, // for (gap = n / 2; ...)
       // Highlight elements potentially involved in this gap pass (optional)
       // comparisonIndices: [...Array(n).keys()].filter(k => k % gap === 0), // Example: highlight start of each sublist
     }
 
     // Do a gapped insertion sort for this gap size.
-    // The first gap elements arr[0..gap-1] are already in gapped order
-    // keep adding one more element until the entire array is gap sorted
     for (let i = gap; i < n; i++) {
-      // Add arr[i] to the elements that have been gap sorted
-      // Save arr[i] in temp and make a hole at position i
-      const temp = arr[i]
-      let j = i
-
-      // Yield state showing the element being picked for insertion
       yield {
         array: [...arr],
-        highlightedIndices: [i], // Highlight the element being inserted
-        // comparisonIndices: [...Array(Math.ceil(i / gap)).keys()].map(k => i - k * gap).filter(k => k >= 0), // Indices compared against
-        message: `Selecting element ${temp} at index ${i} for gapped insertion (gap ${gap}).`,
+        message: `Outer gapped loop: i = ${i}`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 2, // for (i = gap; i < n; ...)
+        highlightedIndices: [i],
       }
+      const temp = arr[i]
+      yield {
+        array: [...arr],
+        message: `temp = array[${i}] (${temp})`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 3, // temp = array[i]
+        highlightedIndices: [i],
+      }
+      let j = i
 
       // Initial comparison for the while loop is made before entering, if j >= gap
       let comparedInLoop = false
@@ -74,79 +78,93 @@ export const shellSortGenerator: SortGenerator = function* (
         liveStats.comparisons = (liveStats.comparisons || 0) + 1
         comparedInLoop = true
       }
+      yield {
+        array: [...arr],
+        message: `Inner gapped loop (insertion): j = ${j}`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 4, // for (j = i; j >= gap ...)
+        highlightedIndices: [j, j - gap].filter(idx => idx >= 0),
+        comparisonIndices: [j, j - gap].filter(idx => idx >= 0),
+      }
 
       // Shift earlier gap-sorted elements up until the correct location for arr[i] is found
       while (j >= gap && shouldInsertBefore(temp, arr[j - gap], direction)) {
-        // If not the first comparison (already counted), count subsequent ones
         if (!comparedInLoop) {
           liveStats.comparisons = (liveStats.comparisons || 0) + 1
         }
         comparedInLoop = false // Reset for next potential iteration comparison
 
-        // Yield state showing comparison and preparing for shift
         yield {
           array: [...arr],
-          highlightedIndices: [j, j - gap], // Highlight elements being compared
+          highlightedIndices: [j, j - gap],
           comparisonIndices: [j, j - gap],
           message: `Comparing ${temp} with ${arr[j - gap]} (gap=${gap}). Shifting ${arr[j - gap]} from ${j - gap} to ${j}.`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 4, // still on the while condition
         }
 
-        arr[j] = arr[j - gap] // Shift element
+        arr[j] = arr[j - gap]
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
-
-        // Yield state after shift
         yield {
           array: [...arr],
-          highlightedIndices: [j], // Highlight the new position of the shifted element
-          comparisonIndices: [j - gap], // Show where it came from
+          highlightedIndices: [j],
+          comparisonIndices: [j - gap],
           message: `Shifted ${arr[j]} from index ${j - gap} to ${j}.`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 5, // array[j] = array[j - gap]
         }
         j -= gap
-        // Count comparison for the next iteration of the while loop, if condition holds
         if (j >= gap) {
           liveStats.comparisons = (liveStats.comparisons || 0) + 1
-          comparedInLoop = true // Mark that this comparison for next iter is counted
+          comparedInLoop = true
+        }
+        // Yield after j is decremented, before next while check
+        yield {
+          array: [...arr],
+          message: `Decremented j to ${j} (j -= gap)`,
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: 4, // Back to while condition
+          highlightedIndices: [j, j - gap].filter(idx => idx >= 0),
         }
       }
+      yield {
+        array: [...arr],
+        message: 'Exited inner gapped loop (insertion part).',
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 6, // Closing brace of inner for (j...)
+        highlightedIndices: [j],
+      }
 
-      // Put temp (the original arr[i]) in its correct location
-      if (j !== i) {
-        // Only yield if a shift actually happened
-        arr[j] = temp
-        liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
-        yield {
-          array: [...arr],
-          highlightedIndices: [j], // Highlight where temp was placed
-          // comparisonIndices: [],
-          message: `Inserted element ${temp} at index ${j}.`,
-          currentStats: { ...liveStats },
-        }
-      } else {
-        // Yield state if no shift was needed
-        yield {
-          array: [...arr],
-          highlightedIndices: [i], // Highlight the element that didn't need to move
-          // comparisonIndices: [i - gap].filter(k => k >=0), // Compare with the element `gap` positions before
-          message: `Element ${temp} at index ${i} is already in correct gapped position.`,
-          currentStats: { ...liveStats },
-        }
+      arr[j] = temp
+      liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
+      yield {
+        array: [...arr],
+        highlightedIndices: [j],
+        message: `Inserted element ${temp} at index ${j}.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 7, // array[j] = temp
       }
     }
     yield {
       array: [...arr],
       message: `Completed pass with gap = ${gap}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 8, // Closing brace of for (i = gap ...)
     }
   }
+  yield {
+    array: [...arr],
+    message: 'Finished all gap passes.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 9, // Closing brace of for (gap = n/2 ...)
+  }
 
-  // Final state confirmation (gap is 1, equivalent to insertion sort)
   yield {
     array: [...arr],
     sortedIndices: [...Array(n).keys()],
     message: 'Shell Sort Complete!',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 10, // Closing brace of shellSort function
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

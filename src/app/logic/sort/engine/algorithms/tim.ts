@@ -13,7 +13,8 @@ const insertionSortForRunGenerator = function* (
   right: number, // inclusive right boundary of the run
   direction: 'asc' | 'desc',
   fullArrayRef: number[], // Reference to the full array for yielding
-  liveStats: Partial<SortStats> // Added liveStats
+  liveStats: Partial<SortStats>, // Added liveStats
+  currentPseudoCodeLine: number // Added currentPseudoCodeLine
 ): Generator<SortStep, void, void> {
   const runLength = right - left + 1
   yield {
@@ -21,6 +22,7 @@ const insertionSortForRunGenerator = function* (
     activeRange: { start: left, end: right },
     message: `Sorting run [${left}...${right}] with Insertion Sort.`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: currentPseudoCodeLine,
   }
 
   for (let i = left + 1; i <= right; i++) {
@@ -34,6 +36,7 @@ const insertionSortForRunGenerator = function* (
       activeRange: { start: left, end: right },
       message: `Insertion Sort (Run [${left}...${right}]): Key ${key}. Comparing with ${j >= left ? arr[j] : 'start of run'}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
 
     while (j >= left) {
@@ -50,6 +53,7 @@ const insertionSortForRunGenerator = function* (
         activeRange: { start: left, end: right },
         message: `Shifting ${arr[j]} from index ${j} to ${j + 1}.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: currentPseudoCodeLine,
       }
       arr[j + 1] = arr[j]
       liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
@@ -65,6 +69,7 @@ const insertionSortForRunGenerator = function* (
             ? `Comparing key ${key} with ${arr[j]}.`
             : `Reached start of run for key ${key}.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: currentPseudoCodeLine,
       }
     }
     arr[j + 1] = key
@@ -75,6 +80,7 @@ const insertionSortForRunGenerator = function* (
       activeRange: { start: left, end: right },
       message: `Inserted key ${key} at index ${j + 1}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
   }
   yield {
@@ -83,6 +89,7 @@ const insertionSortForRunGenerator = function* (
     sortedIndices: [...Array(runLength).keys()].map(k => left + k),
     message: `Run [${left}...${right}] sorted.`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: currentPseudoCodeLine,
   }
 }
 
@@ -94,7 +101,8 @@ const mergeRunsGenerator = function* (
   right: number, // inclusive right boundary
   direction: 'asc' | 'desc',
   fullArrayRef: number[], // Reference to the full array for yielding
-  liveStats: Partial<SortStats> // Added liveStats
+  liveStats: Partial<SortStats>, // Added liveStats
+  currentPseudoCodeLine: number // Added currentPseudoCodeLine
 ): Generator<SortStep, void, void> {
   const len1 = mid - left + 1
   const len2 = right - mid
@@ -111,6 +119,7 @@ const mergeRunsGenerator = function* (
       .concat([...Array(len2).keys()].map(k => mid + 1 + k)),
     message: `Merging runs [${left}...${mid}] and [${mid + 1}...${right}]. Left temp: [${leftTemp.join(',')}], Right temp: [${rightTemp.join(',')}]`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: currentPseudoCodeLine,
   }
 
   let i = 0
@@ -126,6 +135,7 @@ const mergeRunsGenerator = function* (
       comparisonIndices: [k],
       message: `Comparing ${leftTemp[i]} (from left temp) and ${rightTemp[j]} (from right temp). Placing result at index ${k}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
 
     const takeFromLeft =
@@ -145,6 +155,7 @@ const mergeRunsGenerator = function* (
       highlightedIndices: [k],
       message: `Placed ${arr[k]} at index ${k}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
     k++
   }
@@ -157,6 +168,7 @@ const mergeRunsGenerator = function* (
       comparisonIndices: [k],
       message: `Copying remaining ${leftTemp[i]} from left temp to index ${k}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
     arr[k] = leftTemp[i]
     liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
@@ -168,6 +180,7 @@ const mergeRunsGenerator = function* (
       highlightedIndices: [k - 1],
       message: `Placed ${arr[k - 1]} at index ${k - 1}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
   }
 
@@ -179,6 +192,7 @@ const mergeRunsGenerator = function* (
       comparisonIndices: [k],
       message: `Copying remaining ${rightTemp[j]} from right temp to index ${k}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
     arr[k] = rightTemp[j]
     liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
@@ -190,6 +204,7 @@ const mergeRunsGenerator = function* (
       highlightedIndices: [k - 1],
       message: `Placed ${arr[k - 1]} at index ${k - 1}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: currentPseudoCodeLine,
     }
   }
   yield {
@@ -198,6 +213,7 @@ const mergeRunsGenerator = function* (
     sortedIndices: [...Array(right - left + 1).keys()].map(idx => left + idx),
     message: `Finished merging runs. Range [${left}...${right}] is now sorted.`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: currentPseudoCodeLine,
   }
 }
 
@@ -223,49 +239,85 @@ export const timSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 0,
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
 
-  yield { array: [...arr], message: 'Starting TimSort.', currentStats: { ...liveStats } }
+  yield {
+    array: [...arr],
+    message: 'Starting TimSort.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 0,
+  }
 
+  // Phase 1: Sort individual runs
+  yield {
+    array: [...arr],
+    message: 'Phase 1: Sorting initial runs using Insertion Sort.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 4,
+  }
   for (let i = 0; i < n; i += RUN_SIZE) {
     const left = i
     const right = Math.min(i + RUN_SIZE - 1, n - 1)
-    yield* insertionSortForRunGenerator(arr, left, right, direction, arr, liveStats)
+    yield {
+      array: [...arr],
+      message: `Creating run for range [${left}...${right}]. Min merge: ${RUN_SIZE}`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 5,
+    }
+    yield* insertionSortForRunGenerator(arr, left, right, direction, arr, liveStats, 7)
   }
 
   yield {
     array: [...arr],
     message: 'Finished sorting initial runs. Starting merge phase.',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 10,
   }
 
+  // Phase 2: Merge runs
   for (let size = RUN_SIZE; size < n; size = 2 * size) {
     yield {
       array: [...arr],
-      message: `Merging runs of size ${size}.`,
+      message: `Merging runs. Current merge size: ${size}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 12,
     }
     for (let left = 0; left < n; left += 2 * size) {
       const mid = Math.min(left + size - 1, n - 1)
       const right = Math.min(left + 2 * size - 1, n - 1)
+      yield {
+        array: [...arr],
+        message: `Identifying runs to merge. Left: ${left}, Mid: ${mid}, Right: ${right}.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 13,
+      }
 
       if (mid < right) {
-        yield* mergeRunsGenerator(arr, left, mid, right, direction, arr, liveStats)
+        yield {
+          array: [...arr],
+          message: `Condition mid < right true. Merging range [${left}...${right}].`,
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: 16,
+        }
+        yield* mergeRunsGenerator(arr, left, mid, right, direction, arr, liveStats, 17)
       } else {
         yield {
           array: [...arr],
           activeRange: { start: left, end: right },
           message: `Skipping merge for block starting at ${left} (only one run).`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 16,
         }
       }
     }
     yield {
       array: [...arr],
-      message: `Finished merging runs of size ${size}.`,
+      message: `Finished merging runs of size ${size}. Preparing for next size.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 20,
     }
   }
 
@@ -274,6 +326,7 @@ export const timSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()],
     message: 'TimSort Complete!',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 22,
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

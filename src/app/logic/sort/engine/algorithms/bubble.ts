@@ -34,6 +34,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 0, // or a specific line for empty/sorted case
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -44,14 +45,42 @@ export const bubbleSortGenerator: SortGenerator = function* (
     message: 'Starting Bubble Sort',
     activeRange: { start: 0, end: n - 1 },
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 0, // function bubbleSort(array, n) {
   }
 
   // Outer loop for passes
   for (let i = 0; i < n - 1; i++) {
+    yield {
+      array: [...arr],
+      message: `Outer loop: i = ${i}`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 2, // for (let i = 0; i < n - 1; i++) {
+      sortedIndices: Array.from(sortedIndices),
+      activeRange: { start: 0, end: n - 1 - i },
+    }
     swapped = false
+    yield {
+      array: [...arr],
+      message: 'Resetting swapped flag',
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 3, // swapped = false;
+      sortedIndices: Array.from(sortedIndices),
+      activeRange: { start: 0, end: n - 1 - i },
+    }
     // Inner loop for comparisons and swaps
     const currentPassEnd = n - 1 - i
     for (let j = 0; j < currentPassEnd; j++) {
+      yield {
+        array: [...arr],
+        message: `Inner loop: j = ${j}`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 4, // for (let j = 0; j < n - 1 - i; j++) {
+        highlightedIndices: [j, j + 1],
+        comparisonIndices: [j, j + 1],
+        swappingIndices: null,
+        sortedIndices: Array.from(sortedIndices),
+        activeRange: { start: 0, end: currentPassEnd },
+      }
       // Highlight elements being compared
       yield {
         array: [...arr],
@@ -62,6 +91,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: currentPassEnd },
         message: `Comparing ${arr[j]} and ${arr[j + 1]} at indices ${j} and ${j + 1}`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 5, // if (array[j] > array[j + 1]) {
       }
 
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
@@ -76,6 +106,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
           activeRange: { start: 0, end: currentPassEnd },
           message: `Preparing to swap ${arr[j]} and ${arr[j + 1]}.`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 6, // swap(array[j], array[j + 1]);
         }
 
         // Swap elements
@@ -83,6 +114,16 @@ export const bubbleSortGenerator: SortGenerator = function* (
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
         swapped = true
+        yield {
+          array: [...arr],
+          message: 'Set swapped flag to true',
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: 7, // swapped = true;
+          highlightedIndices: [j, j + 1],
+          swappingIndices: [j, j + 1],
+          sortedIndices: Array.from(sortedIndices),
+          activeRange: { start: 0, end: currentPassEnd },
+        }
 
         // Yield state after swap
         yield {
@@ -94,6 +135,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
           activeRange: { start: 0, end: currentPassEnd },
           message: `Swapped. New values: ${arr[j]} (at ${j}) and ${arr[j + 1]} (at ${j + 1}).`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 6, // Back to the swap line for visual clarity of action
         }
       } else {
         // Yield state if no swap occurred (optional, but good for clarity)
@@ -106,8 +148,17 @@ export const bubbleSortGenerator: SortGenerator = function* (
           activeRange: { start: 0, end: currentPassEnd },
           message: `No swap needed for ${arr[j]} and ${arr[j + 1]}.`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 5, // Still on the if condition
         }
       }
+    } // End inner loop (j)
+    yield {
+      array: [...arr],
+      message: 'End of inner loop for comparisons.',
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 9, // Closing brace of inner for loop or start of if(swapped == false)
+      sortedIndices: Array.from(sortedIndices),
+      activeRange: { start: 0, end: currentPassEnd - 1 },
     }
 
     // After each pass, the last element of the active range is sorted
@@ -121,10 +172,19 @@ export const bubbleSortGenerator: SortGenerator = function* (
       activeRange: { start: 0, end: currentPassEnd - 1 }, // Reduce active range
       message: `End of pass ${i + 1}. Index ${currentPassEnd} is sorted.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 2, // Back to outer loop condition for next iteration visual
     }
 
     // If no swaps occurred in a pass, the array is sorted
     if (!swapped) {
+      yield {
+        array: [...arr],
+        message: 'Checking if no swaps occurred.',
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 10, // if (swapped == false)
+        sortedIndices: Array.from(sortedIndices),
+        activeRange: { start: 0, end: currentPassEnd - 1 },
+      }
       // Mark remaining unsorted elements as sorted
       for (let k = 0; k < currentPassEnd; k++) {
         sortedIndices.add(k)
@@ -136,16 +196,17 @@ export const bubbleSortGenerator: SortGenerator = function* (
         swappingIndices: null,
         sortedIndices: Array.from(sortedIndices),
         activeRange: { start: 0, end: -1 }, // No active range
-        message: 'Array sorted (no swaps in last pass).',
+        message: 'Array sorted (no swaps in last pass). Breaking loop.',
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 11, // break;
       }
       break // Exit outer loop
     }
-  }
+  } // End outer loop (i)
 
   // Ensure the first element is marked sorted if loop finishes naturally
   if (sortedIndices.size < n) {
-    sortedIndices.add(0)
+    for (let k = 0; k < n; k++) sortedIndices.add(k) // Mark all as sorted
   }
 
   // Final sorted state confirmation
@@ -155,6 +216,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
     message: 'Bubble Sort Complete!',
     swappingIndices: null,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 14, // Closing brace of function
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

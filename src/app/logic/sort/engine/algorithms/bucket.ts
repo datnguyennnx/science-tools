@@ -29,6 +29,7 @@ const insertionSortForBucketGenerator = function* (
         ),
         message: `Bucket ${bucketActualIndex}: Comparing key ${key} with ${bucket[j]}.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 1,
       }
     }
 
@@ -44,6 +45,7 @@ const insertionSortForBucketGenerator = function* (
         ),
         message: `Bucket ${bucketActualIndex}: Shifted ${bucket[j + 1]} to index ${j + 1} (in bucket).`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 2,
       }
       j--
       // Comparison for next iteration of while loop
@@ -57,6 +59,7 @@ const insertionSortForBucketGenerator = function* (
           ),
           message: `Bucket ${bucketActualIndex}: Comparing key ${key} with ${bucket[j]}.`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 3,
         }
       }
     }
@@ -70,6 +73,7 @@ const insertionSortForBucketGenerator = function* (
       ),
       message: `Bucket ${bucketActualIndex}: Placed key ${key} at index ${j + 1} (in bucket).`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 4,
     }
   }
 }
@@ -96,6 +100,7 @@ export const bucketSortGenerator: SortGenerator = function* (
       sortedIndices: n === 1 ? [0] : [],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 0,
     }
     return { finalArray: initialArray, stats: liveStats as SortStats }
   }
@@ -109,6 +114,7 @@ export const bucketSortGenerator: SortGenerator = function* (
     highlightedIndices: [0],
     message: `Finding min/max. Min: ${minVal}, Max: ${maxVal}.`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 0,
   }
   for (let i = 1; i < n; i++) {
     liveStats.comparisons = (liveStats.comparisons || 0) + 1 // For < minVal
@@ -123,8 +129,17 @@ export const bucketSortGenerator: SortGenerator = function* (
       highlightedIndices: [i],
       message: `Min: ${minVal}, Max: ${maxVal}. Checking index ${i}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 4,
     }
   }
+  yield {
+    array: [...arr],
+    mainArrayLabel: 'Input Array',
+    message: `Min/Max found. Min: ${minVal}, Max: ${maxVal}.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 4,
+  }
+
   if (minVal === maxVal) {
     yield {
       array: [...arr],
@@ -132,6 +147,7 @@ export const bucketSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'All elements are identical. Array is effectively sorted.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 0,
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -155,9 +171,19 @@ export const bucketSortGenerator: SortGenerator = function* (
     auxiliaryStructures: visualizeBuckets(buckets, 'Initialized'),
     message: `Created ${bucketCount} empty buckets. Range: [${minVal}-${maxVal}].`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 2,
   }
 
   // 3. Distribute elements into buckets
+  yield {
+    array: [...arr],
+    mainArrayLabel: 'Input Array',
+    auxiliaryStructures: visualizeBuckets(buckets, 'Preparing to Scatter'),
+    message: 'Preparing to scatter elements into buckets.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 3,
+  }
+
   const range = maxVal - minVal === 0 ? 1 : maxVal - minVal
   for (let i = 0; i < n; i++) {
     const value = arr[i]
@@ -168,8 +194,28 @@ export const bucketSortGenerator: SortGenerator = function* (
     // Ensure bucketIndex is within bounds [0, bucketCount - 1]
     bucketIndex = Math.max(0, Math.min(bucketIndex, bucketCount - 1))
 
+    yield {
+      array: [...arr],
+      mainArrayLabel: 'Input Array',
+      highlightedIndices: [i],
+      message: `Processing element ${arr[i]} for scattering.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 5,
+    }
+
     buckets[bucketIndex].push(value)
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
+
+    yield {
+      array: [...arr],
+      mainArrayLabel: 'Input Array',
+      highlightedIndices: [i],
+      comparisonIndices: [bucketIndex],
+      auxiliaryStructures: visualizeBuckets(buckets, 'Calculating Bucket Index'),
+      message: `Calculated bucketIndex ${bucketIndex} for element ${value}.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 6,
+    }
 
     yield {
       array: [...arr],
@@ -179,15 +225,25 @@ export const bucketSortGenerator: SortGenerator = function* (
       auxiliaryStructures: visualizeBuckets(buckets, 'Distributing'),
       message: `Distributing element ${value} (from index ${i}) into bucket ${bucketIndex}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: 7,
     }
+  }
+  yield {
+    array: [...arr],
+    mainArrayLabel: 'Input Array',
+    auxiliaryStructures: visualizeBuckets(buckets, 'Scattering Complete'),
+    message: 'Finished scattering elements into buckets.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 8,
   }
 
   yield {
     array: [...arr],
     mainArrayLabel: 'Input Array (Before Concatenation)',
-    auxiliaryStructures: visualizeBuckets(buckets, 'Before Sorting'),
+    auxiliaryStructures: visualizeBuckets(buckets, 'Before Sorting Buckets'),
     message: 'Sorting individual buckets.',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 9,
   }
 
   let currentIndex = 0
@@ -205,6 +261,7 @@ export const bucketSortGenerator: SortGenerator = function* (
         auxiliaryStructures: visualizeBuckets(buckets, `Sorting Bucket ${i}`),
         message: `Sorting bucket ${i} with elements: [${currentBucketContentForMsg.join(', ')}] using Insertion Sort.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 10,
       }
       // Pass a snapshot of sortedArr for visualization within insertion sort
       yield* insertionSortForBucketGenerator(
@@ -223,6 +280,15 @@ export const bucketSortGenerator: SortGenerator = function* (
         auxiliaryStructures: visualizeBuckets(buckets, `Sorted Bucket ${i}`),
         message: `Bucket ${i} sorted: [${buckets[i].join(', ')}]`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: 11,
+      }
+
+      yield {
+        array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
+        mainArrayLabel: 'Output Array (Building)',
+        message: `Preparing to gather elements from sorted bucket ${i}.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 16,
       }
 
       for (const val of buckets[i]) {
@@ -236,10 +302,33 @@ export const bucketSortGenerator: SortGenerator = function* (
           auxiliaryStructures: visualizeBuckets(buckets, 'Concatenating'),
           message: `Placing ${val} from sorted bucket ${i} into final array at index ${currentIndex}.`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 17,
         }
         currentIndex++
+        yield {
+          array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
+          mainArrayLabel: 'Output Array (Concatenating)',
+          highlightedIndices: [currentIndex - 1],
+          message: `Incremented output index to ${currentIndex}.`,
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: 18,
+        }
+      }
+      yield {
+        array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
+        mainArrayLabel: 'Output Array (Building)',
+        message: `Finished gathering from bucket ${i}.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 19,
       }
     }
+  }
+  yield {
+    array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
+    mainArrayLabel: 'Output Array (Building)',
+    message: 'Finished gathering from all buckets.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: 20,
   }
 
   yield {
@@ -248,6 +337,7 @@ export const bucketSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()],
     message: 'Bucket Sort Complete!',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: 21,
   }
 
   return { finalArray: sortedArr, stats: liveStats as SortStats }

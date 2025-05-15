@@ -41,6 +41,7 @@ export const combSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
+      currentPseudoCodeLine: 0,
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -51,22 +52,60 @@ export const combSortGenerator: SortGenerator = function* (
     message: 'Starting Comb Sort.',
     currentStats: { ...liveStats },
     swappingIndices: null,
+    currentPseudoCodeLine: 0,
   }
 
   // Main loop continues until the gap is 1 and no swaps occurred in the last pass
   while (gap > 1 || swapped) {
-    // Calculate the next gap
-    const nextGap = Math.floor(gap / SHRINK_FACTOR)
-    gap = nextGap < 1 ? 1 : nextGap
-
     yield {
       array: [...arr],
-      message: `Updating gap to ${gap}. Current Pass Gap: ${gap}`,
+      message: `Checking while condition (gap=${gap}, swapped=${swapped}).`,
       currentStats: { ...liveStats },
-      swappingIndices: null,
+      currentPseudoCodeLine: 5,
     }
 
-    swapped = false // Reset swap flag for the current pass
+    // Calculate the next gap
+    const nextGap = Math.floor(gap / SHRINK_FACTOR)
+    yield {
+      array: [...arr],
+      message: `Calculating next gap: floor(${gap} / ${SHRINK_FACTOR}) = ${nextGap}.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: 6,
+    }
+
+    gap = nextGap
+
+    if (gap < 1) {
+      yield {
+        array: [...arr],
+        message: `Gap was < 1 (${gap}), setting gap to 1.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 7,
+      }
+      gap = 1
+      yield {
+        array: [...arr],
+        message: `Gap is now ${gap}.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 8,
+      }
+    } else {
+      yield {
+        array: [...arr],
+        message: `Gap updated to ${gap}.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 9,
+      }
+    }
+
+    swapped = false
+    yield {
+      array: [...arr],
+      message: `Reset swapped to false for current pass with gap ${gap}.`,
+      currentStats: { ...liveStats },
+      swappingIndices: null,
+      currentPseudoCodeLine: 10,
+    }
 
     // Compare elements with the current gap
     for (let i = 0; i <= n - 1 - gap; i++) {
@@ -77,10 +116,11 @@ export const combSortGenerator: SortGenerator = function* (
         highlightedIndices: [i, j],
         comparisonIndices: [i, j],
         sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: i, end: j }, // Indicate the span of comparison
+        activeRange: { start: i, end: j },
         message: `Comparing elements at index ${i} (${arr[i]}) and index ${j} (${arr[j]}) with gap ${gap}.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
+        currentPseudoCodeLine: 12,
       }
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
       if (shouldSwap(arr[i], arr[j], direction)) {
@@ -93,6 +133,7 @@ export const combSortGenerator: SortGenerator = function* (
           activeRange: { start: i, end: j },
           message: `Preparing to swap elements at indices ${i} (${arr[i]}) and ${j} (${arr[j]}).`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 13,
         }
         ;[arr[i], arr[j]] = [arr[j], arr[i]]
         liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -103,11 +144,12 @@ export const combSortGenerator: SortGenerator = function* (
           array: [...arr],
           highlightedIndices: [i, j],
           comparisonIndices: [],
-          swappingIndices: [i, j], // Show what was just swapped
+          swappingIndices: [i, j],
           sortedIndices: Array.from(sortedIndices),
           activeRange: { start: i, end: j },
           message: `Swapped. New values ${arr[i]} (at ${i}) and ${arr[j]} (at ${j}).`,
           currentStats: { ...liveStats },
+          currentPseudoCodeLine: 14,
         }
       } else {
         yield {
@@ -119,31 +161,37 @@ export const combSortGenerator: SortGenerator = function* (
           message: `No swap needed for elements at indices ${i} and ${j}.`,
           currentStats: { ...liveStats },
           swappingIndices: null,
+          currentPseudoCodeLine: 15,
         }
       }
     }
 
-    // Yield end of pass information
     yield {
       array: [...arr],
       message: `End of pass with gap ${gap}. Swapped this pass: ${swapped}`,
       currentStats: { ...liveStats },
       swappingIndices: null,
+      currentPseudoCodeLine: 16,
     }
 
-    // If gap is 1 and no swaps happened, the array is sorted
     if (gap === 1 && !swapped) {
+      yield {
+        array: [...arr],
+        message: 'Gap is 1 and no swaps occurred, array is sorted.',
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: 17,
+      }
       break
     }
   }
 
-  // Final sorted state confirmation
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()], // Mark all as sorted
+    sortedIndices: [...Array(n).keys()],
     message: 'Comb Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
+    currentPseudoCodeLine: 18,
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

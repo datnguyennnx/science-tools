@@ -18,13 +18,18 @@ export type SortStep = {
   mainArrayLabel?: string
   auxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
   currentStats?: Partial<SortStats> // Add currentStats for live updates
+  currentPseudoCodeLine?: number
 }
 
-// Define a generic type for the sort generator function
+export interface SortResult {
+  finalArray: number[]
+  stats: SortStats
+}
+
 export type SortGenerator = (
   initialArray: number[],
   direction: 'asc' | 'desc'
-) => Generator<SortStep, { finalArray: number[]; stats: SortStats }, void>
+) => Generator<SortStep, SortResult, void>
 
 // ----- New Types for Generic Visualization -----
 export type AuxiliaryDataType =

@@ -1,0 +1,75 @@
+'use client'
+
+import type { SortAlgorithm } from '../algorithmRegistry'
+import { insertionSortGenerator } from '../algorithms'
+
+export const insertionSortData: SortAlgorithm = {
+  id: 'insertionSort',
+  name: 'Insertion Sort',
+  description:
+    "Much like sorting a hand of playing cards, Insertion Sort builds the final sorted array one item at a time. It takes each element from the input and inserts it into the correct position within the already sorted portion of the array. It\'s simple to implement and efficient for small datasets or nearly sorted data, as it only requires shifting elements to make space for the new insertion.",
+  generator: insertionSortGenerator,
+  complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
+  origin: { name: 'Fundamental/Early' },
+  img: '',
+  pseudoCodes: {
+    plaintext: [
+      'procedure insertionSort(list)',
+      '  for i = 1 to length of list - 1',
+      '    key = list[i]',
+      '    j = i - 1',
+      '    // For ascending sort: list[j] > key',
+      '    // For descending sort: list[j] < key',
+      '    while j >= 0 and list[j] > key', // Defaulting to ascending sort logic
+      '      list[j + 1] = list[j]',
+      '      j = j - 1',
+      '    end while',
+      '    list[j + 1] = key',
+      '  end for',
+      'end procedure',
+    ],
+    c: [
+      'void insertionSort(int arr[], int n) {',
+      '  int i, key, j;',
+      '  for (i = 1; i < n; i++) {',
+      '    key = arr[i];',
+      '    j = i - 1;',
+      '    // For ascending sort, continue while arr[j] is greater than key.',
+      '    // For descending sort, continue while arr[j] is less than key.',
+      '    while (j >= 0 && arr[j] > key) { // Defaulting to ascending logic',
+      '      arr[j + 1] = arr[j];',
+      '      j = j - 1;',
+      '    }',
+      '    arr[j + 1] = key;',
+      '  }',
+      '}',
+    ],
+    cpp: [
+      'void insertionSort(int arr[], int n) {',
+      '  for (int i = 1; i < n; i++) {',
+      '    int key = arr[i];',
+      '    int j = i - 1;',
+      '    // For ascending sort, continue while arr[j] is greater than key.',
+      '    // For descending sort, continue while arr[j] is less than key.',
+      '    while (j >= 0 && arr[j] > key) { // Defaulting to ascending logic',
+      '      arr[j + 1] = arr[j];',
+      '      j--;',
+      '    }',
+      '    arr[j + 1] = key;',
+      '  }',
+      '}',
+    ],
+    python: [
+      'def insertionSort(arr):',
+      '  for i in range(1, len(arr)):',
+      '    key = arr[i]',
+      '    j = i - 1',
+      '    # For ascending sort, continue while arr[j] is greater than key.',
+      '    # For descending sort, continue while arr[j] is less than key.',
+      '    while j >= 0 and arr[j] > key: # Defaulting to ascending logic',
+      '      arr[j + 1] = arr[j]',
+      '      j -= 1',
+      '    arr[j + 1] = key',
+    ],
+  },
+}

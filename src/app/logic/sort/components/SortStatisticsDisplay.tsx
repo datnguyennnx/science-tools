@@ -41,18 +41,8 @@ const descriptions: Record<string, string> = {
 }
 
 export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
-  // Basic metrics
-  const basicMetrics = [
-    {
-      label: 'Num Elements',
-      value: formatNum(stats.numElements),
-      description: descriptions['Num Elements'],
-    },
-    {
-      label: 'Unique Elements',
-      value: formatNum(stats.numUniqueElements),
-      description: descriptions['Unique Elements'],
-    },
+  // Timing metrics (separated to their own table)
+  const timingMetrics = [
     {
       label: 'Delay',
       value: stats.delay,
@@ -68,6 +58,20 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
       value: stats.sortTime,
       description: descriptions['Sort Time'],
     },
+  ]
+
+  // Basic metrics (without timing metrics)
+  const basicMetrics = [
+    {
+      label: 'Num Elements',
+      value: formatNum(stats.numElements),
+      description: descriptions['Num Elements'],
+    },
+    {
+      label: 'Unique Elements',
+      value: formatNum(stats.numUniqueElements),
+      description: descriptions['Unique Elements'],
+    },
     {
       label: 'Comparisons',
       value: formatNum(stats.comparisons),
@@ -80,7 +84,7 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
     },
   ]
 
-  // Advanced metrics
+  // Advanced metrics (unchanged)
   const advancedMetrics = [
     {
       label: 'Main Array Writes',
@@ -114,10 +118,15 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
     },
   ]
 
+  const validTimingMetrics = timingMetrics.filter(metric => metric.value !== '-')
   const validBasicMetrics = basicMetrics.filter(metric => metric.value !== '-')
   const validAdvancedMetrics = advancedMetrics.filter(metric => metric.value !== '-')
 
-  if (validBasicMetrics.length === 0 && validAdvancedMetrics.length === 0) {
+  if (
+    validBasicMetrics.length === 0 &&
+    validAdvancedMetrics.length === 0 &&
+    validTimingMetrics.length === 0
+  ) {
     return (
       <section className="p-4 text-sm text-muted-foreground">
         No statistics available for this algorithm.
@@ -127,73 +136,109 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
 
   return (
     <section>
+      {/* Timing Metrics Table */}
+      {validTimingMetrics.length > 0 && (
+        <>
+          <h3 className="text-sm font-medium mb-2">Timing Information</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {validTimingMetrics.map(metric => (
+                  <TableHead key={metric.label}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>{metric.label}</span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                {validTimingMetrics.map(metric => (
+                  <TableCell key={metric.label}>{metric.value}</TableCell>
+                ))}
+              </TableRow>
+            </TableBody>
+          </Table>
+        </>
+      )}
+
       {/* Basic Metrics Table */}
       {validBasicMetrics.length > 0 && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {/* Removed the "Value" TableHead */}
-              {validBasicMetrics.map(metric => (
-                <TableHead key={metric.label}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>{metric.label}</span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="text-xs text-muted-foreground">{metric.description}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              {/* Removed the "Algorithm Performance" TableCell */}
-              {validBasicMetrics.map(metric => (
-                <TableCell key={metric.label}>{metric.value}</TableCell>
-              ))}
-            </TableRow>
-          </TableBody>
-        </Table>
+        <>
+          <h3 className="text-sm font-medium mt-4 mb-2">Algorithm Performance</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {validBasicMetrics.map(metric => (
+                  <TableHead key={metric.label}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>{metric.label}</span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                {validBasicMetrics.map(metric => (
+                  <TableCell key={metric.label}>{metric.value}</TableCell>
+                ))}
+              </TableRow>
+            </TableBody>
+          </Table>
+        </>
       )}
 
       {/* Advanced Metrics Table */}
       {validAdvancedMetrics.length > 0 && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {/* Removed the "Value" TableHead */}
-              {validAdvancedMetrics.map(metric => (
-                <TableHead key={metric.label}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>{metric.label}</span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p className="text-xs text-muted-foreground">{metric.description}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              {/* Removed the "Algorithm Performance" TableCell */}
-              {validAdvancedMetrics.map(metric => (
-                <TableCell key={metric.label}>{metric.value}</TableCell>
-              ))}
-            </TableRow>
-          </TableBody>
-        </Table>
+        <>
+          <h3 className="text-sm font-medium mt-4 mb-2">Advanced Metrics</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {validAdvancedMetrics.map(metric => (
+                  <TableHead key={metric.label}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>{metric.label}</span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs text-muted-foreground">{metric.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                {validAdvancedMetrics.map(metric => (
+                  <TableCell key={metric.label}>{metric.value}</TableCell>
+                ))}
+              </TableRow>
+            </TableBody>
+          </Table>
+        </>
       )}
 
-      {validAdvancedMetrics.length === 0 && validBasicMetrics.some(m => m.value !== '-') && (
-        <div className="mt-4 p-4 text-center text-sm text-muted-foreground border-t border-dashed">
-          This algorithm does not utilize specific auxiliary data structures for visualization.
-        </div>
-      )}
+      {validAdvancedMetrics.length === 0 &&
+        (validBasicMetrics.some(m => m.value !== '-') ||
+          validTimingMetrics.some(m => m.value !== '-')) && (
+          <div className="mt-4 p-4 text-center text-sm text-muted-foreground border-t border-dashed">
+            This algorithm does not utilize specific auxiliary data structures for visualization.
+          </div>
+        )}
     </section>
   )
 }
