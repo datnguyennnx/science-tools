@@ -52,25 +52,6 @@ export const DEFAULT_KEY_BINDINGS: KeyBinding[] = [
   { code: 'KeyN', commandId: PomodoroCommandType.SkipSession, preventDefault: true },
   { code: 'KeyR', commandId: PomodoroCommandType.ResetCycle, preventDefault: true },
 
-  {
-    code: 'KeyF',
-    commandId: PomodoroCommandType.SwitchToFocus,
-    requiresNotRunning: true,
-    preventDefault: true,
-  },
-  {
-    code: 'KeyB',
-    commandId: PomodoroCommandType.SwitchToShortBreak,
-    requiresNotRunning: true,
-    preventDefault: true,
-  },
-  {
-    code: 'KeyL',
-    commandId: PomodoroCommandType.SwitchToLongBreak,
-    requiresNotRunning: true,
-    preventDefault: true,
-  },
-
   { code: 'KeyS', commandId: PomodoroCommandType.OpenSettings, preventDefault: true }, // Typically dialogs steal focus, but good practice
   {
     code: 'Slash',
