@@ -5,6 +5,8 @@ import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
+import { CommandProvider } from '@/app/_command-manager/CommandProvider'
+import { GlobalClientEffects } from '@/components/global-client-effects'
 
 export const metadata: Metadata = {
   title: {
@@ -111,13 +113,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="p-2 w-full min-h-screen">
-              <SidebarTrigger />
-              <div>{children}</div>
-            </main>
-          </SidebarProvider>
+          <CommandProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <main className="p-2 w-full min-h-screen">
+                <SidebarTrigger />
+                <div>{children}</div>
+              </main>
+            </SidebarProvider>
+            <GlobalClientEffects />
+          </CommandProvider>
         </ThemeProvider>
       </body>
     </html>
