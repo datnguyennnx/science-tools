@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator, SortStep, AuxiliaryStructure } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer'
+import { SortGenerator, SortStep, AuxiliaryStructure, SortStats } from '../types'
 
 // Modified Insertion Sort for buckets to be a generator and update stats
 const insertionSortForBucketGenerator = function* (

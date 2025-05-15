@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer'
+import { SortGenerator, SortStats } from '../types'
 
 // Comparison function based on direction
 const shouldSwap = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {

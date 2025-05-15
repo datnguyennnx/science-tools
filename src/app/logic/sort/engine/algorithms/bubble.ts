@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator } from '../types' // Removed SortStep as it's implicitly used by SortGenerator
-import type { SortStats } from '../../components/AuxiliaryVisualizer' // Import SortStats
+import { SortGenerator, SortStats } from '../types'
 
 // Comparison function based on direction (using const arrow function style)
 const compare = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {

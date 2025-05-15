@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer'
+import { SortGenerator, SortStats } from '../types'
 
 // Helper function to flip a prefix of the array
 // This function is synchronous and modifies arr directly.

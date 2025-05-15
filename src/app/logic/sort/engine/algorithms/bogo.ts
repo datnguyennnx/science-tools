@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator, SortStep } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer'
+import { SortGenerator, SortStats, SortStep } from '../types'
 
 // Helper function to check if the array is sorted
 const isSorted = (

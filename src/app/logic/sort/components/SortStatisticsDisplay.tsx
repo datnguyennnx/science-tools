@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { SortStats } from './AuxiliaryVisualizer'
+import { SortStats } from '../engine/types'
 
 interface SortStatisticsDisplayProps {
   stats: Readonly<SortStats>

@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator, AuxiliaryStructure } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer' // Import SortStats
+import { SortGenerator, AuxiliaryStructure, SortStats } from '../types'
 
 export const patienceSortGenerator: SortGenerator = function* (
   initialArray: number[],

@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator, SortStep } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer'
+import { SortGenerator, SortStep, SortStats } from '../types'
 
 // Comparison function based on direction
 // Checks if `a` should be placed BEFORE `b`

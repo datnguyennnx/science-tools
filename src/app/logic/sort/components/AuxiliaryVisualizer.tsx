@@ -7,24 +7,7 @@ import { ChartContainer, ChartTooltipContent, ChartConfig } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SortStatisticsDisplay } from './SortStatisticsDisplay'
 import { motion } from 'framer-motion'
-
-// Define and export SortStats type
-export interface SortStats {
-  algorithmName?: string
-  numElements?: number
-  numUniqueElements?: number
-  delay?: string
-  visualTime?: string
-  sortTime?: string
-  comparisons?: number
-  swaps?: number
-  reversals?: number
-  mainArrayWrites?: number
-  auxiliaryArrayWrites?: number
-  externalArrayItems?: number
-  percentSorted?: number
-  segments?: number
-}
+import { SortStats } from '../engine/types'
 
 interface AuxiliaryVisualizerProps {
   sortStats?: Readonly<SortStats>

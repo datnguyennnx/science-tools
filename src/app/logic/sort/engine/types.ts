@@ -1,5 +1,3 @@
-import type { SortStats } from '../components/AuxiliaryVisualizer' // Import SortStats
-
 export type SortStep = {
   array: ReadonlyArray<number>
   message?: string
@@ -40,4 +38,21 @@ export interface AuxiliaryStructure {
   id: string // Unique key, e.g., 'counts', 'buckets', 'resultList', 'strand'
   title: string // Display title, e.g., 'Count Array', 'Result List'
   data: AuxiliaryDataType
+}
+
+export interface SortStats {
+  algorithmName?: string
+  numElements?: number
+  numUniqueElements?: number
+  delay?: string
+  visualTime?: string
+  sortTime?: string
+  comparisons?: number
+  swaps?: number
+  reversals?: number
+  mainArrayWrites?: number
+  auxiliaryArrayWrites?: number
+  externalArrayItems?: number
+  percentSorted?: number
+  segments?: number
 }

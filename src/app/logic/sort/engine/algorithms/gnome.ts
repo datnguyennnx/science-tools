@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer'
+import { SortGenerator, SortStats } from '../types'
 
 // Comparison function: Checks if arr[index] >= arr[index - 1] (for asc) or <= (for desc)
 const isInOrder = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {

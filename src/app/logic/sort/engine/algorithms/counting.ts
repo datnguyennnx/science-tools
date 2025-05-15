@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer' // Import SortStats
+import { SortGenerator, SortStats } from '../types'
 
 // Note: Counting Sort assumes non-negative integer inputs.
 // It's not a general-purpose comparison sort.

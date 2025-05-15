@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer' // Import SortStats
+import { SortGenerator, SortStats } from '../types'
 
 // Comparison function: Checks if b should come AFTER a
 const shouldInsertBefore = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {

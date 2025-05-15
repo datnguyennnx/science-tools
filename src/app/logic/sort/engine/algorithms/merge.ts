@@ -1,7 +1,6 @@
 'use client' // If this engine code is intended to be bundled with client components
 
-import { SortStep, SortGenerator } from '../types' // Removed RecursiveSortGenerator, MergeGenerator from imports
-import type { SortStats } from '../../components/AuxiliaryVisualizer' // Import SortStats
+import { SortStep, SortGenerator, SortStats } from '../types'
 
 // Comparison function based on direction
 const compare = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {

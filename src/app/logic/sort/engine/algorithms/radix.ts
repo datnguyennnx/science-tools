@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator, SortStep } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer' // Import SortStats
+import { SortGenerator, SortStep, SortStats } from '../types'
 
 // Helper function to get digit at a specific place (1s, 10s, 100s, etc.)
 const getDigit = (num: number, place: number): number => Math.floor(Math.abs(num) / place) % 10

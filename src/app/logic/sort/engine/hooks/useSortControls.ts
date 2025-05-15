@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { SortStep } from '../types'
 import type { SortAlgorithm } from '../algorithmRegistry'
-import type { SortStats } from '../../components/AuxiliaryVisualizer'
+import type { SortStats } from '../types'
 
 const MIN_ARRAY_SIZE = 5
 const MAX_ARRAY_SIZE = 200

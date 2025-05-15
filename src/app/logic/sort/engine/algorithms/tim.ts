@@ -1,7 +1,6 @@
 'use client'
 
-import { SortGenerator, SortStep } from '../types'
-import type { SortStats } from '../../components/AuxiliaryVisualizer' // Import SortStats
+import { SortGenerator, SortStep, SortStats } from '../types'
 
 // Define the size of the runs (a common value in TimSort implementations)
 const RUN_SIZE = 32
