@@ -23,12 +23,35 @@ export const metadata: Metadata = {
     'k-map',
     'karnaugh map',
     'truth tables',
-    'logic gates',
+    'venn diagram',
   ],
   openGraph: {
     title: 'Boolean Algebra Simplifier Tool',
     description: 'Simplify boolean expressions and visualize with interactive tools',
     type: 'website',
+    url: 'https://data-science.hallucinationguys.com/logic/boolean-algebra',
+    siteName: 'Science Tools',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Boolean Algebra Simplifier Tool',
+    description:
+      'Simplify boolean expressions and visualize with interactive K-maps and truth tables.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 }
 

@@ -11,26 +11,70 @@ export const metadata: Metadata = {
     template: '%s | Science Tools',
     default: 'Science Tools',
   },
-  description: 'A collection of interactive tools for science, math, and productivity',
-  keywords: ['science', 'tools', 'productivity', 'mathematics', 'logic', 'pomodoro'],
+  description:
+    'A collection of interactive tools for science, math, and productivity. Explore sorting algorithms, boolean algebra, Pomodoro timers, and more.',
+  keywords: [
+    'science tools',
+    'interactive learning',
+    'STEM education',
+    'developer tools',
+    'math tools',
+    'logic solver',
+    'pomodoro technique',
+    'algorithm visualization',
+    'boolean algebra simplifier',
+    'Karnaugh map',
+    'truth table',
+    'venn diagram',
+  ],
   authors: [
     {
       name: 'Science Tools Team',
+      url: 'https://data-science.hallucinationguys.com/',
     },
   ],
   category: 'Education',
   openGraph: {
     type: 'website',
     locale: 'en_US',
+    url: 'https://data-science.hallucinationguys.com/',
     siteName: 'Science Tools',
-    title: 'Science Tools',
-    description: 'A collection of interactive tools for science, math, and productivity',
+    title: 'Science Tools: Interactive Learning for Math & Logic',
+    description:
+      'Discover a suite of interactive tools for visualizing algorithms, simplifying boolean algebra, managing tasks with Pomodoro, and more. Perfect for students and developers.',
+    images: [
+      {
+        url: '/hero-images.png',
+        width: 1200,
+        height: 630,
+        alt: 'Science Tools - Interactive Learning Platform',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Science Tools',
-    description: 'A collection of interactive tools for science, math, and productivity',
+    title: 'Science Tools: Interactive Learning for Math & Logic',
+    description:
+      'Explore interactive tools for algorithms, boolean algebra, and productivity on Science Tools.',
+    images: ['/hero-images.png'],
   },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  manifest: '/site.webmanifest',
 }
 
 export const viewport: Viewport = {

@@ -25,13 +25,15 @@ export const metadata: Metadata = {
     description:
       'Visualize how different sorting algorithms work step-by-step. An educational tool for students and developers.',
     type: 'website',
-    siteName: 'Your Site Name',
+    url: 'https://data-science.hallucinationguys.com/logic/sort',
+    siteName: 'Science Tools',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Visualize Sorting Algorithms Interactively',
     description:
       'See Merge Sort, Quick Sort, and more in action. A great tool for learning algorithm mechanics.',
+    images: ['/images/og-sort.png'],
   },
   robots: {
     index: true,
