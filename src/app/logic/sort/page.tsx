@@ -3,10 +3,15 @@
 import { useEffect, useState } from 'react'
 import { AlgorithmInfoDisplay, SortVisualizer, PseudoCodeDisplay } from './components'
 import type { SupportedLanguages } from './components/PseudoCodeDisplay'
-import { useSortControls } from './engine/hooks'
+import {
+  useSortControls,
+  useAlgorithmSelection,
+  useSortTabView,
+  useSortKeyboardCommands,
+} from './engine/hooks'
 import { TimeComplexityCategory, SpaceComplexityCategory } from './engine/algorithmRegistry'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { useAlgorithmSelection } from './engine/hooks/useAlgorithmSelection'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function SortPage(): React.JSX.Element {
   const {
@@ -49,46 +54,37 @@ export default function SortPage(): React.JSX.Element {
   const [currentPseudoCodeLanguage, setCurrentPseudoCodeLanguage] =
     useState<SupportedLanguages>('cpp')
 
-  const [activeTab, setActiveTab] = useState<'info' | 'code'>('info')
   const [showAlgorithmInfo, setShowAlgorithmInfo] = useState<boolean>(true)
   const [showPseudoCode, setShowPseudoCode] = useState<boolean>(true)
+
+  const { activeTab, setActiveTab } = useSortTabView({
+    showAlgorithmInfo,
+    showPseudoCode,
+  })
+  const { toggleAlgorithmInfoShortcut, togglePseudoCodeShortcut } = useSortKeyboardCommands({
+    setShowAlgorithmInfo,
+    setShowPseudoCode,
+  })
 
   useEffect(() => {
     resetSort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAlgorithmId, sortDirection])
 
-  // Effect to manage activeTab when visibility changes
-  useEffect(() => {
-    if (!showAlgorithmInfo && activeTab === 'info') {
-      if (showPseudoCode) {
-        setActiveTab('code')
-      } else {
-        // Both are hidden, no active tab or a default placeholder if needed
-        // For now, let's assume if both hidden, tabs might not render or show empty
-      }
-    } else if (!showPseudoCode && activeTab === 'code') {
-      if (showAlgorithmInfo) {
-        setActiveTab('info')
-      } else {
-        // Both are hidden
-      }
-    } else if (showAlgorithmInfo && activeTab === 'code' && !showPseudoCode) {
-      // If pseudo code was active and gets hidden, switch to info if available
-      setActiveTab('info')
-    } else if (showPseudoCode && activeTab === 'info' && !showAlgorithmInfo) {
-      // If info was active and gets hidden, switch to pseudo code if available
-      setActiveTab('code')
-    }
-  }, [showAlgorithmInfo, showPseudoCode, activeTab])
-
   const displayedSortStats =
     liveSortStats && Object.keys(liveSortStats).length > 0
       ? liveSortStats
       : (finalSortStats ?? undefined)
 
-  const mainPanelColSpan = showAlgorithmInfo || showPseudoCode ? 'xl:col-span-4' : 'xl:col-span-6'
+  const mainPanelColSpan = showAlgorithmInfo || showPseudoCode ? 'xl:col-span-5' : 'xl:col-span-8'
   const rightPanelVisible = showAlgorithmInfo || showPseudoCode
+
+  const motionVariants = {
+    initial: { opacity: 0, height: 0, y: -10 },
+    animate: { opacity: 1, height: 'auto', y: 0 },
+    exit: { opacity: 0, height: 0, y: -10 },
+    transition: { duration: 0.3, ease: 'easeInOut' },
+  }
 
   const visibleMobileTabs = [
     showAlgorithmInfo && { value: 'info', label: 'Algorithm Info' },
@@ -96,7 +92,7 @@ export default function SortPage(): React.JSX.Element {
   ].filter(Boolean) as Array<{ value: 'info' | 'code'; label: string }>
 
   return (
-    <main className="xl:grid xl:grid-cols-6 xl:gap-4">
+    <main className="xl:grid xl:grid-cols-8 xl:gap-4">
       {/* Left Panel: Sort Visualizer */}
       <div className={`w-full ${mainPanelColSpan}`}>
         <SortVisualizer
@@ -129,10 +125,8 @@ export default function SortPage(): React.JSX.Element {
           handleSpaceCategoryChange={handleSpaceCategoryChange}
           auxiliaryStructures={auxiliaryStructures}
           maxValue={MAX_VALUE}
-          showAlgorithmInfo={showAlgorithmInfo}
-          onShowAlgorithmInfoChange={setShowAlgorithmInfo}
-          showPseudoCode={showPseudoCode}
-          onShowPseudoCodeChange={setShowPseudoCode}
+          toggleAlgorithmInfoShortcut={toggleAlgorithmInfoShortcut}
+          togglePseudoCodeShortcut={togglePseudoCodeShortcut}
         />
       </div>
 
@@ -158,13 +152,76 @@ export default function SortPage(): React.JSX.Element {
                 </TabsTrigger>
               )}
             </TabsList>
+            <AnimatePresence mode="wait">
+              {showAlgorithmInfo && activeTab === 'info' && (
+                <motion.div
+                  key="algoInfoMobile"
+                  initial={motionVariants.initial}
+                  animate={motionVariants.animate}
+                  exit={motionVariants.exit}
+                  transition={motionVariants.transition}
+                  className="overflow-hidden"
+                >
+                  <TabsContent value="info" forceMount>
+                    <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
+                  </TabsContent>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {showPseudoCode && activeTab === 'code' && (
+                <motion.div
+                  key="pseudoCodeMobile"
+                  initial={motionVariants.initial}
+                  animate={motionVariants.animate}
+                  exit={motionVariants.exit}
+                  transition={motionVariants.transition}
+                  className="overflow-hidden"
+                >
+                  <TabsContent value="code" forceMount>
+                    <PseudoCodeDisplay
+                      algorithmName={selectedAlgorithm?.name}
+                      pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
+                      activeLine={currentSortStep?.currentPseudoCodeLine}
+                      language={currentPseudoCodeLanguage}
+                      onLanguageChange={setCurrentPseudoCodeLanguage}
+                      sortStats={displayedSortStats}
+                    />
+                  </TabsContent>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Tabs>
+        </div>
+      )}
+
+      {/* Desktop Right Panel (AlgorithmInfo top, PseudoCode/Stats bottom) */}
+      {rightPanelVisible && (
+        <div className="hidden xl:grid xl:col-span-3 h-fit gap-4">
+          <AnimatePresence>
             {showAlgorithmInfo && (
-              <TabsContent value="info">
+              <motion.div
+                key="algoInfoDesktop"
+                initial={motionVariants.initial}
+                animate={motionVariants.animate}
+                exit={motionVariants.exit}
+                transition={motionVariants.transition}
+                className="overflow-hidden"
+              >
                 <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
-              </TabsContent>
+              </motion.div>
             )}
+          </AnimatePresence>
+          <AnimatePresence>
             {showPseudoCode && (
-              <TabsContent value="code">
+              <motion.div
+                key="pseudoCodeDesktop"
+                initial={motionVariants.initial}
+                animate={motionVariants.animate}
+                exit={motionVariants.exit}
+                transition={motionVariants.transition}
+                className="overflow-hidden"
+              >
                 <PseudoCodeDisplay
                   algorithmName={selectedAlgorithm?.name}
                   pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
@@ -173,26 +230,9 @@ export default function SortPage(): React.JSX.Element {
                   onLanguageChange={setCurrentPseudoCodeLanguage}
                   sortStats={displayedSortStats}
                 />
-              </TabsContent>
+              </motion.div>
             )}
-          </Tabs>
-        </div>
-      )}
-
-      {/* Desktop Right Panel (AlgorithmInfo top, PseudoCode/Stats bottom) */}
-      {rightPanelVisible && (
-        <div className="hidden xl:grid xl:col-span-2 h-fit gap-4">
-          {showAlgorithmInfo && <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />}
-          {showPseudoCode && (
-            <PseudoCodeDisplay
-              algorithmName={selectedAlgorithm?.name}
-              pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
-              activeLine={currentSortStep?.currentPseudoCodeLine}
-              language={currentPseudoCodeLanguage}
-              onLanguageChange={setCurrentPseudoCodeLanguage}
-              sortStats={displayedSortStats}
-            />
-          )}
+          </AnimatePresence>
         </div>
       )}
     </main>

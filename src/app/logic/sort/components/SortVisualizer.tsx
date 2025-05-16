@@ -12,7 +12,6 @@ import { SortConfigControls } from './SortConfigControls'
 import { SortActionButtons } from './SortActionButtons'
 import { SortChartDisplay } from './SortChartDisplay'
 import { AuxiliaryStructuresDisplay } from './AuxiliaryStructuresDisplay'
-import { SettingsControls } from './SettingsControls'
 
 interface SortVisualizerProps {
   currentSortStep: SortStep | null
@@ -44,10 +43,8 @@ interface SortVisualizerProps {
   handleSpaceCategoryChange: (category: string) => void
   auxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
   maxValue: number
-  showAlgorithmInfo: boolean
-  onShowAlgorithmInfoChange: (checked: boolean) => void
-  showPseudoCode: boolean
-  onShowPseudoCodeChange: (checked: boolean) => void
+  toggleAlgorithmInfoShortcut?: string
+  togglePseudoCodeShortcut?: string
 }
 
 export function SortVisualizer({
@@ -80,10 +77,8 @@ export function SortVisualizer({
   handleSpaceCategoryChange,
   auxiliaryStructures,
   maxValue,
-  showAlgorithmInfo,
-  onShowAlgorithmInfoChange,
-  showPseudoCode,
-  onShowPseudoCodeChange,
+  toggleAlgorithmInfoShortcut,
+  togglePseudoCodeShortcut,
 }: SortVisualizerProps): React.JSX.Element {
   // Internal handlers remain for now, can be moved or simplified if props are passed directly
   const internalOnStart = () => {
@@ -149,15 +144,6 @@ export function SortVisualizer({
           />
 
           <div className="flex flex-col gap-4 xl:w-auto">
-            <SettingsControls
-              showAlgorithmInfo={showAlgorithmInfo}
-              onShowAlgorithmInfoChange={onShowAlgorithmInfoChange}
-              showPseudoCode={showPseudoCode}
-              onShowPseudoCodeChange={onShowPseudoCodeChange}
-            />
-          </div>
-
-          <div className="flex flex-col gap-4 xl:w-auto">
             <SortActionButtons
               onNewArray={internalOnNewArray}
               onStart={internalOnStart}
@@ -166,6 +152,8 @@ export function SortVisualizer({
               onReset={internalOnReset}
               isSorting={isSorting}
               isPaused={isPaused}
+              toggleAlgorithmInfoShortcut={toggleAlgorithmInfoShortcut}
+              togglePseudoCodeShortcut={togglePseudoCodeShortcut}
             />
           </div>
         </div>
