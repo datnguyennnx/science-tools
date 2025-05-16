@@ -173,4 +173,5 @@ export const radixSortData: SortAlgorithm = {
       '    return arr',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: true,
 }

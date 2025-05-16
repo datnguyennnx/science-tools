@@ -193,4 +193,5 @@ export const bucketSortData: SortAlgorithm = {
       '    return sorted_arr',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: true,
 }

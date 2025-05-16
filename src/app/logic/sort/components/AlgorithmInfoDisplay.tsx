@@ -25,8 +25,6 @@ export function AlgorithmInfoDisplay({
     'Honoring the brilliant minds behind these fundamental sorting algorithms.'
   )
 
-  // console.log('AlgorithmInfoDisplay: Rendering. Selected Algorithm ID:', selectedAlgorithm?.id); // Covered by useEffect
-
   useEffect(() => {
     if (selectedAlgorithm) {
       const randomIndex = Math.floor(Math.random() * AUTHOR_RESPECT_QUOTES.length)

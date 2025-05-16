@@ -4,9 +4,9 @@ import type { SortStep, SortStats } from '../types'
 import type { SortAlgorithm } from '../algorithmRegistry'
 import { SORT_ALGORITHMS } from '../algorithmRegistry'
 import {
+  DEFAULT_ARRAY_SIZE,
   MIN_ARRAY_SIZE,
   MAX_ARRAY_SIZE,
-  DEFAULT_ARRAY_SIZE,
   MAX_VALUE,
   DEFAULT_SPEED,
   MIN_SPEED,
@@ -14,8 +14,8 @@ import {
 } from '../../constants/sortSettings'
 import { useSortableArray } from './useSortableArray'
 import { useSortPerformance } from './useSortPerformance'
-import { useDebouncedAuxiliaryStructures } from './useDebouncedAuxiliaryStructures'
 import { useSortExecution } from './useSortExecution'
+// import { useDebouncedAuxiliaryStructures } from './useDebouncedAuxiliaryStructures'
 
 export interface UseSortControlsProps {
   initialSpeed?: number
@@ -47,12 +47,13 @@ export const useSortControls = ({
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(-1)
   const [displayedSortStep, setDisplayedSortStep] = useState<SortStep | null>(null)
 
-  const auxiliaryStructures = useDebouncedAuxiliaryStructures(
-    displayedSortStep?.auxiliaryStructures
-  )
+  const auxiliaryStructures = displayedSortStep?.auxiliaryStructures
+
+  const currentStep = sortSteps[currentStepIndex]
+
+  const algorithmName = currentStep?.currentStats?.algorithmName || 'N/A'
 
   const handleStepProcessed = useCallback((step: SortStep) => {
-    console.log('[useSortControls] handleStepProcessed: Received step:', step)
     setDisplayedSortStep(step)
     setSortSteps(prev => [...prev, step])
     setCurrentStepIndex(prev => prev + 1)
@@ -145,18 +146,12 @@ export const useSortControls = ({
     // Don't reset on initial mount if selectedAlgorithm is the default
     // This check might need adjustment based on how initialSelectedAlgorithmId is handled upstream
     if (selectedAlgorithm && selectedAlgorithm.id !== (SORT_ALGORITHMS[0]?.id || '')) {
-      console.log(
-        '[useSortControls] useEffect [selectedAlgorithm]: Algorithm changed, calling resetSort.'
-      )
       resetSort()
     }
     // Adding resetSort to dependency array as it's a useCallback
     // selectedAlgorithm.id is not directly available for dependency, using selectedAlgorithm which is a memoized object
   }, [selectedAlgorithm, resetSort])
 
-  // Expose relevant values from useSortExecution and other hooks
-  // console.log('[useSortControls] Returning: displayedSortStep:', displayedSortStep); // Too noisy if logged every render
-  // console.log('[useSortControls] Returning: debounced auxiliaryStructures for UI:', auxiliaryStructures);
   return {
     array,
     arraySize,
@@ -183,5 +178,6 @@ export const useSortControls = ({
     resumeSort,
     stepForward,
     resetSort,
+    algorithmName,
   }
 }

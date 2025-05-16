@@ -197,4 +197,5 @@ export const mergeSortData: SortAlgorithm = {
       '    merge(arr, l, m, r)',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

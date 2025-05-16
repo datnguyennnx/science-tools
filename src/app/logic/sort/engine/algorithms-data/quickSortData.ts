@@ -116,4 +116,5 @@ export const quickSortData: SortAlgorithm = {
       '    quickSort(arr, pi + 1, high)',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

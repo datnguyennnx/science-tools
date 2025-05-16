@@ -130,4 +130,5 @@ export const timSortData: SortAlgorithm = {
       '    size *= 2',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

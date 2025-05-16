@@ -157,4 +157,5 @@ export const pancakeSortData: SortAlgorithm = {
       '    current_size -= 1',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

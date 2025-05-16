@@ -78,4 +78,5 @@ export const gnomeSortData: SortAlgorithm = {
       '    return arr',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

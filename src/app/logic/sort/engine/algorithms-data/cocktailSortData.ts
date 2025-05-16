@@ -133,4 +133,5 @@ export const cocktailSortData: SortAlgorithm = {
       '    start += 1',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

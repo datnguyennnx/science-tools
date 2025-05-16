@@ -89,4 +89,5 @@ export const shellSortData: SortAlgorithm = {
       '    gap //= 2',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

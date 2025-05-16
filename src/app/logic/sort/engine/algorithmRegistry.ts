@@ -127,6 +127,7 @@ export interface SortAlgorithm {
   origin?: AlgorithmOrigin
   img?: string
   pseudoCodes?: Record<SupportedLanguages, string[]> // New field for multiple pseudo-codes
+  hasAdvancedAuxiliaryVisuals?: boolean // Added for grouping algorithms with special aux visuals
   // pseudoCode?: string[] // Old field - removed
   // pseudoCodeLanguage?: 'c' | 'cpp' | 'python' | 'plaintext' // Old field - removed
 }

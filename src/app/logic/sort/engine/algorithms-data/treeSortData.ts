@@ -171,4 +171,5 @@ export const treeSortData: SortAlgorithm = {
       '    return sorted_list',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: true,
 }

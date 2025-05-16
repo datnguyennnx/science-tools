@@ -111,4 +111,5 @@ export const combSortData: SortAlgorithm = {
       '        swapped = True',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

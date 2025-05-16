@@ -160,4 +160,5 @@ export const heapSortData: SortAlgorithm = {
       '    heapify(arr, i, 0)',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

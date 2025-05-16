@@ -97,19 +97,15 @@ export function SortVisualizer({
     onNewArray()
   }
   const internalSetSelectedAlgorithmId = (id: string) => {
-    // console.log('SortVisualizer: Algorithm selection changed to:', id) // Kept for debugging if needed
     setSelectedAlgorithmId(id)
   }
   const internalSetSortDirection = (direction: 'asc' | 'desc') => {
-    // console.log('SortVisualizer: Sort direction changed to:', direction)
     setSortDirection(direction)
   }
   const internalHandleTimeCategoryChange = (category: string) => {
-    // console.log('SortVisualizer: Time category filter changed to:', category)
     handleTimeCategoryChange(category)
   }
   const internalHandleSpaceCategoryChange = (category: string) => {
-    // console.log('SortVisualizer: Space category filter changed to:', category)
     handleSpaceCategoryChange(category)
   }
 

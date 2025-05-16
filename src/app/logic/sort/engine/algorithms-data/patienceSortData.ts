@@ -182,4 +182,5 @@ export const patienceSortData: SortAlgorithm = {
       '    return result',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: true,
 }

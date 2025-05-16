@@ -22,6 +22,7 @@ export type SortStep = {
 export interface SortResult {
   finalArray: number[]
   stats: SortStats
+  finalAuxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
 }
 
 export type SortGenerator = (
@@ -30,14 +31,24 @@ export type SortGenerator = (
 ) => Generator<SortStep, SortResult, void>
 
 // ----- New Types for Generic Visualization -----
-export type AuxiliaryDataType =
-  | ReadonlyArray<number> // Simple list of numbers
-  | ReadonlyArray<{ value: number; [key: string]: unknown }> // Use unknown instead of any
+export type AuxiliaryChartItem =
+  | number
+  | {
+      value: number
+      originalIndex?: number
+      id?: string | number
+      [key: string]: unknown
+    }
+export type AuxiliaryDataType = ReadonlyArray<AuxiliaryChartItem>
 
+/**
+ * Represents an auxiliary data structure to be visualized.
+ */
 export interface AuxiliaryStructure {
-  id: string // Unique key, e.g., 'counts', 'buckets', 'resultList', 'strand'
-  title: string // Display title, e.g., 'Count Array', 'Result List'
-  data: AuxiliaryDataType
+  id: string // Unique identifier for React keys and animation, e.g., 'counts', 'buckets-pass-1'
+  title: string // Title of the chart for this structure, e.g., 'Digit Counts (Pass 1)'
+  data: AuxiliaryDataType // Data for the chart
+  displaySlot?: string // Optional identifier for grouping into a specific display container/slot, e.g., 'digitCounts', 'outputBuffer'
 }
 
 export interface SortStats {

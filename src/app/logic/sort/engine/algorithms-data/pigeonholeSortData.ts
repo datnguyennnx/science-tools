@@ -125,4 +125,5 @@ export const pigeonholeSortData: SortAlgorithm = {
       '    return arr',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: true,
 }

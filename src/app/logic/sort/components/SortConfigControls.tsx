@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -105,11 +107,27 @@ export function SortConfigControls({
             <SelectValue placeholder="Select algorithm" />
           </SelectTrigger>
           <SelectContent>
-            {algorithms.map(algo => (
-              <SelectItem key={algo.id} value={algo.id}>
-                {algo.name}
-              </SelectItem>
-            ))}
+            <SelectGroup>
+              <SelectLabel className="font-bold">Distribution & Special Purpose</SelectLabel>
+              {algorithms
+                .filter(algo => algo.hasAdvancedAuxiliaryVisuals)
+                .map(algo => (
+                  <SelectItem key={algo.id} value={algo.id}>
+                    {algo.name}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
+
+            <SelectGroup>
+              <SelectLabel className="font-bold">Comparison-Based & Others</SelectLabel>
+              {algorithms
+                .filter(algo => !algo.hasAdvancedAuxiliaryVisuals)
+                .map(algo => (
+                  <SelectItem key={algo.id} value={algo.id}>
+                    {algo.name}
+                  </SelectItem>
+                ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>
@@ -176,7 +194,7 @@ export function SortConfigControls({
           onValueChange={handleTimeCategoryChange}
           name="time-complexity-filter"
         >
-          <SelectTrigger className="w-full space-x-2 ">
+          <SelectTrigger>
             <SelectValue placeholder="Select Time Complexity" />
           </SelectTrigger>
           <SelectContent>
@@ -200,7 +218,7 @@ export function SortConfigControls({
           onValueChange={handleSpaceCategoryChange}
           name="space-complexity-filter"
         >
-          <SelectTrigger className="w-full space-x-2 ">
+          <SelectTrigger>
             <SelectValue placeholder="Select Space Complexity" />
           </SelectTrigger>
           <SelectContent>

@@ -182,4 +182,5 @@ export const cycleSortData: SortAlgorithm = {
       '    return arr',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

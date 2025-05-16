@@ -85,4 +85,5 @@ export const bubbleSortData: SortAlgorithm = {
       '      break',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

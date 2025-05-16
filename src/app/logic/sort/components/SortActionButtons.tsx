@@ -26,14 +26,6 @@ export function SortActionButtons({
   toggleAlgorithmInfoShortcut,
   togglePseudoCodeShortcut,
 }: SortActionButtonsProps): React.JSX.Element {
-  console.log(
-    '[SortActionButtons] Rendering. isSorting:',
-    isSorting,
-    'isPaused:',
-    isPaused,
-    'Start button disabled:',
-    isSorting && !isPaused
-  )
   return (
     <div className="flex flex-col space-y-3">
       <div className="flex items-center justify-between text-sm leading-none flex-wrap gap-2">

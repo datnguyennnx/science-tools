@@ -124,4 +124,5 @@ export const oddEvenSortData: SortAlgorithm = {
       '    return arr',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

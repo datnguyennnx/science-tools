@@ -88,4 +88,5 @@ export const selectionSortData: SortAlgorithm = {
       '      arr[i], arr[minIndex] = arr[minIndex], arr[i]',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

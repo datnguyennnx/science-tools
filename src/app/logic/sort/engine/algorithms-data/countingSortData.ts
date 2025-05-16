@@ -145,4 +145,5 @@ export const countingSortData: SortAlgorithm = {
       '  return output # Return new sorted list',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: true,
 }

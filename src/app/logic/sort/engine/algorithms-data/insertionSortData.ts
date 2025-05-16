@@ -72,4 +72,5 @@ export const insertionSortData: SortAlgorithm = {
       '    arr[j + 1] = key',
     ],
   },
+  hasAdvancedAuxiliaryVisuals: false,
 }

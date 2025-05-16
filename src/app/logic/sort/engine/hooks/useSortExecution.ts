@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import type { SortStep, SortStats, SortGenerator } from '../types'
+import type { SortStep, SortStats, SortGenerator, SortResult } from '../types'
 import type { SortAlgorithm } from '../algorithmRegistry'
 import {
   DEFAULT_SPEED,
   MIN_SPEED,
   MAX_SPEED,
-  BASE_DELAY_MS,
+  MAX_ANIMATION_DELAY_MS,
   MIN_DELAY_MS,
 } from '../../constants/sortSettings'
 
@@ -75,8 +75,6 @@ export function useSortExecution({
   const [tempLiveStats, setTempLiveStats] = useState<Partial<SortStats> | null>(null)
   const isInitialMountRef = useRef(true) // Ref to track initial mount
 
-  console.log('[useSortExecution] Hook initialized')
-
   const clearSortingTimeout = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -98,91 +96,67 @@ export function useSortExecution({
 
   const calculateDelay = useCallback(() => {
     const speedRange = MAX_SPEED - MIN_SPEED
-    const delayRange = BASE_DELAY_MS - MIN_DELAY_MS
+    const delayRange = MAX_ANIMATION_DELAY_MS - MIN_DELAY_MS
     const normalizedSpeed = (MAX_SPEED - speed) / speedRange
-    const delay = MIN_DELAY_MS + Math.pow(normalizedSpeed, 2) * delayRange
+    const delay = MIN_DELAY_MS + normalizedSpeed * delayRange
     return Math.max(MIN_DELAY_MS, delay)
   }, [speed])
 
   const nextStep = useCallback(() => {
-    console.log('[useSortExecution] nextStep: Called')
-    console.log('[useSortExecution] nextStep: isPaused:', isPaused, 'isSorting:', isSorting)
     if (isPaused || !isSorting) return
     if (!sortGeneratorRef.current) {
-      console.error('[useSortExecution] nextStep: sortGeneratorRef.current is null!')
       return
     }
-    console.log(
-      '[useSortExecution] nextStep: sortGeneratorRef.current is',
-      sortGeneratorRef.current
-    )
 
     const result = sortGeneratorRef.current.next()
-    console.log('[useSortExecution] nextStep: Generator.next() result:', result)
 
     if (!result.done) {
       const stepFromGenerator = result.value
-      console.log(
-        '[useSortExecution] nextStep: !result.done, stepFromGenerator:',
-        stepFromGenerator
-      )
       setCurrentRawSortStep(stepFromGenerator)
       onStepProcessed(stepFromGenerator)
-      console.log('[useSortExecution] nextStep: onStepProcessed called with:', stepFromGenerator)
 
       const liveStatsForStep = processActiveGeneratorStep(
         stepFromGenerator,
-        tempLiveStats, // Pass current internal temp stats
+        tempLiveStats,
         visualStartTimeRef.current,
         calculateDelay()
       )
-      setTempLiveStats(liveStatsForStep) // Update internal temp stats
-      onLiveStatsUpdate(liveStatsForStep) // Notify parent
-      console.log('[useSortExecution] nextStep: onLiveStatsUpdate called with:', liveStatsForStep)
+      setTempLiveStats(liveStatsForStep)
+      onLiveStatsUpdate(liveStatsForStep)
 
       timeoutRef.current = setTimeout(nextStep, calculateDelay())
     } else {
       clearSortingTimeout()
-      const finalAlgorithmResult = result.value
-      console.log(
-        '[useSortExecution] nextStep: result.done, finalAlgorithmResult:',
-        finalAlgorithmResult
-      )
+      const finalAlgorithmResult = result.value as SortResult
 
       const timingStats = calculateTimingStats(
-        tempLiveStats, // Use final internal temp stats
+        tempLiveStats,
         visualStartTimeRef.current,
         calculateDelay()
       )
 
       const finalCombinedStats: SortStats = {
-        ...tempLiveStats,
-        ...finalAlgorithmResult.stats,
+        ...(tempLiveStats || {}),
+        ...(finalAlgorithmResult.stats || {}),
         ...timingStats,
-        numElements: array.length, // array here is the initial array passed to startSort
+        numElements: array.length,
       } as SortStats
 
-      // Construct the very last step for record-keeping
       const completionStep: SortStep = {
         array: [...finalAlgorithmResult.finalArray],
         sortedIndices: finalAlgorithmResult.finalArray.map((_, idx) => idx),
         message: `${selectedAlgorithm?.name || 'Algorithm'} Complete!`,
         currentStats: finalCombinedStats,
-        auxiliaryStructures: currentRawSortStep?.auxiliaryStructures, // Corrected: use currentRawSortStep
+        auxiliaryStructures:
+          finalAlgorithmResult.finalAuxiliaryStructures || currentRawSortStep?.auxiliaryStructures,
       }
-      // What is stepFromGenerator here? It's from the last iteration. This needs care.
-      // Let's get aux from the last step that was processed via onStepProcessed
-      // For simplicity now, this might be an issue if aux structs are only in finalAlgorithmResult.stats (not standard)
 
       onSortComplete(finalAlgorithmResult.finalArray, finalCombinedStats, completionStep)
-      console.log(
-        '[useSortExecution] nextStep: onSortComplete called with finalArray, finalCombinedStats, completionStep'
-      )
-      setCurrentRawSortStep(completionStep) // Final step
+      setCurrentRawSortStep(completionStep)
       setIsSorting(false)
       setIsPaused(false)
       sortGeneratorRef.current = null
-      setTempLiveStats(null) // Reset temp stats
+      setTempLiveStats(null)
     }
   }, [
     isPaused,
@@ -202,18 +176,7 @@ export function useSortExecution({
   ])
 
   const startSort = useCallback(() => {
-    console.log('[useSortExecution] startSort: Called')
-    console.log(
-      '[useSortExecution] startSort: selectedAlgorithm:',
-      selectedAlgorithm,
-      'array.length:',
-      array.length
-    )
-
     if (!selectedAlgorithm || array.length === 0) {
-      console.warn(
-        '[useSortExecution] startSort: Preconditions not met (no algorithm or empty array).'
-      )
       return
     }
 
@@ -240,13 +203,6 @@ export function useSortExecution({
     justResumedRef.current = false
 
     sortGeneratorRef.current = selectedAlgorithm.generator([...array], sortDirection)
-    console.log(
-      '[useSortExecution] startSort: sortGeneratorRef.current assigned:',
-      sortGeneratorRef.current
-    )
-
-    // console.log('[useSortExecution] startSort: Calling nextStep...'); // nextStep will now be called by useEffect
-    // nextStep(); // Do not call directly, let useEffect handle it
   }, [
     selectedAlgorithm,
     array,
@@ -275,20 +231,7 @@ export function useSortExecution({
   const stepForward = useCallback(() => {
     if (!isSorting || !isPaused || !sortGeneratorRef.current) return
 
-    // Temporarily allow nextStep to run once
-    // No, this is not how stepForward should work.
-    // It should just call nextStep *if* conditions are met and it's paused.
-    // The existing nextStep logic handles the generator.
-    // We just need to ensure that when stepForward is called, the system *thinks* it's not paused for one step.
-
-    // To correctly implement stepForward: briefly unpause, call nextStep, then re-pause if still sorting.
-    // However, the current nextStep checks isPaused internally. So, stepForward implies unpausing for one step.
-
-    // The issue with directly calling nextStep() when paused is that nextStep() itself has an `if (isPaused) return;` guard.
-    // A simple way is to simulate one step of the generator manually.
-
     const result = sortGeneratorRef.current.next()
-    console.log('[useSortExecution] stepForward: Generator.next() result:', result)
 
     if (!result.done) {
       const stepFromGenerator = result.value
@@ -310,7 +253,6 @@ export function useSortExecution({
         // This check isn't robust. The `done` flag from `result` is the source of truth.
       }
     } else {
-      // This logic is similar to the end of nextStep
       clearSortingTimeout()
       const finalAlgorithmResult = result.value
       const timingStats = calculateTimingStats(
@@ -358,24 +300,11 @@ export function useSortExecution({
 
   // Effect to handle resume AND the initial start of the sort after state is set
   useEffect(() => {
-    console.log(
-      '[useSortExecution] useEffect [isSorting, isPaused, sortGeneratorRef]: isSorting:',
-      isSorting,
-      'isPaused:',
-      isPaused,
-      'justResumedRef:',
-      justResumedRef.current
-    )
     if (isSorting && !isPaused && sortGeneratorRef.current) {
       if (justResumedRef.current) {
-        // This is a resume operation
-        console.log('[useSortExecution] useEffect: Resuming sort, calling nextStep...')
         nextStep()
         justResumedRef.current = false
       } else if (!timeoutRef.current) {
-        // This is the initial start after sortGeneratorRef is set and isSorting is true
-        // And no timeout is already pending (e.g. from a previous step of a paused sort)
-        console.log('[useSortExecution] useEffect: Initial start of sort, calling nextStep...')
         nextStep()
       }
     }
@@ -403,9 +332,6 @@ export function useSortExecution({
       return
     }
 
-    console.log(
-      '[useSortExecution] useEffect [selectedAlgorithm]: Algorithm changed, resetting execution state.'
-    )
     resetExecution() // Use the new comprehensive reset
   }, [selectedAlgorithm, resetExecution])
 
