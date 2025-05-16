@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { memo, useState, useEffect } from 'react'
 import type { SortAlgorithm } from '../engine/algorithmRegistry'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import Image from 'next/image'
@@ -18,7 +18,7 @@ interface AlgorithmInfoDisplayProps {
   selectedAlgorithm: SortAlgorithm | undefined
 }
 
-export function AlgorithmInfoDisplay({
+const MemoizedAlgorithmInfoDisplay = memo(function AlgorithmInfoDisplay({
   selectedAlgorithm,
 }: AlgorithmInfoDisplayProps): React.JSX.Element {
   const [randomQuote, setRandomQuote] = useState<string>(
@@ -140,4 +140,6 @@ export function AlgorithmInfoDisplay({
       </CardContent>
     </Card>
   )
-}
+})
+
+export { MemoizedAlgorithmInfoDisplay as AlgorithmInfoDisplay }

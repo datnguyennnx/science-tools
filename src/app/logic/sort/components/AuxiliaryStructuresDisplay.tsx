@@ -1,41 +1,35 @@
 'use client'
 
-import React from 'react'
+import { memo, useMemo } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import type { AuxiliaryStructure } from '../engine/types'
 import { AuxiliaryStructureChart } from './AuxiliaryStructureChart'
 
 interface AuxiliaryStructuresDisplayProps {
   auxiliaryStructures: ReadonlyArray<AuxiliaryStructure> | undefined
-  maxValue: number
   /** Indicates if this section should have a top border and padding, useful when it's not the first item. */
   separateSection?: boolean
 }
 
-// Helper to group structures by displaySlot
-const groupStructuresBySlot = (
-  structures: ReadonlyArray<AuxiliaryStructure> | undefined
-): Record<string, AuxiliaryStructure[]> => {
-  if (!structures) return {}
-  return structures.reduce(
-    (acc, structure) => {
-      const slot = structure.displaySlot || 'default'
-      if (!acc[slot]) {
-        acc[slot] = []
-      }
-      acc[slot].push(structure)
-      return acc
-    },
-    {} as Record<string, AuxiliaryStructure[]>
-  )
-}
-
-export function AuxiliaryStructuresDisplay({
+const MemoizedAuxiliaryStructuresDisplay = memo(function AuxiliaryStructuresDisplay({
   auxiliaryStructures,
-  maxValue,
   separateSection = false,
 }: AuxiliaryStructuresDisplayProps): React.JSX.Element | null {
-  const groupedStructures = groupStructuresBySlot(auxiliaryStructures)
+  const groupedStructures = useMemo(() => {
+    if (!auxiliaryStructures) return {}
+    return auxiliaryStructures.reduce(
+      (acc, structure) => {
+        const slot = structure.displaySlot || 'default'
+        if (!acc[slot]) {
+          acc[slot] = []
+        }
+        acc[slot].push(structure)
+        return acc
+      },
+      {} as Record<string, AuxiliaryStructure[]>
+    )
+  }, [auxiliaryStructures])
+
   const numActiveSlots = Object.keys(groupedStructures).length
 
   if (numActiveSlots === 0) {
@@ -76,11 +70,7 @@ export function AuxiliaryStructuresDisplay({
             )}
             <AnimatePresence initial={false}>
               {structuresInSlot.map(structure => (
-                <AuxiliaryStructureChart
-                  key={structure.id}
-                  structure={structure}
-                  maxValue={maxValue}
-                />
+                <AuxiliaryStructureChart key={structure.id} structure={structure} />
               ))}
             </AnimatePresence>
           </div>
@@ -88,4 +78,6 @@ export function AuxiliaryStructuresDisplay({
       </div>
     </div>
   )
-}
+})
+
+export { MemoizedAuxiliaryStructuresDisplay as AuxiliaryStructuresDisplay }

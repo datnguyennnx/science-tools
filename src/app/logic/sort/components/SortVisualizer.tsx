@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import { memo } from 'react'
 import type { SortStep, AuxiliaryStructure } from '../engine/types'
 import type {
   SortAlgorithm,
@@ -42,12 +42,11 @@ interface SortVisualizerProps {
   selectedSpaceCategory: string
   handleSpaceCategoryChange: (category: string) => void
   auxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
-  maxValue: number
   toggleAlgorithmInfoShortcut?: string
   togglePseudoCodeShortcut?: string
 }
 
-export function SortVisualizer({
+const MemoizedSortVisualizer = memo(function SortVisualizer({
   currentSortStep,
   onStart,
   onPause,
@@ -76,7 +75,6 @@ export function SortVisualizer({
   selectedSpaceCategory,
   handleSpaceCategoryChange,
   auxiliaryStructures,
-  maxValue,
   toggleAlgorithmInfoShortcut,
   togglePseudoCodeShortcut,
 }: SortVisualizerProps): React.JSX.Element {
@@ -159,11 +157,12 @@ export function SortVisualizer({
         {hasAuxStructures && (
           <AuxiliaryStructuresDisplay
             auxiliaryStructures={auxiliaryStructures}
-            maxValue={maxValue}
             separateSection={false}
           />
         )}
       </CardContent>
     </Card>
   )
-}
+})
+
+export { MemoizedSortVisualizer as SortVisualizer }

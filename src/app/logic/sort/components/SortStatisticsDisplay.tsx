@@ -1,4 +1,4 @@
-import React from 'react'
+import { memo } from 'react'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import {
   Table,
@@ -40,7 +40,9 @@ const descriptions: Record<string, string> = {
     'Number of distinct sorted or unsorted segments identified or processed by the algorithm (e.g., runs in Tim Sort; not universally implemented).',
 }
 
-export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
+const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
+  stats,
+}: SortStatisticsDisplayProps) {
   // Timing metrics (separated to their own table)
   const timingMetrics = [
     {
@@ -200,4 +202,6 @@ export function SortStatisticsDisplay({ stats }: SortStatisticsDisplayProps) {
       )}
     </section>
   )
-}
+})
+
+export { MemoizedSortStatisticsDisplay as SortStatisticsDisplay }

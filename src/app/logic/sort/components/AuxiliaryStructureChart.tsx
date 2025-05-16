@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { memo, useMemo } from 'react'
 import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, Cell } from 'recharts'
 import { motion } from 'framer-motion'
 import type { AuxiliaryStructure } from '../engine/types'
@@ -15,37 +15,36 @@ const auxChartConfig = {
 
 interface AuxiliaryStructureChartProps {
   structure: Readonly<AuxiliaryStructure>
-  maxValue: number // For YAxis domain consistency if needed, or dynamic based on data
 }
 
-export function AuxiliaryStructureChart({
+const MemoizedAuxiliaryStructureChart = memo(function AuxiliaryStructureChart({
   structure,
 }: AuxiliaryStructureChartProps): React.JSX.Element {
-  // Check if data is in { value: number; originalIndex: number } format or just number[]
-  const isDetailedData =
-    structure.data.length > 0 &&
-    typeof structure.data[0] === 'object' &&
-    'value' in structure.data[0]
+  const chartData = useMemo(() => {
+    const isDetailedData =
+      structure.data.length > 0 &&
+      typeof structure.data[0] === 'object' &&
+      'value' in structure.data[0]
 
-  const chartData = isDetailedData
-    ? (structure.data as ReadonlyArray<{ value: number; [key: string]: unknown }>).map(
-        (item, index) => {
-          let name: string
-          if (item.originalIndex !== undefined && item.originalIndex !== null) {
-            name = item.originalIndex.toString()
-          } else if (item.id !== undefined && item.id !== null) {
-            // Handle 'id' from TreeSort or other structures
-            name = item.id.toString()
-          } else {
-            name = index.toString() // Fallback to array index
+    return isDetailedData
+      ? (structure.data as ReadonlyArray<{ value: number; [key: string]: unknown }>).map(
+          (item, index) => {
+            let name: string
+            if (item.originalIndex !== undefined && item.originalIndex !== null) {
+              name = item.originalIndex.toString()
+            } else if (item.id !== undefined && item.id !== null) {
+              name = item.id.toString()
+            } else {
+              name = index.toString()
+            }
+            return { name, value: item.value }
           }
-          return { name, value: item.value }
-        }
-      )
-    : (structure.data as ReadonlyArray<number>).map((val, idx) => ({
-        name: idx.toString(),
-        value: val,
-      }))
+        )
+      : (structure.data as ReadonlyArray<number>).map((val, idx) => ({
+          name: idx.toString(),
+          value: val,
+        }))
+  }, [structure.data]) // Depend on structure.data for memoization
 
   return (
     <div className="w-full flex flex-col space-y-2">
@@ -83,4 +82,6 @@ export function AuxiliaryStructureChart({
       </motion.div>
     </div>
   )
-}
+})
+
+export { MemoizedAuxiliaryStructureChart as AuxiliaryStructureChart }

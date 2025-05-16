@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, RefObject } from 'react'
 import type { SortStep, SortStats } from '../types'
 
 export interface UseSortPerformanceReturn {
@@ -6,7 +6,7 @@ export interface UseSortPerformanceReturn {
   finalSortStats: SortStats | null
   setLiveSortStats: React.Dispatch<React.SetStateAction<Partial<SortStats> | null>>
   setFinalSortStats: React.Dispatch<React.SetStateAction<SortStats | null>>
-  visualStartTimeRef: React.MutableRefObject<number | null>
+  visualStartTimeRef: RefObject<number | null>
   processActiveGeneratorStep: (
     generatorStep: SortStep,
     currentLiveStats: Partial<SortStats> | null,

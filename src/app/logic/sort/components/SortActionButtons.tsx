@@ -1,4 +1,4 @@
-import React from 'react'
+import { memo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/Kbd'
 import { Play, Pause, RotateCcw, SkipForward, PlusSquare } from 'lucide-react'
@@ -15,7 +15,7 @@ interface SortActionButtonsProps {
   togglePseudoCodeShortcut?: string
 }
 
-export function SortActionButtons({
+const MemoizedSortActionButtons = memo(function SortActionButtons({
   onNewArray,
   onStart,
   onPause,
@@ -89,4 +89,6 @@ export function SortActionButtons({
       </div>
     </div>
   )
-}
+})
+
+export { MemoizedSortActionButtons as SortActionButtons }

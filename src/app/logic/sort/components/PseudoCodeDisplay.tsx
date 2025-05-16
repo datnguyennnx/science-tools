@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import { lazy, memo, Suspense, CSSProperties } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Select,
@@ -9,10 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+// import { Prism as SyntaxHighlighterPrism } from 'react-syntax-highlighter' // REMOVED: Unused import
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism' // Import style directly
 import type { SortStats } from '../engine/types'
 import { SortStatisticsDisplay } from './SortStatisticsDisplay'
+
+// Lazy load SyntaxHighlighter component
+const SyntaxHighlighter = lazy(() =>
+  import('react-syntax-highlighter').then(module => ({ default: module.Prism }))
+)
 
 // Re-add SupportedLanguages type
 export type SupportedLanguages = 'c' | 'cpp' | 'python' | 'plaintext'
@@ -33,13 +38,13 @@ const languageOptions: Array<{ value: SupportedLanguages; label: string }> = [
   { value: 'plaintext', label: 'Plain Text' },
 ]
 
-export function PseudoCodeDisplay({
+const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
   algorithmName,
   pseudoCode,
   activeLine,
-  language, // Removed default, parent controls this
+  language,
   onLanguageChange,
-  sortStats, // Added prop
+  sortStats,
 }: PseudoCodeDisplayProps): React.JSX.Element {
   const hasPseudoCode = pseudoCode && Array.isArray(pseudoCode) && pseudoCode.length > 0
   const hasStats = !!sortStats && Object.keys(sortStats).length > 0
@@ -102,59 +107,64 @@ export function PseudoCodeDisplay({
       {/* Content Area for Pseudo Code */}
       {hasPseudoCode && (
         <CardContent className="text-sm no-scrollbar">
-          <SyntaxHighlighter
-            language={highlighterLanguage}
-            style={oneDark}
-            showLineNumbers
-            wrapLines={true}
-            lineNumberStyle={{
-              minWidth: '3.25em',
-              paddingRight: '1em',
-              textAlign: 'right',
-              color: '#777',
-            }}
-            lineProps={lineNumber => {
-              const style: React.CSSProperties = {
-                display: 'block',
-                width: '100%',
-                wordBreak: 'break-all',
-                whiteSpace: 'pre-wrap',
-              }
-              // activeLine is 0-indexed, lineNumber is 1-indexed
-              if (activeLine !== undefined && lineNumber === activeLine + 1) {
-                const currentLineContent =
-                  pseudoCode && activeLine >= 0 && activeLine < pseudoCode.length
-                    ? pseudoCode[activeLine]
-                    : ''
-                const trimmedLine = currentLineContent.trim()
-
-                // Regex to check for empty, whitespace-only, or common comment-only lines
-                // Covers: empty, whitespace, //, #, ;
-                const isIgnorableLine = /^\s*$|^\s*(\/\/|#|;).*$/.test(trimmedLine)
-
-                if (!isIgnorableLine) {
-                  style.backgroundColor = 'rgba(255, 255, 255, 0.2)'
-                  style.fontWeight = 'bold'
+          <Suspense fallback={<div className="p-4 text-center">Loading code highlighter...</div>}>
+            <SyntaxHighlighter
+              language={highlighterLanguage}
+              style={oneDark} // Use directly imported style
+              showLineNumbers
+              wrapLines={true}
+              lineNumberStyle={
+                {
+                  minWidth: '3.25em',
+                  paddingRight: '1em',
+                  textAlign: 'right',
+                  color: '#777',
+                } as CSSProperties
+              } // Add type assertion for lineNumberStyle
+              lineProps={(lineNumber: number) => {
+                // Add type for lineNumber
+                const style: React.CSSProperties = {
+                  display: 'block',
+                  width: '100%',
+                  wordBreak: 'break-all',
+                  whiteSpace: 'pre-wrap',
                 }
-              }
-              return { style }
-            }}
-            customStyle={{
-              margin: 0,
-              padding: '1rem',
-              borderRadius: '0.375rem',
-              backgroundColor: 'var(--syntax-bg, #282c34)',
-              fontSize: '0.75rem',
-              lineHeight: '1.625',
-            }}
-            codeTagProps={{
-              style: {
-                fontFamily: 'var(--font-mono)',
-              },
-            }}
-          >
-            {codeString}
-          </SyntaxHighlighter>
+                // activeLine is 0-indexed, lineNumber is 1-indexed
+                if (activeLine !== undefined && lineNumber === activeLine + 1) {
+                  const currentLineContent =
+                    pseudoCode && activeLine >= 0 && activeLine < pseudoCode.length
+                      ? pseudoCode[activeLine]
+                      : ''
+                  const trimmedLine = currentLineContent.trim()
+
+                  const isIgnorableLine = /^\s*$|^\s*(\/\/|#|;).*$/.test(trimmedLine)
+
+                  if (!isIgnorableLine) {
+                    style.backgroundColor = 'rgba(255, 255, 255, 0.2)'
+                    style.fontWeight = 'bold'
+                  }
+                }
+                return { style }
+              }}
+              customStyle={
+                {
+                  margin: 0,
+                  padding: '1rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: 'var(--syntax-bg, #282c34)',
+                  fontSize: '0.75rem',
+                  lineHeight: '1.625',
+                } as CSSProperties
+              } // Add type assertion for customStyle
+              codeTagProps={{
+                style: {
+                  fontFamily: 'var(--font-mono)',
+                } as CSSProperties, // Add type assertion for codeTagProps.style
+              }}
+            >
+              {codeString}
+            </SyntaxHighlighter>
+          </Suspense>
         </CardContent>
       )}
 
@@ -176,4 +186,6 @@ export function PseudoCodeDisplay({
       )}
     </Card>
   )
-}
+})
+
+export { MemoizedPseudoCodeDisplay as PseudoCodeDisplay }

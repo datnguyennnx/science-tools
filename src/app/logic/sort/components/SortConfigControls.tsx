@@ -1,4 +1,4 @@
-import React, { useOptimistic, startTransition } from 'react'
+import { memo, useOptimistic, startTransition } from 'react'
 import type {
   SortAlgorithm,
   TimeComplexityCategory,
@@ -40,7 +40,7 @@ interface SortConfigControlsProps {
   handleSpaceCategoryChange: (category: string) => void
 }
 
-export function SortConfigControls({
+const MemoizedSortConfigControls = memo(function SortConfigControls({
   arraySize,
   setArraySize,
   MIN_ARRAY_SIZE,
@@ -76,9 +76,6 @@ export function SortConfigControls({
         setArraySize(clampedValue)
       })
     }
-    // If parseInt results in NaN (e.g., user types non-numeric or clears input),
-    // setArraySize is not called. The input field, being controlled by `arraySize` prop,
-    // will revert to its last valid state.
   }
 
   const handleSpeedInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,8 +84,6 @@ export function SortConfigControls({
       const clampedValue = Math.max(MIN_SPEED, Math.min(value, MAX_SPEED))
       setSpeed(clampedValue)
     }
-    // If parseInt results in NaN, setSpeed is not called.
-    // The input field will revert to its last valid state.
   }
 
   return (
@@ -233,4 +228,6 @@ export function SortConfigControls({
       </div>
     </div>
   )
-}
+})
+
+export { MemoizedSortConfigControls as SortConfigControls }

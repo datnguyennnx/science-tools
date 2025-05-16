@@ -46,7 +46,6 @@ export default function SortPage(): React.JSX.Element {
     pauseSort,
     resetSort,
     stepForward,
-    MAX_VALUE,
   } = useSortControls({
     selectedAlgorithm: selectedAlgorithm || undefined,
   })
@@ -124,7 +123,6 @@ export default function SortPage(): React.JSX.Element {
           selectedSpaceCategory={selectedSpaceCategory}
           handleSpaceCategoryChange={handleSpaceCategoryChange}
           auxiliaryStructures={auxiliaryStructures}
-          maxValue={MAX_VALUE}
           toggleAlgorithmInfoShortcut={toggleAlgorithmInfoShortcut}
           togglePseudoCodeShortcut={togglePseudoCodeShortcut}
         />

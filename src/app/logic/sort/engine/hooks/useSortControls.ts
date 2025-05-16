@@ -128,10 +128,6 @@ export const useSortControls = ({
 
   useEffect(() => {
     performFullReset()
-  }, [performFullReset])
-
-  useEffect(() => {
-    performFullReset()
   }, [arraySize, performFullReset])
 
   const resetSort = useCallback(
