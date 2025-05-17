@@ -11,6 +11,7 @@ import {
   formatToLatex as toLatexString,
 } from '../../engine/parser/formatter'
 import type { OutputFormat } from '../../engine/generator/generator'
+import { useDebounce } from '@/hooks/useDebounce'
 
 /**
  * Detect input format (standard or LaTeX) based on content
@@ -43,6 +44,9 @@ export function ExpressionInput({
   const [localSimplifiedResult, setLocalSimplifiedResult] = useState('')
   const [error, setError] = useState('')
   const [complexity, setComplexity] = useState(3) // Default complexity level
+
+  // Debounce the expression for preview updates
+  const debouncedExpression = useDebounce(expression, 300) // 300ms delay
 
   // Create wrapper functions for the parser, memoized with useCallback
   const parse = useCallback((input: string, options: Partial<ParserOptions> = {}) => {
@@ -100,15 +104,18 @@ export function ExpressionInput({
   )
 
   useEffect(() => {
-    if (!expression.trim()) {
+    if (!debouncedExpression.trim()) {
+      // Use debouncedExpression for preview logic
       setAlternativePreview('')
-      onExpressionChange?.('')
+      // Still call onExpressionChange with the immediate expression for other consumers
+      onExpressionChange?.(expression)
       return
     }
 
+    // Still call onExpressionChange with the immediate expression
     onExpressionChange?.(expression)
-    updatePreview(expression)
-  }, [expression, onExpressionChange, updatePreview])
+    updatePreview(debouncedExpression) // Use debouncedExpression for updating the preview
+  }, [debouncedExpression, expression, onExpressionChange, updatePreview]) // Add expression to dependencies if onExpressionChange needs immediate value
 
   const handleExpressionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newExpression = e.target.value

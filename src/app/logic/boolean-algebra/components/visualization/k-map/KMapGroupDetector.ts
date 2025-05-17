@@ -6,6 +6,11 @@ import {
   KMAP_GROUP_BORDER_WIDTH,
 } from '../utils/colors'
 
+// Caches for pattern generation
+const octetPatternCache: Record<string, Array<Array<[number, number]>>> = {}
+const quadPatternCache: Record<string, Array<Array<[number, number]>>> = {}
+const pairPatternCache: Record<string, Array<Array<[number, number]>>> = {}
+
 /**
  * Detects groups in a Karnaugh Map with improved performance for large k-maps
  */
@@ -127,6 +132,11 @@ export function detectGroups(
  * This pre-computes patterns for better performance
  */
 function generateOctetPatterns(rows: number, cols: number): Array<Array<[number, number]>> {
+  const cacheKey = `${rows}-${cols}`
+  if (octetPatternCache[cacheKey]) {
+    return octetPatternCache[cacheKey]
+  }
+
   const patterns: Array<Array<[number, number]>> = []
 
   // Only valid for 4x4 K-maps (4 variables)
@@ -176,6 +186,7 @@ function generateOctetPatterns(rows: number, cols: number): Array<Array<[number,
     }
   }
 
+  octetPatternCache[cacheKey] = patterns
   return patterns
 }
 
@@ -184,6 +195,10 @@ function generateOctetPatterns(rows: number, cols: number): Array<Array<[number,
  * This pre-computes patterns for better performance
  */
 function generateQuadPatterns(rows: number, cols: number): Array<Array<[number, number]>> {
+  const cacheKey = `${rows}-${cols}`
+  if (quadPatternCache[cacheKey]) {
+    return quadPatternCache[cacheKey]
+  }
   const patterns: Array<Array<[number, number]>> = []
 
   // 2x2 quads
@@ -244,6 +259,7 @@ function generateQuadPatterns(rows: number, cols: number): Array<Array<[number, 
     }
   }
 
+  quadPatternCache[cacheKey] = patterns
   return patterns
 }
 
@@ -252,6 +268,10 @@ function generateQuadPatterns(rows: number, cols: number): Array<Array<[number, 
  * This pre-computes patterns for better performance
  */
 function generatePairPatterns(rows: number, cols: number): Array<Array<[number, number]>> {
+  const cacheKey = `${rows}-${cols}`
+  if (pairPatternCache[cacheKey]) {
+    return pairPatternCache[cacheKey]
+  }
   const patterns: Array<Array<[number, number]>> = []
 
   // Horizontal pairs
@@ -274,6 +294,7 @@ function generatePairPatterns(rows: number, cols: number): Array<Array<[number, 
     }
   }
 
+  pairPatternCache[cacheKey] = patterns
   return patterns
 }
 

@@ -73,7 +73,7 @@ export default function BooleanAlgebraLayout({ children }: BooleanAlgebraLayoutP
               <p className="sr-only">Open Guide</p>
             </Button>
           </DialogTrigger>
-          <DialogContent className="min-w-3xl max-h-[80vh] overflow-y-auto no-scrollbar">
+          <DialogContent className="min-w-4xl max-h-[80vh] overflow-y-auto no-scrollbar">
             <DialogHeader>
               <DialogTitle className="text-[--color-foreground]">Boolean Algebra Guide</DialogTitle>
               <DialogDescription className="text-[--color-muted-foreground]">

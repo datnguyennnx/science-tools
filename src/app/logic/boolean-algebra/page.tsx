@@ -2,11 +2,30 @@
 
 import { useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import dynamic from 'next/dynamic'
 
-// Import the components
+// Import the ExpressionInput statically as it's always visible and critical for input
 import { ExpressionInput } from './components/input'
-import { TruthTable, KarnaughMap, VennDiagram } from './components/visualization'
-import { StepByStepSimplification } from './components/simplification'
+
+// Dynamically import visualization and simplification components
+const TruthTable = dynamic(() => import('./components/visualization').then(mod => mod.TruthTable), {
+  loading: () => <p className="text-center p-4">Loading Truth Table...</p>,
+})
+
+const KarnaughMap = dynamic(
+  () => import('./components/visualization').then(mod => mod.KarnaughMap),
+  { loading: () => <p className="text-center p-4">Loading K-Map...</p> }
+)
+
+const VennDiagram = dynamic(
+  () => import('./components/visualization').then(mod => mod.VennDiagram),
+  { loading: () => <p className="text-center p-4">Loading Venn Diagram...</p> }
+)
+
+const StepByStepSimplification = dynamic(
+  () => import('./components/simplification').then(mod => mod.StepByStepSimplification),
+  { loading: () => <p className="text-center p-4">Loading Simplification Steps...</p> }
+)
 
 export default function BooleanAlgebraPage() {
   const [currentExpressionInput, setCurrentExpressionInput] = useState('')

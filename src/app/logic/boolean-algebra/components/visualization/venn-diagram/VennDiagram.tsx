@@ -215,7 +215,7 @@ export const VennDiagram = ({ expression, className = '' }: VennDiagramProps) =>
 
   // Define base and fullscreen classes for the content area
   const baseContentClasses = 'pt-4' // Basic padding for normal mode
-  const fullscreenContentClasses = 'flex-grow pt-0 flex items-center justify-center' // Removed overflow-y-auto
+  const fullscreenContentClasses = 'flex-grow flex flex-col overflow-y-auto pt-0' // Simplified for better child layout control
 
   const cardTitle = 'Venn Diagram'
 

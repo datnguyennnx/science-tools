@@ -47,19 +47,23 @@ export function ExpressionError({ error, className = '' }: ExpressionErrorProps)
   }
 
   return (
-    <div className={`p-4 bg-red-50 border border-red-200 rounded-md text-red-700 ${className}`}>
+    <div
+      className={`p-4 bg-[var(--error-background)] border border-[var(--error-border)] rounded-md text-[var(--error-text)] ${className}`}
+    >
       <div className="flex gap-2 items-start">
-        <XCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+        <XCircle className="h-5 w-5 text-[var(--error-icon)] mt-0.5 flex-shrink-0" />
         <div>
-          <h4 className="font-semibold text-red-800">Expression Error</h4>
+          <h4 className="font-semibold text-[var(--error-text-strong)]">Expression Error</h4>
           <p className="mt-1">{userFriendlyMessage}</p>
           {additionalHelp && (
-            <p className="mt-2 text-sm border-t border-red-200 pt-2">{additionalHelp}</p>
+            <p className="mt-2 text-sm border-t border-[var(--error-border)] pt-2">
+              {additionalHelp}
+            </p>
           )}
           {userFriendlyMessage.includes('0!') && (
-            <div className="mt-2 text-sm border-t border-red-200 pt-2">
+            <div className="mt-2 text-sm border-t border-[var(--error-border)] pt-2">
               <p className="font-semibold">Example fix:</p>
-              <code className="block bg-red-50 p-1 rounded mt-1">
+              <code className="block bg-[var(--error-background)] p-1 rounded mt-1">
                 <p className="line-through">0!(B)</p> → <p className="font-semibold">0*!(B)</p>
               </code>
             </div>
