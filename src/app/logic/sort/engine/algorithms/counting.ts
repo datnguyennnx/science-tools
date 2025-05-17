@@ -37,7 +37,7 @@ export const countingSortGenerator: SortGenerator = function* (
       sortedIndices: n === 1 ? [0] : [],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // Or a general "pre-condition met" line
+      currentPseudoCodeLine: [0], // Or a general "pre-condition met" line
       auxiliaryStructures: [countAuxStructure], // Ensure even empty state has it
     }
     return {
@@ -57,7 +57,7 @@ export const countingSortGenerator: SortGenerator = function* (
     message: `Starting Counting Sort. Finding maximum value. Current max: ${max}`,
     mainArrayLabel: 'Input Array',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0, // General start
+    currentPseudoCodeLine: [0], // General start
     auxiliaryStructures: [countAuxStructure],
   }
   for (let i = 1; i < n; i++) {
@@ -68,7 +68,7 @@ export const countingSortGenerator: SortGenerator = function* (
       message: `Checking index ${i} (value ${arr[i]}). Current max: ${max}`,
       mainArrayLabel: 'Input Array',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // Still part of finding max, related to input array
+      currentPseudoCodeLine: [0], // Still part of finding max, related to input array
       auxiliaryStructures: [countAuxStructure],
     }
     if (arr[i] > max) {
@@ -79,7 +79,7 @@ export const countingSortGenerator: SortGenerator = function* (
         message: `New maximum found: ${max} at index ${i}`,
         mainArrayLabel: 'Input Array',
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 0, // Still part of finding max
+        currentPseudoCodeLine: [0], // Still part of finding max
         auxiliaryStructures: [countAuxStructure],
       }
     }
@@ -102,7 +102,7 @@ export const countingSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [countAuxStructure],
     message: `Initialized count array of size ${countSize}. Max value is ${max}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 1, // count = array of (max - min + 1) zeros
+    currentPseudoCodeLine: [6],
   }
 
   // 2. Count occurrences of each element
@@ -118,7 +118,7 @@ export const countingSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [countAuxStructure],
       message: `About to count element ${arr[i]} at index ${i}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 3, // for each number in array:
+      currentPseudoCodeLine: [8],
     }
 
     count[arr[i]]++
@@ -131,7 +131,7 @@ export const countingSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [countAuxStructure],
       message: `Counting element ${arr[i]} at index ${i}. Incrementing count at index ${arr[i]}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 4, // count[number - min]++
+      currentPseudoCodeLine: [9],
     }
   }
 
@@ -145,7 +145,7 @@ export const countingSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [countAuxStructure],
     message: 'Calculating cumulative counts.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 5, // // Calculate cumulative counts (comment line)
+    currentPseudoCodeLine: [12],
   }
   // Loop corresponds to "for i from 1 to count.length - 1:"
   for (let i = 1; i < countSize; i++) {
@@ -159,7 +159,7 @@ export const countingSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [countAuxStructure],
       message: `About to update cumulative count at index ${i}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 6, // for i from 1 to count.length - 1:
+      currentPseudoCodeLine: [12],
     }
     count[i] += count[i - 1]
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
@@ -172,7 +172,7 @@ export const countingSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [countAuxStructure],
       message: `Updating cumulative count at index ${i}. New value: ${count[i]}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 7, // count[i] = count[i] + count[i - 1]
+      currentPseudoCodeLine: [13],
     }
   }
 
@@ -189,7 +189,7 @@ export const countingSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [countAuxStructure],
     message: 'Building sorted output array using cumulative counts.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 9, // output = array of same size as input
+    currentPseudoCodeLine: [16],
   }
 
   // Iterate backwards for stability (though stability is less critical if only numbers)
@@ -211,7 +211,7 @@ export const countingSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [countAuxStructure],
       message: `Processing element ${value} from original array at index ${i}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 10, // for i from array.length - 1 down to 0:
+      currentPseudoCodeLine: [17],
     }
 
     if (direction === 'asc') {
@@ -227,7 +227,7 @@ export const countingSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [countAuxStructure], // Still shows count *before* decrement for this specific element's placement logic
         message: `Placed element ${value} into output index ${outputIndex}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 11, // output[count[array[i] - min] - 1] = array[i]
+        currentPseudoCodeLine: [20],
       }
       count[value]--
       liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
@@ -246,7 +246,7 @@ export const countingSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [countAuxStructure], // Still shows count *before* decrement
         message: `Placed element ${value} into output index ${outputIndex}. (Descending logic follows ascending placement then reverse)`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 11, // output[count[array[i] - min] - 1] = array[i]
+        currentPseudoCodeLine: [20],
       }
       count[value]--
       liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
@@ -262,7 +262,7 @@ export const countingSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [countAuxStructure],
       message: `Placing element ${value} (from original index ${i}) into output index ${outputIndex}. Decremented count for ${value}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 12, // count[array[i] - min]--
+      currentPseudoCodeLine: [21],
     }
   }
 
@@ -277,8 +277,7 @@ export const countingSortGenerator: SortGenerator = function* (
       highlightedIndices: [],
       message: 'Reversing array for descending order.',
       currentStats: { ...liveStats },
-      // No specific pseudo code line for reverse, maybe related to return
-      currentPseudoCodeLine: 13,
+      currentPseudoCodeLine: [25],
       auxiliaryStructures: [countAuxStructure],
     }
   }
@@ -291,7 +290,7 @@ export const countingSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()], // All indices are sorted conceptually
     message: 'Counting Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 13, // return output
+    currentPseudoCodeLine: [31],
     auxiliaryStructures: [countAuxStructure],
   }
 

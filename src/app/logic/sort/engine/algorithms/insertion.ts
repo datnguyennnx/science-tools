@@ -2,7 +2,6 @@
 
 import { SortGenerator, SortStats } from '../types'
 
-// Comparison function: Checks if b should come AFTER a
 const shouldInsertBefore = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
   return direction === 'asc' ? a < b : a > b
 }
@@ -31,7 +30,7 @@ export const insertionSortGenerator: SortGenerator = function* (
       sortedIndices: Array.from(sortedIndices),
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // function insertionSort(array, n) {
+      currentPseudoCodeLine: [2],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -44,7 +43,7 @@ export const insertionSortGenerator: SortGenerator = function* (
     message: 'Starting Insertion Sort. Index 0 is initially considered sorted.',
     activeRange: { start: 0, end: 0 }, // Initially sorted range
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0, // function insertionSort(array, n) {
+    currentPseudoCodeLine: [0], // function insertionSort(array, n) {
   }
 
   // Iterate from the second element
@@ -53,7 +52,7 @@ export const insertionSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Outer loop: i = ${i}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 1, // for (let i = 1; i < n; i++) {
+      currentPseudoCodeLine: [4],
       activeRange: { start: 0, end: i - 1 },
       sortedIndices: Array.from(sortedIndices),
     }
@@ -62,7 +61,7 @@ export const insertionSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Key = ${key}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2, // let key = array[i];
+      currentPseudoCodeLine: [5],
       activeRange: { start: 0, end: i - 1 },
       sortedIndices: Array.from(sortedIndices),
       highlightedIndices: [i],
@@ -72,7 +71,7 @@ export const insertionSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `j = ${j}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 3, // let j = i - 1;
+      currentPseudoCodeLine: [6],
       activeRange: { start: 0, end: i - 1 },
       sortedIndices: Array.from(sortedIndices),
       highlightedIndices: [i],
@@ -87,7 +86,7 @@ export const insertionSortGenerator: SortGenerator = function* (
       activeRange: { start: 0, end: i - 1 }, // Current sorted range
       message: `Pass ${i}: Selecting element ${key} at index ${i} to insert into sorted portion [0...${i - 1}].`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 4, // Comment line / start of while logic
+      currentPseudoCodeLine: [7],
     }
 
     let comparedIndex = -1
@@ -115,7 +114,7 @@ export const insertionSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: i - 1 },
         message: `Comparing key ${key} with ${arr[j]} at index ${j}. Shift ${arr[j]} to index ${j + 1}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 6, // while (j >= 0 && array[j] > key) {
+        currentPseudoCodeLine: [7],
       }
 
       arr[j + 1] = arr[j] // Shift element
@@ -124,7 +123,7 @@ export const insertionSortGenerator: SortGenerator = function* (
         array: [...arr],
         message: `Shifted arr[j+1] = arr[j]`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 7, // array[j + 1] = array[j];
+        currentPseudoCodeLine: [8],
         highlightedIndices: [j + 1],
         comparisonIndices: [i],
         sortedIndices: Array.from(sortedIndices),
@@ -140,14 +139,14 @@ export const insertionSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: i - 1 },
         message: `Shifted ${arr[j + 1]} from index ${j} to ${j + 1}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 7, // Still on array[j + 1] = array[j];
+        currentPseudoCodeLine: [8],
       }
       j = j - 1
       yield {
         array: [...arr],
         message: `Decremented j to ${j}`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 8, // j = j - 1;
+        currentPseudoCodeLine: [9],
         highlightedIndices: [j + 1],
         comparisonIndices: [i],
         sortedIndices: Array.from(sortedIndices),
@@ -162,7 +161,7 @@ export const insertionSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `End of while loop for key ${key}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 9, // Closing brace of while or start of array[j + 1] = key;
+      currentPseudoCodeLine: [10],
       highlightedIndices: [i],
       sortedIndices: Array.from(sortedIndices),
       activeRange: { start: 0, end: i - 1 },
@@ -181,7 +180,7 @@ export const insertionSortGenerator: SortGenerator = function* (
             ? `Key ${key} should be inserted before ${arr[j]} at index ${j + 1}.`
             : `Key ${key} is the smallest/largest so far, inserting at index 0.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 6, // Condition that broke while loop
+        currentPseudoCodeLine: [7],
       }
     } else if (comparedIndex === -1) {
       yield {
@@ -192,7 +191,7 @@ export const insertionSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: i - 1 },
         message: `Key ${key} is already in correct position relative to ${arr[j]}. No shifts needed in this pass.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 6, // while condition was false from start
+        currentPseudoCodeLine: [7],
       }
     }
 
@@ -210,14 +209,14 @@ export const insertionSortGenerator: SortGenerator = function* (
       activeRange: { start: 0, end: i }, // Update sorted range
       message: `Inserted key ${key} at index ${j + 1}. Sorted portion is now [0...${i}].`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 10, // array[j + 1] = key;
+      currentPseudoCodeLine: [11],
     }
   } // End of for loop
   yield {
     array: [...arr],
     message: `End of outer for loop.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 11, // Closing brace of for loop
+    currentPseudoCodeLine: [12],
     sortedIndices: Array.from(sortedIndices),
   }
 
@@ -227,7 +226,7 @@ export const insertionSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()],
     message: 'Insertion Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 12, // Closing brace of function
+    currentPseudoCodeLine: [14],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

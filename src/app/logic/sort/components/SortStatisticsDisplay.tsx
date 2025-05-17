@@ -20,7 +20,6 @@ const formatPercent = (p?: number) => (p != null ? `${p}%` : '-')
 const descriptions: Record<string, string> = {
   'Num Elements': 'Total number of elements in the array being sorted.',
   'Unique Elements': 'Number of unique values in the array being sorted.',
-  Delay: 'The configured delay (in milliseconds) between sort operations for visualization.',
   'Visual Time':
     'Estimated time (in seconds) spent on visualization, including delays and rendering steps.',
   'Sort Time':
@@ -44,11 +43,6 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
   stats,
 }: SortStatisticsDisplayProps) {
   const timingMetrics = [
-    {
-      label: 'Delay',
-      value: stats.delay,
-      description: descriptions.Delay,
-    },
     {
       label: 'Visual Time',
       value: stats.visualTime,

@@ -57,7 +57,7 @@ const countingSortByDigitGenerator = function* (
     auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureInitial],
     message: `Counting Sort (Radix): Initializing counts for digit at place ${place}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 11,
+    currentPseudoCodeLine: [12],
   }
 
   // Phase 1: Count occurrences
@@ -76,7 +76,7 @@ const countingSortByDigitGenerator = function* (
       auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureCounting],
       message: `Processing ${arr[i]} (Original Index: ${originalIndices[i]}); Digit at place ${place} is ${digit}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 13,
+      currentPseudoCodeLine: [15],
     }
     count[digit]++
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
@@ -93,7 +93,7 @@ const countingSortByDigitGenerator = function* (
     auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureAfterCounting],
     message: `Finished counting all digits for place ${place}. Counts: ${count.join(', ')}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 15,
+    currentPseudoCodeLine: [17],
   }
 
   // Phase 2: Calculate cumulative counts
@@ -109,7 +109,7 @@ const countingSortByDigitGenerator = function* (
     auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureBeforeCumulative],
     message: `Starting cumulative sum calculation for place ${place}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 16,
+    currentPseudoCodeLine: [19],
   }
   for (let i = 1; i < 10; i++) {
     count[i] += count[i - 1]
@@ -127,7 +127,7 @@ const countingSortByDigitGenerator = function* (
     auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureAfterCumulative],
     message: `Finished cumulative sum for place ${place}. Cumulative Counts: ${count.join(', ')}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 18,
+    currentPseudoCodeLine: [21],
   }
 
   // Phase 3: Build the output array
@@ -143,7 +143,7 @@ const countingSortByDigitGenerator = function* (
     auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureReadyForBuild],
     message: `Building output array for place ${place}. Using cumulative counts to place elements.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 10,
+    currentPseudoCodeLine: [23],
   }
 
   for (let i = n - 1; i >= 0; i--) {
@@ -162,7 +162,7 @@ const countingSortByDigitGenerator = function* (
       auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureLocating],
       message: `Processing item ${arr[i]} (Original Index: ${originalIndices[i]}). Digit ${digit}. Target index in output: ${count[digit] - 1}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 20,
+      currentPseudoCodeLine: [24],
     }
 
     const outputIndex = count[digit] - 1
@@ -192,7 +192,7 @@ const countingSortByDigitGenerator = function* (
       auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureDecremented],
       message: `Placed ${value} at output index ${outputIndex}. Decremented count for digit ${digit}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 22,
+      currentPseudoCodeLine: [25],
     }
   }
 
@@ -208,7 +208,7 @@ const countingSortByDigitGenerator = function* (
     auxiliaryStructures: [...priorPassesFinalAux, finalAuxForThisPass],
     message: `Finished building output array for place ${place}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 23,
+    currentPseudoCodeLine: [27],
   }
 
   return {
@@ -245,7 +245,7 @@ export const radixSortGenerator: SortGenerator = function* (
       sortedIndices: n === 1 ? [0] : [],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // radixSort(array)
+      currentPseudoCodeLine: [0], // radixSort(array)
       auxiliaryStructures: [...accumulatedFinalAuxStates], // Include even for early exit
     }
     return { finalArray: arr, stats: liveStats as SortStats }
@@ -257,7 +257,7 @@ export const radixSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Initial Array',
     message: `Found max absolute value: ${maxAbs}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 1, // max = findMaxAbsolute(array)
+    currentPseudoCodeLine: [1], // max = findMaxAbsolute(array)
     auxiliaryStructures: [...accumulatedFinalAuxStates],
   }
 
@@ -266,7 +266,7 @@ export const radixSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Initial Array',
     message: `Starting Radix Sort (LSD). Max absolute value: ${maxAbs}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0, // radixSort(array)
+    currentPseudoCodeLine: [0], // radixSort(array)
     auxiliaryStructures: [...accumulatedFinalAuxStates],
   }
 
@@ -275,7 +275,7 @@ export const radixSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: `Initializing place to ${place}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 2, // place = 1
+    currentPseudoCodeLine: [2], // place = 1
     auxiliaryStructures: [...accumulatedFinalAuxStates],
   }
   while (maxAbs / place >= 1) {
@@ -285,7 +285,7 @@ export const radixSortGenerator: SortGenerator = function* (
       mainArrayLabel: `Array Before Place ${place} Sort`,
       message: `--- Starting pass for digit place ${place} ---`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 3, // while (max / place >= 1)
+      currentPseudoCodeLine: [3], // while (max / place >= 1)
       auxiliaryStructures: [...accumulatedFinalAuxStates], // Structures from *before* this pass starts
     }
 
@@ -311,7 +311,7 @@ export const radixSortGenerator: SortGenerator = function* (
       mainArrayLabel: `Array After Place ${place} Sort`,
       message: `--- Completed pass for digit place ${place}. Array state after pass ---`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 4, // countingSortByDigit completed for this place
+      currentPseudoCodeLine: [4], // countingSortByDigit completed for this place
       auxiliaryStructures: [...accumulatedFinalAuxStates], // Now includes the one from the pass just finished
     }
 
@@ -320,7 +320,7 @@ export const radixSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Updating place to ${place}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 5, // place *= 10
+      currentPseudoCodeLine: [5], // place *= 10
       auxiliaryStructures: [...accumulatedFinalAuxStates],
     }
   }
@@ -329,7 +329,7 @@ export const radixSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: 'Finished all passes for Radix Sort.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 6,
+    currentPseudoCodeLine: [6],
     auxiliaryStructures: [...accumulatedFinalAuxStates],
   }
 
@@ -341,7 +341,7 @@ export const radixSortGenerator: SortGenerator = function* (
       mainArrayLabel: 'Array (Reversed for Descending)',
       message: 'Reversing array for descending order.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 7, // End of radixSort function
+      currentPseudoCodeLine: [7], // End of radixSort function
       auxiliaryStructures: [...accumulatedFinalAuxStates],
     }
   }
@@ -352,7 +352,7 @@ export const radixSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()], // Array is now fully sorted
     message: 'Radix Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 7, // End of radixSort function
+    currentPseudoCodeLine: [7], // End of radixSort function
     auxiliaryStructures: [...accumulatedFinalAuxStates],
   }
 

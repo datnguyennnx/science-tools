@@ -35,7 +35,7 @@ export const patienceSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // patienceSort(array)
+      currentPseudoCodeLine: [0],
       auxiliaryStructures: [pilesAuxStructure],
     }
     return {
@@ -49,7 +49,7 @@ export const patienceSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: `Starting Patience Sort (${direction === 'asc' ? 'Ascending' : 'Descending'}). Phase 1: Dealing elements into piles.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0, // patienceSort(array)
+    currentPseudoCodeLine: [0],
     auxiliaryStructures: [pilesAuxStructure],
   }
 
@@ -78,13 +78,13 @@ export const patienceSortGenerator: SortGenerator = function* (
     message: 'Initialized empty piles.',
     auxiliaryStructures: [pilesAuxStructure],
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 1, // piles = []
+    currentPseudoCodeLine: [1],
   }
   yield {
     array: [...arr],
     message: 'Starting Phase 1: Dealing cards into piles.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 2, // // Phase 1: Deal cards into piles
+    currentPseudoCodeLine: [3],
     auxiliaryStructures: [pilesAuxStructure],
   }
 
@@ -98,7 +98,7 @@ export const patienceSortGenerator: SortGenerator = function* (
       message: `Dealing element ${currentElement} (from original index ${i}).`,
       auxiliaryStructures: [pilesAuxStructure],
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 3, // for each card in array
+      currentPseudoCodeLine: [3],
     }
 
     let placed = false
@@ -118,7 +118,7 @@ export const patienceSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [pilesAuxStructure],
         message: `Comparing element ${currentElement} with top of pile ${j} (${pileTop}).`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 4, // pileToPlace = find_pile(...)
+        currentPseudoCodeLine: [6],
       }
 
       if (canPlaceOnPile) {
@@ -130,7 +130,7 @@ export const patienceSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [pilesAuxStructure],
           message: `Pile ${j} is suitable.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 5, // if pileToPlace exists
+          currentPseudoCodeLine: [7],
         }
         piles[j].push(currentElement)
         liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
@@ -144,7 +144,7 @@ export const patienceSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [pilesAuxStructure],
           message: `Placed ${currentElement} on pile ${j}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 6, // place card on pileToPlace
+          currentPseudoCodeLine: [12],
         }
         break
       }
@@ -159,7 +159,7 @@ export const patienceSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [pilesAuxStructure],
         message: 'No suitable pile found for current card.',
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 7, // else (no pileToPlace)
+        currentPseudoCodeLine: [13],
       }
       piles.push([currentElement])
       liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1 // New pile creation is a form of aux write
@@ -172,7 +172,7 @@ export const patienceSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [pilesAuxStructure],
         message: `No suitable pile. Created new pile ${targetPileIndex} with ${currentElement}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 8, // create new pile with card
+        currentPseudoCodeLine: [14],
       }
     }
     updatePilesAuxStructure(piles, 'Card Placed', targetPileIndex)
@@ -183,7 +183,7 @@ export const patienceSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [pilesAuxStructure],
       message: `Finished processing card ${currentElement}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 9,
+      currentPseudoCodeLine: [17],
     }
   }
   updatePilesAuxStructure(piles, 'Final Piles Before Merge')
@@ -193,7 +193,7 @@ export const patienceSortGenerator: SortGenerator = function* (
     message: 'Phase 1 complete. All elements dealt. Phase 2: Merging piles.',
     auxiliaryStructures: [pilesAuxStructure],
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 11, // // Phase 2: Merge piles...
+    currentPseudoCodeLine: [17],
   }
 
   const sortedArray = new Array<number>(n)
@@ -207,7 +207,7 @@ export const patienceSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Sorted Output (Building)',
     message: 'Initialized empty sortedArray for merging.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 12, // sortedArray = []
+    currentPseudoCodeLine: [19],
     auxiliaryStructures: [pilesAuxStructure],
   }
   let sortedCount = 0
@@ -220,7 +220,7 @@ export const patienceSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [pilesAuxStructure],
       message: `Checking while condition for merging: sortedCount (${sortedCount}) < n (${n}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 13, // while any pile is not empty
+      currentPseudoCodeLine: [20],
     }
     let bestElementThisIteration: number | null = null
     let pileIndexOfBestElement = -1
@@ -257,7 +257,7 @@ export const patienceSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [pilesAuxStructure],
           message: `Merging: Checked P${currentPileIdx} (top ${currentPileTop}). Current ${direction === 'asc' ? 'min' : 'max'} candidate: ${bestElementThisIteration === null ? 'N/A' : bestElementThisIteration} from P${pileIndexOfBestElement === -1 ? 'N/A' : pileIndexOfBestElement}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 14, // smallestTopCardPile = find_pile_with_smallest_top(piles)
+          currentPseudoCodeLine: [23],
         }
       }
     }
@@ -280,7 +280,7 @@ export const patienceSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [pilesAuxStructure],
         message: `Took ${bestElementThisIteration} from pile ${pileIndexOfBestElement}. Added to sorted array at index ${sortedCount}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 16, // add it to sortedArray (after line 15 for remove)
+        currentPseudoCodeLine: [32],
       }
       sortedCount++
     } else {
@@ -292,7 +292,7 @@ export const patienceSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [pilesAuxStructure],
           message: `Merge Error: Piles empty but only ${sortedCount}/${n} elements sorted.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 13,
+          currentPseudoCodeLine: [31],
         }
       }
       break
@@ -305,7 +305,7 @@ export const patienceSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [pilesAuxStructure],
     message: 'Finished merging piles.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 17,
+    currentPseudoCodeLine: [34],
   }
 
   updatePilesAuxStructure(piles, 'Merge Complete (Piles Should Be Empty)')
@@ -316,7 +316,7 @@ export const patienceSortGenerator: SortGenerator = function* (
     message: 'Patience Sort Complete!',
     auxiliaryStructures: [pilesAuxStructure],
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 18, // return sortedArray
+    currentPseudoCodeLine: [36],
   }
 
   return {

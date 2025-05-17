@@ -1,13 +1,9 @@
+'use client'
+
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { SortStep, SortStats, SortGenerator, SortResult } from '../types'
 import type { SortAlgorithm } from '../algorithmRegistry'
-import {
-  DEFAULT_SPEED,
-  MIN_SPEED,
-  MAX_SPEED,
-  MAX_ANIMATION_DELAY_MS,
-  MIN_DELAY_MS,
-} from '../../constants/sortSettings'
+import { DEFAULT_SPEED, MIN_SPEED, MAX_SPEED, MIN_DELAY_MS } from '../../constants/sortSettings'
 
 export interface UseSortExecutionProps {
   array: number[]
@@ -95,9 +91,8 @@ export function useSortExecution({
 
   const calculateDelay = useCallback(() => {
     const speedRange = MAX_SPEED - MIN_SPEED
-    const delayRange = MAX_ANIMATION_DELAY_MS - MIN_DELAY_MS
     const normalizedSpeed = (MAX_SPEED - speed) / speedRange
-    const delay = MIN_DELAY_MS + normalizedSpeed * delayRange
+    const delay = MIN_DELAY_MS + normalizedSpeed
     return Math.max(MIN_DELAY_MS, delay)
   }, [speed])
 
@@ -185,7 +180,6 @@ export function useSortExecution({
       comparisons: 0,
       swaps: 0,
       accesses: 0,
-      delay: '-',
       visualTime: '0.00 s',
       sortTime: '0.00 s',
       algorithmName: selectedAlgorithm.name,
@@ -212,13 +206,11 @@ export function useSortExecution({
   ])
 
   const pauseSort = useCallback(() => {
+    // Corrected condition: Only pause if sorting is active and not already paused.
     if (!isSorting || isPaused) return
     setIsPaused(true)
     clearSortingTimeout()
-    const pausedStats = { ...tempLiveStats, delay: 'Paused' } as Partial<SortStats>
-    setTempLiveStats(pausedStats)
-    onLiveStatsUpdate(pausedStats)
-  }, [isSorting, isPaused, clearSortingTimeout, onLiveStatsUpdate, tempLiveStats])
+  }, [isSorting, isPaused, clearSortingTimeout])
 
   const resumeSort = useCallback(() => {
     if (!isSorting || !isPaused) return
@@ -301,20 +293,6 @@ export function useSortExecution({
       }
     }
   }, [isSorting, isPaused, nextStep])
-
-  // Effect to update delay in live stats when speed changes while running
-  useEffect(() => {
-    if (isSorting && !isPaused) {
-      const currentDelay = calculateDelay()
-      const updatedStats = {
-        ...tempLiveStats,
-        delay: `${currentDelay.toFixed(1)} ms`,
-      } as Partial<SortStats>
-      setTempLiveStats(updatedStats)
-      onLiveStatsUpdate(updatedStats)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [speed, isSorting, isPaused, calculateDelay, onLiveStatsUpdate])
 
   // Effect to reset sorting state when the selected algorithm changes
   useEffect(() => {

@@ -26,7 +26,7 @@ export const cycleSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 0,
+      currentPseudoCodeLine: [0],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -36,7 +36,7 @@ export const cycleSortGenerator: SortGenerator = function* (
     message: 'Starting Cycle Sort.',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 0,
+    currentPseudoCodeLine: [0],
   }
 
   for (let cycleStart = 0; cycleStart <= n - 2; cycleStart++) {
@@ -47,7 +47,7 @@ export const cycleSortGenerator: SortGenerator = function* (
       message: `Considering cycle starting at index ${cycleStart} (value: ${arr[cycleStart]}).`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 2,
+      currentPseudoCodeLine: [2],
     }
 
     let itemInHand = arr[cycleStart]
@@ -58,7 +58,7 @@ export const cycleSortGenerator: SortGenerator = function* (
       message: `Item in hand = ${itemInHand}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 3,
+      currentPseudoCodeLine: [3],
     }
     let pos = cycleStart
     yield {
@@ -68,7 +68,7 @@ export const cycleSortGenerator: SortGenerator = function* (
       message: `Initial position for item = ${pos}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 4,
+      currentPseudoCodeLine: [4],
     }
 
     for (let i = cycleStart + 1; i < n; i++) {
@@ -81,7 +81,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         message: `Finding position for ${itemInHand}: comparing with ${arr[i]}.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 5,
+        currentPseudoCodeLine: [5],
       }
       if (
         (direction === 'asc' && arr[i] < itemInHand) ||
@@ -96,7 +96,7 @@ export const cycleSortGenerator: SortGenerator = function* (
           message: `Element ${arr[i]} is smaller (asc) / larger (desc). Incrementing pos to ${pos}.`,
           currentStats: { ...liveStats },
           swappingIndices: null,
-          currentPseudoCodeLine: 6,
+          currentPseudoCodeLine: [7],
         }
       }
     }
@@ -107,7 +107,7 @@ export const cycleSortGenerator: SortGenerator = function* (
       message: `Finished finding initial position for ${itemInHand}. Correct position: ${pos}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 7,
+      currentPseudoCodeLine: [9],
     }
 
     if (pos === cycleStart) {
@@ -118,7 +118,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         message: `Element ${itemInHand} at index ${cycleStart} is already in its correct sorted position.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 8,
+        currentPseudoCodeLine: [11],
       }
       sortedIndices.add(cycleStart)
       continue
@@ -133,7 +133,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         message: `Duplicate of ${itemInHand} found at target position ${pos}. Advancing position.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 9,
+        currentPseudoCodeLine: [15],
       }
       pos++
       if (pos >= n) break
@@ -146,7 +146,7 @@ export const cycleSortGenerator: SortGenerator = function* (
       message: `Final target position for ${itemInHand} is ${pos}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 9,
+      currentPseudoCodeLine: [17],
     }
 
     if (pos >= n && itemInHand === arr[n - 1] && pos === n) {
@@ -159,7 +159,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         sortedIndices: Array.from(sortedIndices),
         message: `Preparing to place ${itemInHand} (originally from index ${cycleStart}) into position ${pos}. Swapping with ${arr[pos]}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 10,
+        currentPseudoCodeLine: [20],
       }
       ;[itemInHand, arr[pos]] = [arr[pos], itemInHand]
       liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -171,7 +171,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         sortedIndices: Array.from(sortedIndices),
         message: `Element ${arr[pos]} placed at index ${pos}. New item in hand: ${itemInHand}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 11,
+        currentPseudoCodeLine: [20],
       }
     }
     yield {
@@ -180,7 +180,7 @@ export const cycleSortGenerator: SortGenerator = function* (
       sortedIndices: Array.from(sortedIndices),
       message: `Initial placement complete for item from cycleStart ${cycleStart}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 13,
+      currentPseudoCodeLine: [21],
     }
 
     while (pos !== cycleStart) {
@@ -190,7 +190,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         sortedIndices: Array.from(sortedIndices),
         message: `Continuing cycle. Current item in hand: ${itemInHand}. Target cycleStart: ${cycleStart}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 14,
+        currentPseudoCodeLine: [23],
       }
       pos = cycleStart
       yield {
@@ -199,7 +199,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         sortedIndices: Array.from(sortedIndices),
         message: `Reset pos to cycleStart: ${cycleStart}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 15,
+        currentPseudoCodeLine: [24],
       }
       for (let i = cycleStart + 1; i < n; i++) {
         liveStats.comparisons = (liveStats.comparisons || 0) + 1
@@ -211,7 +211,7 @@ export const cycleSortGenerator: SortGenerator = function* (
           message: `Cycle rotation: Finding position for item ${itemInHand}. Comparing with ${arr[i]}.`,
           currentStats: { ...liveStats },
           swappingIndices: null,
-          currentPseudoCodeLine: 16,
+          currentPseudoCodeLine: [25],
         }
         if (
           (direction === 'asc' && arr[i] < itemInHand) ||
@@ -226,7 +226,7 @@ export const cycleSortGenerator: SortGenerator = function* (
             message: `Element ${arr[i]} is smaller (asc) / larger (desc). Incrementing pos to ${pos}.`,
             currentStats: { ...liveStats },
             swappingIndices: null,
-            currentPseudoCodeLine: 17,
+            currentPseudoCodeLine: [27],
           }
         }
       }
@@ -237,7 +237,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         message: `Finished finding next position in cycle for ${itemInHand}. Correct position: ${pos}.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 18,
+        currentPseudoCodeLine: [29],
       }
 
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
@@ -249,7 +249,7 @@ export const cycleSortGenerator: SortGenerator = function* (
           message: `Duplicate of ${itemInHand} found at target position ${pos}. Advancing position.`,
           currentStats: { ...liveStats },
           swappingIndices: null,
-          currentPseudoCodeLine: 19,
+          currentPseudoCodeLine: [31],
         }
         pos++
         if (pos >= n) break
@@ -262,7 +262,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         message: `Final target position in cycle for ${itemInHand} is ${pos}.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 19,
+        currentPseudoCodeLine: [33],
       }
 
       if (pos >= n && itemInHand === arr[n - 1] && pos === n) {
@@ -277,7 +277,7 @@ export const cycleSortGenerator: SortGenerator = function* (
           sortedIndices: Array.from(sortedIndices),
           message: `Cycle rotation: Preparing to place item ${itemInHand} into position ${pos}. Swapping with ${originalElementAtPos}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 20,
+          currentPseudoCodeLine: [36],
         }
         ;[itemInHand, arr[pos]] = [arr[pos], itemInHand]
         liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -289,7 +289,7 @@ export const cycleSortGenerator: SortGenerator = function* (
           sortedIndices: Array.from(sortedIndices),
           message: `Element ${arr[pos]} placed at index ${pos}. New item in hand: ${itemInHand}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 21,
+          currentPseudoCodeLine: [36],
         }
         if (isFinalPlacementInCycle && itemInHand === initialArray[cycleStart]) {
         }
@@ -300,7 +300,7 @@ export const cycleSortGenerator: SortGenerator = function* (
         sortedIndices: Array.from(sortedIndices),
         message: `Cycle rotation placement complete.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 23,
+        currentPseudoCodeLine: [38],
       }
     }
     sortedIndices.add(cycleStart)
@@ -311,12 +311,16 @@ export const cycleSortGenerator: SortGenerator = function* (
       message: `Cycle for original index ${cycleStart} complete. Element ${arr[cycleStart]} is sorted.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 24,
+      currentPseudoCodeLine: [39],
     }
   }
 
   if (n > 0 && !sortedIndices.has(n - 1)) {
     sortedIndices.add(n - 1)
+  }
+
+  if (sortedIndices.size < n) {
+    for (let k = 0; k < n; ++k) sortedIndices.add(k)
   }
 
   yield {
@@ -325,7 +329,7 @@ export const cycleSortGenerator: SortGenerator = function* (
     message: 'Cycle Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 25,
+    currentPseudoCodeLine: [40],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

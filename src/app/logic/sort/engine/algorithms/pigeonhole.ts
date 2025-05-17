@@ -35,7 +35,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // pigeonholeSort(array, n)
+      currentPseudoCodeLine: [0], // pigeonholeSort(array, n)
       auxiliaryStructures: [holesAuxStructure],
     }
     return {
@@ -50,7 +50,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Input Array',
     message: 'Starting Pigeonhole Sort.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0, // pigeonholeSort(array, n)
+    currentPseudoCodeLine: [0], // pigeonholeSort(array, n)
     auxiliaryStructures: [holesAuxStructure],
   }
 
@@ -64,7 +64,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     highlightedIndices: [0],
     message: `Finding min/max. Current min: ${min}, max: ${max}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 1,
+    currentPseudoCodeLine: [1],
     auxiliaryStructures: [holesAuxStructure],
   }
   for (let i = 1; i < n; i++) {
@@ -74,7 +74,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
       highlightedIndices: [i],
       message: `Checking index ${i}. Current min: ${min}, max: ${max}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 1,
+      currentPseudoCodeLine: [1],
       auxiliaryStructures: [holesAuxStructure],
     }
     liveStats.comparisons = (liveStats.comparisons || 0) + 1
@@ -86,7 +86,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
         highlightedIndices: [i],
         message: `New min found: ${min}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 1,
+        currentPseudoCodeLine: [1],
         auxiliaryStructures: [holesAuxStructure],
       }
     } else {
@@ -99,7 +99,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
           highlightedIndices: [i],
           message: `New max found: ${max}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 2,
+          currentPseudoCodeLine: [2],
           auxiliaryStructures: [holesAuxStructure],
         }
       }
@@ -111,7 +111,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Input Array',
     message: `Min value: ${min}, Max value: ${max}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 2,
+    currentPseudoCodeLine: [2],
     auxiliaryStructures: [holesAuxStructure],
   }
 
@@ -121,7 +121,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Input Array',
     message: `Calculated range: ${range}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 3, // range = max - min + 1
+    currentPseudoCodeLine: [3], // range = max - min + 1
     auxiliaryStructures: [holesAuxStructure],
   }
 
@@ -145,7 +145,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [holesAuxStructure],
     message: `Created ${range} pigeonholes for values from ${min} to ${max}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 4,
+    currentPseudoCodeLine: [5],
   }
 
   // 3. Scatter: Put elements into their corresponding pigeonholes
@@ -159,7 +159,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
       highlightedIndices: [i],
       message: `Processing element ${arr[i]} for scattering.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 5, // for each element in array
+      currentPseudoCodeLine: [7],
       auxiliaryStructures: [holesAuxStructure],
     }
     holes[holeIndex].push(value)
@@ -173,7 +173,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
       auxiliaryStructures: [holesAuxStructure],
       message: `Placing element ${value} (from index ${i}) into hole ${holeIndex} (value ${min + holeIndex}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 6,
+      currentPseudoCodeLine: [8],
     }
   }
   updateHolesAuxStructure(holes, 'Scattered')
@@ -183,7 +183,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [holesAuxStructure],
     message: 'Finished scattering elements into holes. Starting gather phase.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 7,
+    currentPseudoCodeLine: [11],
   }
 
   let currentIndex = 0
@@ -201,7 +201,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
         comparisonIndices: [i],
         message: `Processing hole ${i} (value ${min + i}) for ascending order. Contains: [${holes[i].join(', ')}]`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 9,
+        currentPseudoCodeLine: [12],
       }
       while (holes[i].length > 0) {
         // For each element in the current hole
@@ -217,7 +217,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [holesAuxStructure],
           message: `Placing value ${value} from hole ${i} into array index ${currentIndex}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 11,
+          currentPseudoCodeLine: [14],
         }
         outputArr[currentIndex] = value
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
@@ -234,7 +234,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [holesAuxStructure],
           message: `Placed ${placedValue} at index ${currentIndex - 1}. Hole ${i} size now ${holes[i].length}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 12,
+          currentPseudoCodeLine: [15],
         }
       }
       updateHolesAuxStructure(holes, `Finished Hole ${i}`)
@@ -244,7 +244,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [holesAuxStructure],
         message: `Finished gathering from hole ${i}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 13,
+        currentPseudoCodeLine: [16],
       }
     }
   } else {
@@ -259,7 +259,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
         comparisonIndices: [i],
         message: `Processing hole ${i} (value ${min + i}) for descending order. Contains: [${holes[i].join(', ')}]`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 9,
+        currentPseudoCodeLine: [12],
       }
       while (holes[i].length > 0) {
         // For each element in the current hole
@@ -275,7 +275,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [holesAuxStructure],
           message: `Placing value ${value} from hole ${i} into array index ${currentIndex}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 11,
+          currentPseudoCodeLine: [14],
         }
         outputArr[currentIndex] = value
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
@@ -292,7 +292,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
           auxiliaryStructures: [holesAuxStructure],
           message: `Placed ${placedValue} at index ${currentIndex - 1}. Hole ${i} size now ${holes[i].length}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 12,
+          currentPseudoCodeLine: [15],
         }
       }
       updateHolesAuxStructure(holes, `Finished Hole ${i}`)
@@ -302,7 +302,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
         auxiliaryStructures: [holesAuxStructure],
         message: `Finished gathering from hole ${i}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 13,
+        currentPseudoCodeLine: [16],
       }
     }
   }
@@ -312,7 +312,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Output Array (Gathering)',
     message: 'Finished gathering from all holes.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 14,
+    currentPseudoCodeLine: [17],
     auxiliaryStructures: [holesAuxStructure],
   }
 
@@ -323,7 +323,7 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()],
     message: 'Pigeonhole Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 15, // Closing brace of function
+    currentPseudoCodeLine: [18],
     auxiliaryStructures: [holesAuxStructure],
   }
 

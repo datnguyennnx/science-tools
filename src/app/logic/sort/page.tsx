@@ -163,9 +163,8 @@ export default function SortPage(): React.JSX.Element {
                 >
                   <TabsContent value="code" forceMount>
                     <PseudoCodeDisplay
-                      algorithmName={selectedAlgorithm?.name}
-                      pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
-                      activeLine={currentSortStep?.currentPseudoCodeLine}
+                      algorithmData={selectedAlgorithm}
+                      activeLines={currentSortStep?.currentPseudoCodeLine}
                       language={currentPseudoCodeLanguage}
                       onLanguageChange={setCurrentPseudoCodeLanguage}
                       sortStats={displayedSortStats}
@@ -206,9 +205,8 @@ export default function SortPage(): React.JSX.Element {
                 className="overflow-hidden"
               >
                 <PseudoCodeDisplay
-                  algorithmName={selectedAlgorithm?.name}
-                  pseudoCode={selectedAlgorithm?.pseudoCodes?.[currentPseudoCodeLanguage]}
-                  activeLine={currentSortStep?.currentPseudoCodeLine}
+                  algorithmData={selectedAlgorithm}
+                  activeLines={currentSortStep?.currentPseudoCodeLine}
                   language={currentPseudoCodeLanguage}
                   onLanguageChange={setCurrentPseudoCodeLanguage}
                   sortStats={displayedSortStats}

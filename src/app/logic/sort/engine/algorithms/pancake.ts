@@ -41,7 +41,7 @@ export const pancakeSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 0, // pancakeSort(array, n)
+      currentPseudoCodeLine: [2], // if n <= 1 then return list
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -52,7 +52,7 @@ export const pancakeSortGenerator: SortGenerator = function* (
     message: 'Starting Pancake Sort.',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 0, // pancakeSort(array, n)
+    currentPseudoCodeLine: [0], // procedure pancakeSort(list, direction)
   }
 
   for (let currentSize = n; currentSize > 1; currentSize--) {
@@ -60,12 +60,11 @@ export const pancakeSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Outer loop: currentSize = ${currentSize}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 1, // for (currSize = n; currSize > 1; currSize--)
+      currentPseudoCodeLine: [3], // for currentSize = n down to 2
       activeRange: { start: 0, end: currentSize - 1 },
       sortedIndices: Array.from(sortedIndices),
     }
     let maxIndex = 0
-    // findMaxIndex conceptually starts here (pseudo line 2 call, helper is 9-15)
     yield {
       array: [...arr],
       highlightedIndices: [0],
@@ -75,20 +74,20 @@ export const pancakeSortGenerator: SortGenerator = function* (
       message: `Pass for size ${currentSize}: Finding ${direction === 'asc' ? 'max' : 'min'} in arr[0...${currentSize - 1}]. Current candidate: ${arr[0]} at index 0.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 10, // maxIdx = 0 (within findMaxIndex)
+      currentPseudoCodeLine: [16], // findExtremeIndex: idxOfExtreme = 0
     }
     for (let i = 1; i < currentSize; i++) {
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
       yield {
         array: [...arr],
         highlightedIndices: [i, maxIndex],
-        comparisonIndices: [...Array(currentSize).keys()], // or just [i, maxIndex]
+        comparisonIndices: [...Array(currentSize).keys()],
         activeRange: { start: 0, end: currentSize - 1 },
         sortedIndices: Array.from(sortedIndices),
         message: `Comparing ${arr[i]} with current ${direction === 'asc' ? 'max' : 'min'} ${arr[maxIndex]}.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 11, // for (i = 1; i < size; i++) (within findMaxIndex)
+        currentPseudoCodeLine: [17], // findExtremeIndex: for i = 1 to size - 1
       }
       const shouldReplaceMax = direction === 'asc' ? arr[i] > arr[maxIndex] : arr[i] < arr[maxIndex]
       if (shouldReplaceMax) {
@@ -96,22 +95,21 @@ export const pancakeSortGenerator: SortGenerator = function* (
         yield {
           array: [...arr],
           highlightedIndices: [i],
-          comparisonIndices: [...Array(currentSize).keys()], // or just [i]
+          comparisonIndices: [...Array(currentSize).keys()],
           activeRange: { start: 0, end: currentSize - 1 },
           sortedIndices: Array.from(sortedIndices),
           message: `New ${direction === 'asc' ? 'max' : 'min'} found: ${arr[maxIndex]} at index ${maxIndex}.`,
           currentStats: { ...liveStats },
           swappingIndices: null,
-          currentPseudoCodeLine: 12, // if (array[i] > array[maxIdx]) { maxIdx = i }
+          currentPseudoCodeLine: [24], // findExtremeIndex: if isMoreExtreme then (leading to idxOfExtreme = i)
         }
       }
     }
-    // End of findMaxIndex logic, mi = findMaxIndex is pseudo line 2
     yield {
       array: [...arr],
       message: `Max/Min for current range found at index ${maxIndex}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2, // mi = findMaxIndex(array, currSize)
+      currentPseudoCodeLine: [4], // extremeIndex = findExtremeIndex(list, currentSize, direction)
       activeRange: { start: 0, end: currentSize - 1 },
       sortedIndices: Array.from(sortedIndices),
       highlightedIndices: [maxIndex],
@@ -122,56 +120,56 @@ export const pancakeSortGenerator: SortGenerator = function* (
         array: [...arr],
         message: `Max/Min is not at the end of current range. Will perform flips.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 3, // if (mi != currSize - 1)
+        currentPseudoCodeLine: [5], // if extremeIndex != currentSize - 1 then
         activeRange: { start: 0, end: currentSize - 1 },
         highlightedIndices: [maxIndex, currentSize - 1],
       }
       if (maxIndex !== 0) {
         yield {
           array: [...arr],
-          highlightedIndices: [], // Clear other highlights
+          highlightedIndices: [],
           comparisonIndices: [],
-          swappingIndices: [...Array(maxIndex + 1).keys()], // Entire range being flipped
+          swappingIndices: [...Array(maxIndex + 1).keys()],
           activeRange: { start: 0, end: maxIndex },
           sortedIndices: Array.from(sortedIndices),
           message: `Preparing to flip prefix arr[0...${maxIndex}] to bring ${arr[maxIndex]} to the front.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 4, // if (mi != 0) { flip(array, mi) }
+          currentPseudoCodeLine: [6], // if extremeIndex != 0 then
         }
-        flip(arr, maxIndex, liveStats) // flip is pseudo lines 16-18
+        flip(arr, maxIndex, liveStats)
         yield {
           array: [...arr],
           highlightedIndices: [...Array(maxIndex + 1).keys()],
-          swappingIndices: [...Array(maxIndex + 1).keys()], // Show range that was just flipped
+          swappingIndices: [...Array(maxIndex + 1).keys()],
           activeRange: { start: 0, end: maxIndex },
           sortedIndices: Array.from(sortedIndices),
           message: `Prefix arr[0...${maxIndex}] flipped. ${arr[0]} is now at the front.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 4, // still on flip operation
+          currentPseudoCodeLine: [7], // flip(list, extremeIndex + 1)
         }
       }
 
       yield {
         array: [...arr],
-        highlightedIndices: [], // Clear other highlights
+        highlightedIndices: [],
         comparisonIndices: [],
-        swappingIndices: [...Array(currentSize).keys()], // Entire range being flipped
+        swappingIndices: [...Array(currentSize).keys()],
         activeRange: { start: 0, end: currentSize - 1 },
         sortedIndices: Array.from(sortedIndices),
         message: `Preparing to flip prefix arr[0...${currentSize - 1}] to move ${arr[0]} to its sorted position.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 5, // flip(array, currSize - 1)
+        currentPseudoCodeLine: [9], // flip(list, currentSize)
       }
-      flip(arr, currentSize - 1, liveStats) // flip is pseudo lines 16-18
+      flip(arr, currentSize - 1, liveStats)
       yield {
         array: [...arr],
         highlightedIndices: [...Array(currentSize).keys()],
-        swappingIndices: [...Array(currentSize).keys()], // Show range that was just flipped
+        swappingIndices: [...Array(currentSize).keys()],
         activeRange: { start: 0, end: currentSize - 1 },
         sortedIndices: Array.from(sortedIndices),
         message: `Prefix arr[0...${currentSize - 1}] flipped. Element ${arr[currentSize - 1]} is now sorted.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 5, // still on flip operation
+        currentPseudoCodeLine: [9], // still on flip operation for currentSize
       }
     } else {
       yield {
@@ -182,15 +180,14 @@ export const pancakeSortGenerator: SortGenerator = function* (
         message: `Element ${arr[maxIndex]} is already in its correct position for this pass.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 3, // if condition was false, conceptually skipping to line 6
+        currentPseudoCodeLine: [5], // if extremeIndex != currentSize - 1 (condition was false)
       }
     }
-    // End of if block (mi != currSize -1)
     yield {
       array: [...arr],
       message: `Flip sequence for currentSize ${currentSize} complete.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 6, // closing brace of if (mi != currSize -1)
+      currentPseudoCodeLine: [10], // end if (for maxIndex != currentSize - 1)
       activeRange: { start: 0, end: currentSize - 1 },
       sortedIndices: Array.from(sortedIndices),
     }
@@ -199,23 +196,22 @@ export const pancakeSortGenerator: SortGenerator = function* (
     yield {
       array: [...arr],
       sortedIndices: Array.from(sortedIndices),
-      activeRange: { start: 0, end: currentSize - 2 },
+      activeRange: { start: 0, end: currentSize - 2 }, // Next iteration will consider one less element
       message: `Element at index ${currentSize - 1} (${arr[currentSize - 1]}) is sorted.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 1, // Back to for loop condition for next iteration
+      currentPseudoCodeLine: [3], // Back to for loop: for currentSize = n down to 2
     }
   }
-  // End of for loop (currSize)
   yield {
     array: [...arr],
     message: `All elements processed.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 7, // closing brace of for (currSize)
+    currentPseudoCodeLine: [11], // end for (for currentSize)
   }
 
   if (n > 0 && !sortedIndices.has(0)) {
-    sortedIndices.add(0)
+    sortedIndices.add(0) // Ensure the first element is marked sorted if not already
   }
 
   yield {
@@ -224,7 +220,7 @@ export const pancakeSortGenerator: SortGenerator = function* (
     message: 'Pancake Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 8, // closing brace of pancakeSort function
+    currentPseudoCodeLine: [13], // end procedure
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

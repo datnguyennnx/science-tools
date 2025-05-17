@@ -2,26 +2,17 @@
 
 import { SortGenerator, SortStats, SortStep } from '../types'
 
-// Helper function to check if the array is sorted
 const isSorted = (
   arr: number[],
   direction: 'asc' | 'desc',
   liveStats: Partial<SortStats>
-  // pseudoCodeLineForCheckStart?: number, // Could pass these for more granular pseudo-code
-  // pseudoCodeLineForCompare?: number,
-  // pseudoCodeLineForReturnFalse?: number,
-  // pseudoCodeLineForReturnTrue?: number,
 ): boolean => {
-  // currentPseudoCodeLine: pseudoCodeLineForCheckStart // e.g. 6 (isSorted loop)
   for (let i = 0; i < arr.length - 1; i++) {
     liveStats.comparisons = (liveStats.comparisons || 0) + 1
-    // currentPseudoCodeLine: pseudoCodeLineForCompare // e.g. 7 (if condition)
     if (direction === 'asc' ? arr[i] > arr[i + 1] : arr[i] < arr[i + 1]) {
-      // currentPseudoCodeLine: pseudoCodeLineForReturnFalse // e.g. 8 (return false)
       return false
     }
   }
-  // currentPseudoCodeLine: pseudoCodeLineForReturnTrue // e.g. 11 (return true)
   return true
 }
 
@@ -30,11 +21,8 @@ const shuffleGenerator = function* (
   liveStats: Partial<SortStats>
 ): Generator<SortStep, void, void> {
   const n = arr.length
-  // currentPseudoCodeLine: 13 (shuffle(array))
-  // currentPseudoCodeLine: 14 (for loop in shuffle)
   for (let i = n - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
-    // currentPseudoCodeLine: 15 (j = random)
 
     yield {
       array: [...arr],
@@ -43,7 +31,7 @@ const shuffleGenerator = function* (
       swappingIndices: [i, j],
       message: `Shuffle: Preparing to swap elements at index ${i} (${arr[i]}) and ${j} (${arr[j]}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 16, // swap(array[i], array[j])
+      currentPseudoCodeLine: [18],
     }
 
     const temp = arr[i]
@@ -56,19 +44,18 @@ const shuffleGenerator = function* (
       array: [...arr],
       highlightedIndices: [i, j],
       comparisonIndices: [],
-      swappingIndices: [i, j], // Show what was just swapped
+      swappingIndices: [i, j],
       message: `Shuffle: Swapped. New values: ${arr[i]} (at ${i}) and ${arr[j]} (at ${j}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 16, // still on swap operation
+      currentPseudoCodeLine: [18],
     }
   }
-  // currentPseudoCodeLine: 17 (end of for loop in shuffle)
   yield {
     array: [...arr],
     message: 'Shuffle complete for this attempt.',
     currentStats: { ...liveStats },
-    swappingIndices: null, // Clear after shuffle pass
-    currentPseudoCodeLine: 18, // end of shuffle()
+    swappingIndices: null,
+    currentPseudoCodeLine: [20],
   }
 }
 
@@ -96,7 +83,7 @@ export const bogoSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 0, // bogoSort(array) { -> considered part of initialization
+      currentPseudoCodeLine: [0],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -106,15 +93,12 @@ export const bogoSortGenerator: SortGenerator = function* (
     message: 'Starting Bogo Sort ("The Patient Sort")... This might take a while!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 0, // bogoSort(array) {
+    currentPseudoCodeLine: [0],
   }
 
   let attempts = 0
-  const MAX_ATTEMPTS = 100000 // Reduced for practical visualization purposes
+  const MAX_ATTEMPTS = 100000
 
-  // Initial check for sorted state
-  // This call to isSorted covers lines 5-12 of pseudo-code conceptually.
-  // We will highlight line 1 when in the while loop condition.
   let sorted = isSorted(arr, direction, liveStats)
   yield {
     array: [...arr],
@@ -123,11 +107,10 @@ export const bogoSortGenerator: SortGenerator = function* (
       : `Initial array not sorted after ${liveStats.comparisons} comparisons. Starting shuffles.`,
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 1, // conceptually, we've checked isSorted for the while loop
+    currentPseudoCodeLine: [1],
   }
 
   while (!sorted) {
-    // currentPseudoCodeLine: 1 // while (!isSorted(array))
     attempts++
     if (attempts > MAX_ATTEMPTS) {
       yield {
@@ -135,7 +118,7 @@ export const bogoSortGenerator: SortGenerator = function* (
         message: `Bogo Sort stopped after ${MAX_ATTEMPTS} shuffles (Safety Break). Array may not be sorted.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 1, // Still in the context of the while loop condition check
+        currentPseudoCodeLine: [1],
       }
       return { finalArray: arr, stats: liveStats as SortStats }
     }
@@ -143,15 +126,13 @@ export const bogoSortGenerator: SortGenerator = function* (
     yield {
       array: [...arr],
       message: `Attempt ${attempts}: Array not sorted. Shuffling...`,
-      highlightedIndices: [...Array(n).keys()], // Highlight whole array during shuffle prep
+      highlightedIndices: [...Array(n).keys()],
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 2, // shuffle(array)
+      currentPseudoCodeLine: [2],
     }
 
-    // shuffleGenerator internal lines are 13-18
-    // We'll mark the call to shuffle as line 2.
-    yield* shuffleGenerator(arr, liveStats) // This will yield steps with lines 16, 18
+    yield* shuffleGenerator(arr, liveStats)
 
     yield {
       array: [...arr],
@@ -159,9 +140,8 @@ export const bogoSortGenerator: SortGenerator = function* (
       highlightedIndices: [],
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 1, // while (!isSorted(array)) - re-evaluating condition
+      currentPseudoCodeLine: [1],
     }
-    // This call to isSorted covers lines 5-12 of pseudo-code conceptually.
     sorted = isSorted(arr, direction, liveStats)
     yield {
       array: [...arr],
@@ -170,18 +150,17 @@ export const bogoSortGenerator: SortGenerator = function* (
         : `Attempt ${attempts}: Still not sorted after ${liveStats.comparisons} total comparisons.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: sorted ? 3 : 1, // If sorted, we are at line 3 (end of while), else back to line 1
+      currentPseudoCodeLine: sorted ? [3] : [1],
     }
   }
 
-  // currentPseudoCodeLine: 3 (closing brace of while)
   yield {
     array: [...arr],
     sortedIndices: [...Array(n).keys()],
     message: `Bogo Sort Complete after ${attempts} attempt(s)! Total comparisons: ${liveStats.comparisons}.`,
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 4, // Closing brace of bogoSort function
+    currentPseudoCodeLine: [4],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

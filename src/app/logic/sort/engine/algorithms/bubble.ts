@@ -33,7 +33,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // or a specific line for empty/sorted case
+      currentPseudoCodeLine: [0], // or a specific line for empty/sorted case
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -44,7 +44,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
     message: 'Starting Bubble Sort',
     activeRange: { start: 0, end: n - 1 },
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0, // function bubbleSort(array, n) {
+    currentPseudoCodeLine: [0], // function bubbleSort(array, n) {
   }
 
   // Outer loop for passes
@@ -53,7 +53,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Outer loop: i = ${i}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2, // for (let i = 0; i < n - 1; i++) {
+      currentPseudoCodeLine: [2],
       sortedIndices: Array.from(sortedIndices),
       activeRange: { start: 0, end: n - 1 - i },
     }
@@ -62,7 +62,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: 'Resetting swapped flag',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 3, // swapped = false;
+      currentPseudoCodeLine: [3],
       sortedIndices: Array.from(sortedIndices),
       activeRange: { start: 0, end: n - 1 - i },
     }
@@ -73,7 +73,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
         array: [...arr],
         message: `Inner loop: j = ${j}`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 4, // for (let j = 0; j < n - 1 - i; j++) {
+        currentPseudoCodeLine: [4],
         highlightedIndices: [j, j + 1],
         comparisonIndices: [j, j + 1],
         swappingIndices: null,
@@ -90,7 +90,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: currentPassEnd },
         message: `Comparing ${arr[j]} and ${arr[j + 1]} at indices ${j} and ${j + 1}`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 5, // if (array[j] > array[j + 1]) {
+        currentPseudoCodeLine: [5],
       }
 
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
@@ -105,7 +105,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
           activeRange: { start: 0, end: currentPassEnd },
           message: `Preparing to swap ${arr[j]} and ${arr[j + 1]}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 6, // swap(array[j], array[j + 1]);
+          currentPseudoCodeLine: [6],
         }
 
         // Swap elements
@@ -117,7 +117,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
           array: [...arr],
           message: 'Set swapped flag to true',
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 7, // swapped = true;
+          currentPseudoCodeLine: [7],
           highlightedIndices: [j, j + 1],
           swappingIndices: [j, j + 1],
           sortedIndices: Array.from(sortedIndices),
@@ -134,7 +134,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
           activeRange: { start: 0, end: currentPassEnd },
           message: `Swapped. New values: ${arr[j]} (at ${j}) and ${arr[j + 1]} (at ${j + 1}).`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 6, // Back to the swap line for visual clarity of action
+          currentPseudoCodeLine: [6],
         }
       } else {
         // Yield state if no swap occurred (optional, but good for clarity)
@@ -147,7 +147,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
           activeRange: { start: 0, end: currentPassEnd },
           message: `No swap needed for ${arr[j]} and ${arr[j + 1]}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 5, // Still on the if condition
+          currentPseudoCodeLine: [5],
         }
       }
     } // End inner loop (j)
@@ -155,7 +155,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: 'End of inner loop for comparisons.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 9, // Closing brace of inner for loop or start of if(swapped == false)
+      currentPseudoCodeLine: [9],
       sortedIndices: Array.from(sortedIndices),
       activeRange: { start: 0, end: currentPassEnd - 1 },
     }
@@ -171,7 +171,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
       activeRange: { start: 0, end: currentPassEnd - 1 }, // Reduce active range
       message: `End of pass ${i + 1}. Index ${currentPassEnd} is sorted.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2, // Back to outer loop condition for next iteration visual
+      currentPseudoCodeLine: [2], // Back to outer loop condition for next iteration visual
     }
 
     // If no swaps occurred in a pass, the array is sorted
@@ -180,7 +180,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
         array: [...arr],
         message: 'Checking if no swaps occurred.',
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 10, // if (swapped == false)
+        currentPseudoCodeLine: [10],
         sortedIndices: Array.from(sortedIndices),
         activeRange: { start: 0, end: currentPassEnd - 1 },
       }
@@ -197,7 +197,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
         activeRange: { start: 0, end: -1 }, // No active range
         message: 'Array sorted (no swaps in last pass). Breaking loop.',
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 11, // break;
+        currentPseudoCodeLine: [11],
       }
       break // Exit outer loop
     }
@@ -215,7 +215,7 @@ export const bubbleSortGenerator: SortGenerator = function* (
     message: 'Bubble Sort Complete!',
     swappingIndices: null,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 14, // Closing brace of function
+    currentPseudoCodeLine: [14],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

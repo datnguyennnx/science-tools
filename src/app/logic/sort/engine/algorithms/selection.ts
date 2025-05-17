@@ -3,7 +3,7 @@
 import { SortGenerator, SortStats } from '../types'
 
 // Comparison function based on direction
-const shouldSwap = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
+const shouldSwapComparison = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
   // Check if 'a' should come AFTER 'b' based on the direction
   return direction === 'asc' ? a < b : a > b
 }
@@ -31,7 +31,7 @@ export const selectionSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0, // Corresponds to function definition
+      currentPseudoCodeLine: [0], // Corresponds to function definition
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -43,7 +43,7 @@ export const selectionSortGenerator: SortGenerator = function* (
     activeRange: { start: 0, end: n - 1 }, // Initially, the whole array is unsorted
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 0, // function selectionSort(array, n) {
+    currentPseudoCodeLine: [0], // function selectionSort(array, n) {
   }
 
   for (let i = 0; i < n - 1; i++) {
@@ -51,7 +51,7 @@ export const selectionSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Outer loop: i = ${i}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 1, // for (let i = 0; i < n - 1; i++) {
+      currentPseudoCodeLine: [2], // for (let i = 0; i < n - 1; i++) {
       activeRange: { start: i, end: n - 1 },
       sortedIndices: Array.from(sortedIndices),
       swappingIndices: null,
@@ -61,7 +61,7 @@ export const selectionSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `minIndex = ${minIndex}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2, // let minIndex = i;
+      currentPseudoCodeLine: [3], // let minIndex = i;
       highlightedIndices: [i],
       comparisonIndices: [i],
       activeRange: { start: i, end: n - 1 },
@@ -75,7 +75,7 @@ export const selectionSortGenerator: SortGenerator = function* (
         array: [...arr],
         message: `Inner loop: j = ${j}`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 3, // for (let j = i + 1; j < n; j++) {
+        currentPseudoCodeLine: [4], // for (let j = i + 1; j < n; j++) {
         highlightedIndices: [minIndex, j],
         comparisonIndices: [minIndex, j],
         activeRange: { start: i, end: n - 1 },
@@ -93,9 +93,9 @@ export const selectionSortGenerator: SortGenerator = function* (
         message: `Comparing element at current ${direction === 'asc' ? 'min' : 'max'} index ${minIndex} (${arr[minIndex]}) with element at index ${j} (${arr[j]})`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 4, // if (array[j] < array[minIndex]) {
+        currentPseudoCodeLine: [5],
       }
-      if (shouldSwap(arr[j], arr[minIndex], direction)) {
+      if (shouldSwapComparison(arr[j], arr[minIndex], direction)) {
         const oldMinIndex = minIndex
         minIndex = j
         yield {
@@ -107,7 +107,7 @@ export const selectionSortGenerator: SortGenerator = function* (
           message: `New ${direction === 'asc' ? 'minimum' : 'maximum'} found at index ${minIndex} (${arr[minIndex]})`,
           currentStats: { ...liveStats },
           swappingIndices: null,
-          currentPseudoCodeLine: 5, // minIndex = j;
+          currentPseudoCodeLine: [6],
         }
       } else {
         yield {
@@ -119,7 +119,7 @@ export const selectionSortGenerator: SortGenerator = function* (
           message: `Element at index ${minIndex} remains the current ${direction === 'asc' ? 'minimum' : 'maximum'}.`,
           currentStats: { ...liveStats },
           swappingIndices: null,
-          currentPseudoCodeLine: 4, // Still on the if condition line or just after it
+          currentPseudoCodeLine: [7], // Point to 'end if' for the inner if
         }
       }
     } // End inner loop (j)
@@ -127,7 +127,7 @@ export const selectionSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: 'End of inner for loop',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 7, // Closing brace of inner for loop, or start of if (minIndex !== i)
+      currentPseudoCodeLine: [8],
       activeRange: { start: i, end: n - 1 },
       sortedIndices: Array.from(sortedIndices),
       swappingIndices: null,
@@ -143,7 +143,7 @@ export const selectionSortGenerator: SortGenerator = function* (
         activeRange: { start: i, end: n - 1 },
         message: `Preparing to swap element at index ${i} (${arr[i]}) with found ${direction === 'asc' ? 'minimum' : 'maximum'} at index ${minIndex} (${arr[minIndex]})`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 8, // if (minIndex != i) {
+        currentPseudoCodeLine: [9],
       }
       ;[arr[i], arr[minIndex]] = [arr[minIndex], arr[i]]
       liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -157,7 +157,7 @@ export const selectionSortGenerator: SortGenerator = function* (
         activeRange: { start: i, end: n - 1 },
         message: `Swapped elements. New value at index ${i} is ${arr[i]}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 9, // swap(array[i], array[minIndex]);
+        currentPseudoCodeLine: [10],
       }
     } else {
       yield {
@@ -169,14 +169,14 @@ export const selectionSortGenerator: SortGenerator = function* (
         message: `Element at index ${i} (${arr[i]}) is already in its sorted position for this pass. No swap needed.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 8, // Still on the if condition (or the else branch)
+        currentPseudoCodeLine: [11], // Point to 'end if' for the outer if
       }
     }
     yield {
       array: [...arr],
       message: 'End of if (minIndex !== i) block',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 10, // Closing brace of if block
+      currentPseudoCodeLine: [11],
       activeRange: { start: i + 1, end: n - 1 },
       sortedIndices: Array.from(sortedIndices),
       swappingIndices: null,
@@ -188,7 +188,7 @@ export const selectionSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: 'End of outer for loop',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 11, // Closing brace of outer for loop
+    currentPseudoCodeLine: [12],
     sortedIndices: Array.from(sortedIndices),
     swappingIndices: null,
   }
@@ -201,7 +201,7 @@ export const selectionSortGenerator: SortGenerator = function* (
     message: 'Selection Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 12, // Closing brace of function
+    currentPseudoCodeLine: [13],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

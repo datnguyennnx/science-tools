@@ -13,7 +13,7 @@ const insertionSortForRunGenerator = function* (
   direction: 'asc' | 'desc',
   fullArrayRef: number[], // Reference to the full array for yielding
   liveStats: Partial<SortStats>, // Added liveStats
-  currentPseudoCodeLine: number // Added currentPseudoCodeLine
+  currentPseudoCodeLine: number[] // Added currentPseudoCodeLine
 ): Generator<SortStep, void, void> {
   const runLength = right - left + 1
   yield {
@@ -101,7 +101,7 @@ const mergeRunsGenerator = function* (
   direction: 'asc' | 'desc',
   fullArrayRef: number[], // Reference to the full array for yielding
   liveStats: Partial<SortStats>, // Added liveStats
-  currentPseudoCodeLine: number // Added currentPseudoCodeLine
+  currentPseudoCodeLine: number[] // Added currentPseudoCodeLine
 ): Generator<SortStep, void, void> {
   const len1 = mid - left + 1
   const len2 = right - mid
@@ -238,16 +238,16 @@ export const timSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0,
+      currentPseudoCodeLine: [0],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
 
   yield {
     array: [...arr],
-    message: 'Starting TimSort.',
+    message: 'Starting Tim Sort.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0,
+    currentPseudoCodeLine: [0],
   }
 
   // Phase 1: Sort individual runs
@@ -255,7 +255,7 @@ export const timSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: 'Phase 1: Sorting initial runs using Insertion Sort.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 4,
+    currentPseudoCodeLine: [4],
   }
   for (let i = 0; i < n; i += RUN_SIZE) {
     const left = i
@@ -264,16 +264,16 @@ export const timSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Creating run for range [${left}...${right}]. Min merge: ${RUN_SIZE}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 5,
+      currentPseudoCodeLine: [5],
     }
-    yield* insertionSortForRunGenerator(arr, left, right, direction, arr, liveStats, 7)
+    yield* insertionSortForRunGenerator(arr, left, right, direction, arr, liveStats, [7])
   }
 
   yield {
     array: [...arr],
     message: 'Finished sorting initial runs. Starting merge phase.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 10,
+    currentPseudoCodeLine: [9],
   }
 
   // Phase 2: Merge runs
@@ -282,7 +282,7 @@ export const timSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Merging runs. Current merge size: ${size}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 12,
+      currentPseudoCodeLine: [11],
     }
     for (let left = 0; left < n; left += 2 * size) {
       const mid = Math.min(left + size - 1, n - 1)
@@ -291,7 +291,7 @@ export const timSortGenerator: SortGenerator = function* (
         array: [...arr],
         message: `Identifying runs to merge. Left: ${left}, Mid: ${mid}, Right: ${right}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 13,
+        currentPseudoCodeLine: [14],
       }
 
       if (mid < right) {
@@ -299,16 +299,16 @@ export const timSortGenerator: SortGenerator = function* (
           array: [...arr],
           message: `Condition mid < right true. Merging range [${left}...${right}].`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 16,
+          currentPseudoCodeLine: [15],
         }
-        yield* mergeRunsGenerator(arr, left, mid, right, direction, arr, liveStats, 17)
+        yield* mergeRunsGenerator(arr, left, mid, right, direction, arr, liveStats, [16])
       } else {
         yield {
           array: [...arr],
           activeRange: { start: left, end: right },
           message: `Skipping merge for block starting at ${left} (only one run).`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 16,
+          currentPseudoCodeLine: [17],
         }
       }
     }
@@ -316,7 +316,7 @@ export const timSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Finished merging runs of size ${size}. Preparing for next size.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 20,
+      currentPseudoCodeLine: [18],
     }
   }
 
@@ -325,7 +325,7 @@ export const timSortGenerator: SortGenerator = function* (
     sortedIndices: [...Array(n).keys()],
     message: 'TimSort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 22,
+    currentPseudoCodeLine: [21],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

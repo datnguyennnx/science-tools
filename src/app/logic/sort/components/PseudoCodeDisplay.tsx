@@ -1,6 +1,6 @@
 'use client'
 
-import { lazy, memo, Suspense, CSSProperties } from 'react'
+import { lazy, memo, Suspense, CSSProperties, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Select,
@@ -9,26 +9,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-// import { Prism as SyntaxHighlighterPrism } from 'react-syntax-highlighter' // REMOVED: Unused import
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism' // Import style directly
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import type { SortStats } from '../engine/types'
+import type { SortAlgorithm } from '../engine/algorithmRegistry'
 import { SortStatisticsDisplay } from './SortStatisticsDisplay'
 
-// Lazy load SyntaxHighlighter component
 const SyntaxHighlighter = lazy(() =>
   import('react-syntax-highlighter').then(module => ({ default: module.Prism }))
 )
 
-// Re-add SupportedLanguages type
 export type SupportedLanguages = 'c' | 'cpp' | 'python' | 'plaintext'
 
 interface PseudoCodeDisplayProps {
-  algorithmName?: string // Reverted prop
-  pseudoCode?: string[] // Reverted prop
-  activeLine?: number // 0-indexed
-  language: SupportedLanguages // Now controlled by parent for Select
-  onLanguageChange: (newLanguage: SupportedLanguages) => void // Callback for language change
-  sortStats?: Readonly<SortStats> // Added prop for sort statistics
+  algorithmData?: SortAlgorithm
+  activeLines?: number[]
+  language: SupportedLanguages
+  onLanguageChange: (newLanguage: SupportedLanguages) => void
+  sortStats?: Readonly<SortStats>
 }
 
 const languageOptions: Array<{ value: SupportedLanguages; label: string }> = [
@@ -39,15 +36,71 @@ const languageOptions: Array<{ value: SupportedLanguages; label: string }> = [
 ]
 
 const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
-  algorithmName,
-  pseudoCode,
-  activeLine,
+  algorithmData,
+  activeLines,
   language,
   onLanguageChange,
   sortStats,
 }: PseudoCodeDisplayProps): React.JSX.Element {
-  const hasPseudoCode = pseudoCode && Array.isArray(pseudoCode) && pseudoCode.length > 0
+  const currentPseudoCodeLines = algorithmData?.pseudoCodes?.[language]
+  const hasPseudoCode =
+    currentPseudoCodeLines &&
+    Array.isArray(currentPseudoCodeLines) &&
+    currentPseudoCodeLines.length > 0
   const hasStats = !!sortStats && Object.keys(sortStats).length > 0
+  const algorithmName = algorithmData?.name
+
+  const preprocessedMapping = useMemo(() => {
+    if (
+      !algorithmData?.pseudoCodeMapping ||
+      language === 'plaintext' ||
+      !algorithmData.pseudoCodeMapping
+    ) {
+      return null
+    }
+
+    const mapping = algorithmData.pseudoCodeMapping
+    const directMap = new Map<number, number[]>()
+
+    for (const ptLineStr in mapping) {
+      const ptLine = parseInt(ptLineStr, 10) // ptLine is 0-indexed key from pseudoCodeMapping
+      const langSpecificLines1Indexed =
+        mapping[ptLine]?.[language as Exclude<SupportedLanguages, 'plaintext'>]
+      if (langSpecificLines1Indexed) {
+        directMap.set(
+          ptLine,
+          langSpecificLines1Indexed.map(l => l - 1) // Convert 1-indexed to 0-indexed here
+        )
+      }
+    }
+    return directMap
+  }, [algorithmData, language])
+
+  const languageSpecificActiveLinesSet = useMemo(() => {
+    if (!activeLines || activeLines.length === 0) {
+      return new Set<number>()
+    }
+
+    if (language === 'plaintext') {
+      // Assuming activeLines from engine are 0-indexed and directly map to plaintext lines.
+      // The SyntaxHighlighter component expects 0-indexed lines in this Set for highlighting.
+      return new Set(activeLines)
+    }
+
+    if (!preprocessedMapping || !algorithmData?.pseudoCodeMapping) {
+      return new Set<number>()
+    }
+
+    const lines = new Set<number>()
+    activeLines.forEach(ptLine => {
+      // ptLine from activeLines is 0-indexed from the engine.
+      const mappedLines = preprocessedMapping.get(ptLine)
+      if (mappedLines) {
+        mappedLines.forEach(l => lines.add(l))
+      }
+    })
+    return lines
+  }, [activeLines, language, preprocessedMapping, algorithmData?.pseudoCodeMapping])
 
   if (!hasPseudoCode && !hasStats) {
     return (
@@ -71,13 +124,11 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
     )
   }
 
-  const codeString = hasPseudoCode ? pseudoCode.join('\n') : ''
-  // Reverted highlighterLanguage logic
+  const codeString = hasPseudoCode ? currentPseudoCodeLines.join('\n') : ''
   const highlighterLanguage = language === 'plaintext' ? 'text' : language
 
   return (
     <Card>
-      {/* Header for Pseudo Code Section */}
       {hasPseudoCode && (
         <CardHeader>
           <div className="flex flex-row justify-between items-center">
@@ -104,42 +155,42 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
         </CardHeader>
       )}
 
-      {/* Content Area for Pseudo Code */}
       {hasPseudoCode && (
         <CardContent className="text-sm no-scrollbar">
           <Suspense fallback={<div className="p-4 text-center">Loading code highlighter...</div>}>
             <SyntaxHighlighter
               language={highlighterLanguage}
-              style={oneDark} // Use directly imported style
+              style={oneDark}
               showLineNumbers
               wrapLines={true}
               lineNumberStyle={
                 {
-                  minWidth: '3.25em',
-                  paddingRight: '1em',
+                  minWidth: '3em',
                   textAlign: 'right',
                   color: '#777',
                 } as CSSProperties
-              } // Add type assertion for lineNumberStyle
+              }
               lineProps={(lineNumber: number) => {
-                // Add type for lineNumber
                 const style: React.CSSProperties = {
                   display: 'block',
                   width: '100%',
                   wordBreak: 'break-all',
                   whiteSpace: 'pre-wrap',
                 }
-                // activeLine is 0-indexed, lineNumber is 1-indexed
-                if (activeLine !== undefined && lineNumber === activeLine + 1) {
-                  const currentLineContent =
-                    pseudoCode && activeLine >= 0 && activeLine < pseudoCode.length
-                      ? pseudoCode[activeLine]
-                      : ''
-                  const trimmedLine = currentLineContent.trim()
 
-                  const isIgnorableLine = /^\s*$|^\s*(\/\/|#|;).*$/.test(trimmedLine)
+                // lineNumber is 1-indexed from SyntaxHighlighter
+                const lineIndexZeroBased = lineNumber - 1
 
-                  if (!isIgnorableLine) {
+                if (languageSpecificActiveLinesSet.size > 0 && currentPseudoCodeLines) {
+                  const actualLineContent = currentPseudoCodeLines[lineIndexZeroBased] ?? ''
+                  const trimmedLine = actualLineContent.trim()
+                  // Common comment patterns: //, #, ; (assembly), /* ... */, <!-- ... -->
+                  // Regex simplified for common single-line comments in typical pseudo-code languages
+                  const isIgnorableLine = /^\s*($|(\/\/|#|;|\/\*|\*\/|<!--|-->|--)).*$/.test(
+                    trimmedLine
+                  )
+
+                  if (languageSpecificActiveLinesSet.has(lineIndexZeroBased) && !isIgnorableLine) {
                     style.backgroundColor = 'rgba(255, 255, 255, 0.2)'
                     style.fontWeight = 'bold'
                   }
@@ -149,17 +200,16 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
               customStyle={
                 {
                   margin: 0,
-                  padding: '1rem',
                   borderRadius: '0.375rem',
                   backgroundColor: 'var(--syntax-bg, #282c34)',
                   fontSize: '0.75rem',
-                  lineHeight: '1.625',
+                  lineHeight: '1.75',
                 } as CSSProperties
-              } // Add type assertion for customStyle
+              }
               codeTagProps={{
                 style: {
                   fontFamily: 'var(--font-mono)',
-                } as CSSProperties, // Add type assertion for codeTagProps.style
+                } as CSSProperties,
               }}
             >
               {codeString}
@@ -168,7 +218,6 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
         </CardContent>
       )}
 
-      {/* Performance Statistics Section */}
       {hasStats && (
         <>
           {!hasPseudoCode && (

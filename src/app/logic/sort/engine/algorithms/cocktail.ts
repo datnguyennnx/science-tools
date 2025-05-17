@@ -60,7 +60,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 0, // cocktailSort(array) { -> initialization covers lines 0-3
+      currentPseudoCodeLine: [0], // cocktailSort(array) { -> initialization covers lines 0-3
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -72,7 +72,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
     activeRange: { start, end },
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 0, // cocktailSort(array) {
+    currentPseudoCodeLine: [0], // cocktailSort(array) {
   }
 
   // Pseudo line 4: while (swapped)
@@ -86,7 +86,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
       sortedIndices: Array.from(sortedIndices),
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 5, // Set swapped = false at start of while
+      currentPseudoCodeLine: [6],
     }
     // Pseudo line 6: for (i = start; i < end; i++)
     for (let i = start; i < end; i++) {
@@ -99,7 +99,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
         message: `Comparing ${arr[i]} and ${arr[i + 1]}`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 7, // if (array[i] > array[i+1])
+        currentPseudoCodeLine: [9],
       }
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
       if (shouldSwapForward(arr[i], arr[i + 1], direction)) {
@@ -112,25 +112,25 @@ export const cocktailSortGenerator: SortGenerator = function* (
           activeRange: { start, end },
           message: `Preparing to swap ${arr[i]} and ${arr[i + 1]}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 8, // swap(array[i], array[i+1])
+          currentPseudoCodeLine: [10],
         }
         ;[arr[i], arr[i + 1]] = [arr[i + 1], arr[i]]
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-        swapped = true // Pseudo line 9: swapped = true
+        swapped = true
         yield {
           array: [...arr],
           highlightedIndices: [i, i + 1],
-          swappingIndices: [i, i + 1], // Show what was just swapped
+          swappingIndices: [i, i + 1],
           sortedIndices: Array.from(sortedIndices),
           activeRange: { start, end },
           message: `Swapped. New values: ${arr[i]} (at ${i}) and ${arr[i + 1]} (at ${i + 1}).`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 9, // after swap and set swapped = true
+          currentPseudoCodeLine: [11],
         }
       }
     }
-    // Pseudo line 11: end of forward for loop
+
     yield {
       array: [...arr],
       sortedIndices: Array.from(sortedIndices),
@@ -138,7 +138,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
       activeRange: { start, end },
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 11,
+      currentPseudoCodeLine: [13],
     }
 
     // Pseudo line 12: if (!swapped)
@@ -150,7 +150,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
         activeRange: { start, end },
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 13, // break
+        currentPseudoCodeLine: [15],
       }
       break
     }
@@ -168,8 +168,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
       activeRange: { start, end },
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 15, // conceptually, before end = end - 1, we might reset swapped (though code does it later)
-      // Let's align with the pseudo-code strict order for now
+      currentPseudoCodeLine: [13],
     }
     // Pseudo line 16: end = end - 1
     end--
@@ -180,10 +179,10 @@ export const cocktailSortGenerator: SortGenerator = function* (
       activeRange: { start, end },
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 16,
+      currentPseudoCodeLine: [17],
     }
 
-    swapped = false // Pseudo line 15 (actual placement in this code for backward pass prep)
+    swapped = false
     yield {
       array: [...arr],
       message: `Backward pass: [${start}...${end}]. Bubbling ${direction === 'asc' ? 'smallest' : 'largest'} to start.`,
@@ -191,12 +190,9 @@ export const cocktailSortGenerator: SortGenerator = function* (
       sortedIndices: Array.from(sortedIndices),
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 15, // swapped = false (for backward pass)
+      currentPseudoCodeLine: [18],
     }
 
-    // Pseudo line 17: for (i = end - 1; i >= start; i--)
-    // Our loop is `for (let i = end; i > start; i--)` comparing `arr[i-1]` and `arr[i]`.
-    // This is effectively the same range. `end` in pseudo is inclusive, here `end` is also inclusive for elements considered.
     for (let i = end; i > start; i--) {
       yield {
         array: [...arr],
@@ -207,13 +203,9 @@ export const cocktailSortGenerator: SortGenerator = function* (
         message: `Comparing ${arr[i - 1]} and ${arr[i]}`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 18, // if (array[i] > array[i+1]) - adjusted for our loop indices
+        currentPseudoCodeLine: [21],
       }
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      // The pseudo code `if (array[i] > array[i+1])` for backward pass (i from `end-1` down to `start`)
-      // means comparing `arr[k]` with `arr[k+1]` where `k` is decreasing.
-      // Our code compares `arr[i-1]` with `arr[i]`. So `a = arr[i-1]`, `b = arr[i]`
-      // If `shouldSwapBackward(arr[i-1], arr[i], direction)` is true...
       if (shouldSwapBackward(arr[i - 1], arr[i], direction)) {
         yield {
           array: [...arr],
@@ -224,25 +216,25 @@ export const cocktailSortGenerator: SortGenerator = function* (
           activeRange: { start, end },
           message: `Preparing to swap ${arr[i - 1]} and ${arr[i]}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 19, // swap(array[i], array[i+1])
+          currentPseudoCodeLine: [22],
         }
         ;[arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-        swapped = true // Pseudo line 20: swapped = true
+        swapped = true
         yield {
           array: [...arr],
           highlightedIndices: [i - 1, i],
-          swappingIndices: [i - 1, i], // Show what was just swapped
+          swappingIndices: [i - 1, i],
           sortedIndices: Array.from(sortedIndices),
           activeRange: { start, end },
           message: `Swapped. New values: ${arr[i - 1]} (at ${i - 1}) and ${arr[i]} (at ${i}).`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 20, // after swap and set swapped = true
+          currentPseudoCodeLine: [23],
         }
       }
     }
-    // Pseudo line 22: end of backward for loop
+
     yield {
       array: [...arr],
       sortedIndices: Array.from(sortedIndices),
@@ -250,7 +242,7 @@ export const cocktailSortGenerator: SortGenerator = function* (
       activeRange: { start, end },
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 22,
+      currentPseudoCodeLine: [25],
     }
 
     sortedIndices.add(start)
@@ -261,9 +253,9 @@ export const cocktailSortGenerator: SortGenerator = function* (
       activeRange: { start, end },
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 22, // After loop, before start increment, conceptually end of backward pass work
+      currentPseudoCodeLine: [25],
     }
-    // Pseudo line 23: start = start + 1
+
     start++
     yield {
       array: [...arr],
@@ -272,13 +264,9 @@ export const cocktailSortGenerator: SortGenerator = function* (
       activeRange: { start, end },
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 23,
+      currentPseudoCodeLine: [27],
     }
 
-    // Pseudo line 4: Loop condition check for while (swapped)
-    // If !swapped, this iteration will be the last one, then break is implicit if loop condition fails
-    // If swapped, loop continues. The check itself happens at the top of the while.
-    // Yielding a step to show check of `while(swapped)` which is line 4
     yield {
       array: [...arr],
       sortedIndices: Array.from(sortedIndices),
@@ -288,22 +276,20 @@ export const cocktailSortGenerator: SortGenerator = function* (
       activeRange: { start, end },
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 4, // Re-checking while condition
+      currentPseudoCodeLine: [5], // Re-checking while condition; plaintext[5]
     }
-    if (!swapped) break // This break corresponds to an implicit check after a full pass
+    if (!swapped) break
   }
 
-  // Pseudo line 24: end of while loop
-  // All remaining elements in [start, end] range are sorted by now
   for (let k = start; k <= end; k++) sortedIndices.add(k)
 
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()], // Mark all as sorted
+    sortedIndices: [...Array(n).keys()],
     message: 'Cocktail Shaker Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 25, // End of function
+    currentPseudoCodeLine: [29],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

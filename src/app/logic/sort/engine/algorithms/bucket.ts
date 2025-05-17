@@ -39,7 +39,7 @@ const insertionSortForBucketGenerator = function* (
       auxiliaryStructures: [...baseStructures, ...overviewAux],
       message: `Bucket ${bucketActualIndex} (Insertion Sort): ${stepMessage}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: pseudoCodeLine, // Map to relevant insertion sort pseudo lines
+      currentPseudoCodeLine: [pseudoCodeLine], // Map to relevant insertion sort pseudo lines
       highlightedIndices: isComparisonStep ? [] : [], // Add specific highlights if needed
       comparisonIndices: isComparisonStep ? [] : [],
     }
@@ -87,7 +87,7 @@ const insertionSortForBucketGenerator = function* (
     auxiliaryStructures: [...baseStructuresFinal, ...overviewAuxFinal],
     message: `Bucket ${bucketActualIndex} (Insertion Sort): Finished sorting bucket.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 5, // End of insertion sort for bucket
+    currentPseudoCodeLine: [5], // End of insertion sort for bucket
   }
 }
 
@@ -126,7 +126,7 @@ export const bucketSortGenerator: SortGenerator = function* (
       sortedIndices: n === 1 ? [0] : [],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0,
+      currentPseudoCodeLine: [1],
       auxiliaryStructures: [...accumulatedFinalAuxStates],
     }
     return {
@@ -146,7 +146,7 @@ export const bucketSortGenerator: SortGenerator = function* (
     highlightedIndices: [0],
     message: `Finding min/max. Min: ${minVal}, Max: ${maxVal}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0,
+    currentPseudoCodeLine: [2],
     auxiliaryStructures: [...accumulatedFinalAuxStates],
   }
   for (let i = 1; i < n; i++) {
@@ -162,7 +162,7 @@ export const bucketSortGenerator: SortGenerator = function* (
       highlightedIndices: [i],
       message: `Min: ${minVal}, Max: ${maxVal}. Checking index ${i}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 4,
+      currentPseudoCodeLine: [3],
       auxiliaryStructures: [...accumulatedFinalAuxStates],
     }
   }
@@ -171,7 +171,7 @@ export const bucketSortGenerator: SortGenerator = function* (
     mainArrayLabel: 'Input Array',
     message: `Min/Max found. Min: ${minVal}, Max: ${maxVal}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 4,
+    currentPseudoCodeLine: [3],
     auxiliaryStructures: [...accumulatedFinalAuxStates],
   }
 
@@ -184,7 +184,7 @@ export const bucketSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'All elements are identical. Array is effectively sorted.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 0,
+      currentPseudoCodeLine: [4],
       auxiliaryStructures: [...accumulatedFinalAuxStates],
     }
     return {
@@ -211,7 +211,7 @@ export const bucketSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [...accumulatedFinalAuxStates],
     message: `Created ${bucketCount} empty buckets. Range: [${minVal}-${maxVal}].`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 2,
+    currentPseudoCodeLine: [9],
   }
 
   // 3. Distribute elements into buckets
@@ -222,7 +222,7 @@ export const bucketSortGenerator: SortGenerator = function* (
     auxiliaryStructures: [...accumulatedFinalAuxStates],
     message: 'Preparing to scatter elements into buckets.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 3,
+    currentPseudoCodeLine: [12],
   }
 
   const range = maxVal - minVal === 0 ? 1 : maxVal - minVal
@@ -241,70 +241,132 @@ export const bucketSortGenerator: SortGenerator = function* (
       highlightedIndices: [i],
       message: `Processing element ${arr[i]} for scattering.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 5,
+      currentPseudoCodeLine: [13],
       auxiliaryStructures: [...accumulatedFinalAuxStates],
     }
 
     buckets[bucketIndex].push(value)
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
     bucketOverviewAux.data = getCurrentBucketOverviewData(buckets)
-    bucketOverviewAux.title = 'Bucket Overview (Calculating Bucket Index)'
-
     yield {
       array: [...arr],
       mainArrayLabel: 'Input Array',
       highlightedIndices: [i],
-      comparisonIndices: [bucketIndex],
-      auxiliaryStructures: [...accumulatedFinalAuxStates],
-      message: `Calculated bucketIndex ${bucketIndex} for element ${value}.`,
+      message: `Scattered element ${value} into bucket ${bucketIndex}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 6,
-    }
-    bucketOverviewAux.title = 'Bucket Overview (Distributing)'
-    yield {
-      array: [...arr],
-      mainArrayLabel: 'Input Array',
-      highlightedIndices: [i],
-      comparisonIndices: [bucketIndex],
+      currentPseudoCodeLine: [16],
       auxiliaryStructures: [...accumulatedFinalAuxStates],
-      message: `Distributing element ${value} (from index ${i}) into bucket ${bucketIndex}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: 7,
     }
   }
-  bucketOverviewAux.title = 'Bucket Overview (Scattering Complete)'
+  bucketOverviewAux.title = 'Bucket Overview (Scattered)'
   yield {
     array: [...arr],
     mainArrayLabel: 'Input Array',
     auxiliaryStructures: [...accumulatedFinalAuxStates],
-    message: 'Finished scattering elements into buckets.',
+    message: 'All elements scattered into buckets. Preparing to sort individual buckets.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 8,
+    currentPseudoCodeLine: [17],
   }
 
-  bucketOverviewAux.title = 'Bucket Overview (Before Sorting Buckets)'
+  // 4. Sort individual buckets
   yield {
     array: [...arr],
-    mainArrayLabel: 'Input Array (Before Concatenation)',
+    mainArrayLabel: 'Input Array',
     auxiliaryStructures: [...accumulatedFinalAuxStates],
-    message: 'Sorting individual buckets.',
+    message: 'Sorting individual buckets using Insertion Sort.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 9,
+    currentPseudoCodeLine: [19],
   }
 
+  for (let bucketIdx = 0; bucketIdx < bucketCount; bucketIdx++) {
+    if (buckets[bucketIdx].length > 0) {
+      const currentBucketContentForMsg = [...buckets[bucketIdx]] // For message before sort
+
+      // Create and add aux structure for this specific bucket's content
+      const bucketContentAuxId = `bucket-content-${bucketIdx}`
+      const bucketContentSlot = `bucket-slot-${bucketIdx}`
+      const bucketContentAux: AuxiliaryStructure = {
+        id: bucketContentAuxId,
+        title: `Bucket ${bucketIdx} Content (Unsorted)`,
+        data: [...buckets[bucketIdx]],
+        displaySlot: bucketContentSlot,
+      }
+      // Add if not already present (e.g. if replaying steps), or update if present
+      const existingBucketContentIndex = accumulatedFinalAuxStates.findIndex(
+        aux => aux.id === bucketContentAuxId
+      )
+      if (existingBucketContentIndex !== -1) {
+        accumulatedFinalAuxStates[existingBucketContentIndex] = bucketContentAux
+      } else {
+        accumulatedFinalAuxStates.push(bucketContentAux)
+      }
+
+      bucketOverviewAux.title = `Bucket Overview (Sorting Bucket ${bucketIdx})`
+      yield {
+        array: [...arr],
+        mainArrayLabel: 'Output Array (Building)',
+        highlightedIndices: [],
+        comparisonIndices: [bucketIdx],
+        auxiliaryStructures: [...accumulatedFinalAuxStates],
+        message: `Sorting bucket ${bucketIdx} with elements: [${currentBucketContentForMsg.join(', ')}] using Insertion Sort.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: [20],
+      }
+
+      yield* insertionSortForBucketGenerator(
+        buckets[bucketIdx], // The actual bucket array to sort
+        direction,
+        liveStats,
+        [...arr], // For visualization context
+        bucketIdx, // bucketActualIndex
+        () => {
+          // getAllBucketsOverviewAux function
+          bucketOverviewAux.data = getCurrentBucketOverviewData(buckets)
+          // Title will be updated by insertionSort if needed, or we can set it here
+          // bucketOverviewAux.title = `Bucket Overview (During Bucket ${bucketIdx} Sort)`
+          return [bucketOverviewAux] // Return as array
+        },
+        [...accumulatedFinalAuxStates], // Pass a copy of current accumulated states
+        bucketContentAuxId // ID for the specific bucket content aux to update
+      )
+
+      // After insertion sort, the bucketContentAux in accumulatedFinalAuxStates should have been updated to sorted.
+      // And buckets[bucketIdx] itself is now sorted.
+      bucketOverviewAux.title = `Bucket Overview (Sorted Bucket ${bucketIdx})`
+      yield {
+        array: [...arr],
+        mainArrayLabel: 'Output Array (Building)',
+        comparisonIndices: [bucketIdx],
+        auxiliaryStructures: [...accumulatedFinalAuxStates],
+        message: `Bucket ${bucketIdx} sorted: [${buckets[bucketIdx].join(', ')}]`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: [21],
+      }
+    }
+  }
+
+  bucketOverviewAux.title = 'Bucket Overview (Buckets Sorted)'
+  yield {
+    array: [...arr],
+    mainArrayLabel: 'Output Array (Building)',
+    auxiliaryStructures: [...accumulatedFinalAuxStates],
+    message: 'All buckets sorted. Preparing to gather elements into the output array.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [23],
+  }
+
+  // 5. Concatenate sorted buckets
   let currentIndex = 0
-  const sortedArr = new Array(n)
+  const outputArray = new Array(n)
 
   for (let i = 0; i < bucketCount; i++) {
     if (buckets[i].length > 0) {
-      const currentBucketContentForMsg = [...buckets[i]] // For message before sort
-
       // Create and add aux structure for this specific bucket's content
       const bucketContentAuxId = `bucket-content-${i}`
       const bucketContentSlot = `bucket-slot-${i}`
       const bucketContentAux: AuxiliaryStructure = {
         id: bucketContentAuxId,
-        title: `Bucket ${i} Content (Unsorted)`,
+        title: `Bucket ${i} Content (Sorted)`,
         data: [...buckets[i]],
         displaySlot: bucketContentSlot,
       }
@@ -318,117 +380,93 @@ export const bucketSortGenerator: SortGenerator = function* (
         accumulatedFinalAuxStates.push(bucketContentAux)
       }
 
-      bucketOverviewAux.title = `Bucket Overview (Sorting Bucket ${i})`
-      yield {
-        array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
-        mainArrayLabel: 'Output Array (Building)',
-        highlightedIndices: [],
-        comparisonIndices: [i],
-        auxiliaryStructures: [...accumulatedFinalAuxStates],
-        message: `Sorting bucket ${i} with elements: [${currentBucketContentForMsg.join(', ')}] using Insertion Sort.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: 10,
-      }
+      const currentBucketAuxAndOverview = [
+        ...accumulatedFinalAuxStates.filter(aux => aux.id !== bucketOverviewId),
+        bucketOverviewAux,
+      ]
 
-      yield* insertionSortForBucketGenerator(
-        buckets[i], // The actual bucket array to sort
-        direction,
-        liveStats,
-        [...sortedArr].map(v => (v === undefined ? NaN : v)), // For visualization context
-        i, // bucketActualIndex
-        () => {
-          // getAllBucketsOverviewAux function
-          bucketOverviewAux.data = getCurrentBucketOverviewData(buckets)
-          // Title will be updated by insertionSort if needed, or we can set it here
-          // bucketOverviewAux.title = `Bucket Overview (During Bucket ${i} Sort)`
-          return [bucketOverviewAux] // Return as array
-        },
-        [...accumulatedFinalAuxStates], // Pass a copy of current accumulated states
-        bucketContentAuxId // ID for the specific bucket content aux to update
-      )
-
-      // After insertion sort, the bucketContentAux in accumulatedFinalAuxStates should have been updated to sorted.
-      // And buckets[i] itself is now sorted.
-      bucketOverviewAux.title = `Bucket Overview (Sorted Bucket ${i})`
-      yield {
-        array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
-        mainArrayLabel: 'Output Array (Building)',
-        comparisonIndices: [i],
-        auxiliaryStructures: [...accumulatedFinalAuxStates],
-        message: `Bucket ${i} sorted: [${buckets[i].join(', ')}]`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: 11,
-      }
-
-      bucketOverviewAux.title = 'Bucket Overview (Preparing to Gather)'
-      yield {
-        array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
-        mainArrayLabel: 'Output Array (Building)',
-        message: `Preparing to gather elements from sorted bucket ${i}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: 16,
-        auxiliaryStructures: [...accumulatedFinalAuxStates],
-      }
-
-      for (const val of buckets[i]) {
-        sortedArr[currentIndex] = val
-        liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
-        bucketOverviewAux.title = 'Bucket Overview (Concatenating)'
+      for (const value of buckets[i]) {
         yield {
-          array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
-          mainArrayLabel: 'Output Array (Concatenating)',
+          array: outputArray,
+          mainArrayLabel: 'Output Array (Building)',
           highlightedIndices: [currentIndex],
-          comparisonIndices: [i],
-          auxiliaryStructures: [...accumulatedFinalAuxStates],
-          message: `Placing ${val} from sorted bucket ${i} into final array at index ${currentIndex}.`,
+          auxiliaryStructures: [...currentBucketAuxAndOverview],
+          message: `Gathering from bucket ${i}: Processing element ${value}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 17,
+          currentPseudoCodeLine: [25],
+        }
+        outputArray[currentIndex] = value
+        liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
+        yield {
+          array: outputArray,
+          mainArrayLabel: 'Output Array (Building)',
+          highlightedIndices: [currentIndex],
+          auxiliaryStructures: [...currentBucketAuxAndOverview],
+          message: `Placed ${value} from bucket ${i} into output array at index ${currentIndex}.`,
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: [26],
         }
         currentIndex++
         yield {
-          array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
-          mainArrayLabel: 'Output Array (Concatenating)',
-          highlightedIndices: [currentIndex - 1],
+          array: outputArray,
+          mainArrayLabel: 'Output Array (Building)',
+          // Highlight next insertion point if within bounds
+          highlightedIndices: currentIndex < n ? [currentIndex] : [],
+          auxiliaryStructures: [...currentBucketAuxAndOverview],
           message: `Incremented output index to ${currentIndex}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 18,
-          auxiliaryStructures: [...accumulatedFinalAuxStates],
+          currentPseudoCodeLine: [27],
         }
       }
-      bucketOverviewAux.title = `Bucket Overview (Finished Bucket ${i} Gather)`
+      // Update the specific bucket aux structure to show it as 'Processed' or 'Empty'
+      const processedBucketAuxId = `bucket-content-${i}`
+      const processedBucketAuxIndex = accumulatedFinalAuxStates.findIndex(
+        aux => aux.id === processedBucketAuxId
+      )
+      if (processedBucketAuxIndex !== -1) {
+        accumulatedFinalAuxStates[processedBucketAuxIndex] = {
+          ...accumulatedFinalAuxStates[processedBucketAuxIndex],
+          title: `Bucket ${i} Content (Processed)`,
+        }
+      }
+      const processedBucketAuxAndOverview = [
+        ...accumulatedFinalAuxStates.filter(aux => aux.id !== bucketOverviewId),
+        bucketOverviewAux,
+      ]
       yield {
-        array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
+        array: outputArray,
         mainArrayLabel: 'Output Array (Building)',
-        message: `Finished gathering from bucket ${i}.`,
+        auxiliaryStructures: [...processedBucketAuxAndOverview],
+        message: `Bucket ${i} gathered.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 19,
-        auxiliaryStructures: [...accumulatedFinalAuxStates],
+        currentPseudoCodeLine: [28],
       }
     }
   }
-  bucketOverviewAux.title = 'Bucket Overview (Gathering Complete)'
+
+  bucketOverviewAux.title = 'Bucket Overview (Completed)'
   yield {
-    array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
-    mainArrayLabel: 'Output Array (Building)',
-    message: 'Finished gathering from all buckets.',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: 20,
+    array: outputArray,
+    mainArrayLabel: 'Output Array (Sorted)',
+    sortedIndices: [...Array(n).keys()],
     auxiliaryStructures: [...accumulatedFinalAuxStates],
+    message: 'All elements gathered into the output array.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [29],
   }
 
-  bucketOverviewAux.title = 'Bucket Overview (Sort Complete)'
   yield {
-    array: [...sortedArr],
-    mainArrayLabel: 'Sorted Array',
+    array: outputArray,
+    mainArrayLabel: 'Output Array (Sorted)',
     sortedIndices: [...Array(n).keys()],
+    auxiliaryStructures: [...accumulatedFinalAuxStates],
     message: 'Bucket Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 21,
-    auxiliaryStructures: [...accumulatedFinalAuxStates],
+    currentPseudoCodeLine: [32],
   }
 
   return {
-    finalArray: sortedArr,
+    finalArray: outputArray,
     stats: liveStats as SortStats,
     finalAuxiliaryStructures: [...accumulatedFinalAuxStates],
   }

@@ -2,7 +2,6 @@
 
 import { SortGenerator, SortStats } from '../types'
 
-// Comparison function: Checks if arr[index] >= arr[index - 1] (for asc) or <= (for desc)
 const isInOrder = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
   return direction === 'asc' ? a >= b : a <= b
 }
@@ -33,7 +32,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 0,
+      currentPseudoCodeLine: [0],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -44,14 +43,14 @@ export const gnomeSortGenerator: SortGenerator = function* (
     message: 'Starting Gnome Sort.',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 0,
+    currentPseudoCodeLine: [0],
   }
 
   yield {
     array: [...arr],
     message: `Initializing index to ${index}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 1,
+    currentPseudoCodeLine: [1],
   }
 
   while (index < n) {
@@ -59,7 +58,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
       array: [...arr],
       message: `Checking while condition: index (${index}) < n (${n}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2,
+      currentPseudoCodeLine: [3],
       highlightedIndices: [index],
     }
     if (index === 0) {
@@ -70,7 +69,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
         message: `At the start (index ${index}). Moving to next element.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 3,
+        currentPseudoCodeLine: [4],
       }
       index++
       yield {
@@ -78,7 +77,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
         highlightedIndices: [index - 1],
         message: `Incremented index to ${index}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 4,
+        currentPseudoCodeLine: [5],
       }
     } else {
       yield {
@@ -88,7 +87,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
         message: `Comparing element at index ${index} (${arr[index]}) with previous at index ${index - 1} (${arr[index - 1]}).`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 6,
+        currentPseudoCodeLine: [6],
       }
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
       if (isInOrder(arr[index], arr[index - 1], direction)) {
@@ -99,7 +98,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
           message: `Elements are in order. Moving forward (index ${index + 1}).`,
           currentStats: { ...liveStats },
           swappingIndices: null,
-          currentPseudoCodeLine: 6,
+          currentPseudoCodeLine: [6],
         }
         index++
         yield {
@@ -107,7 +106,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
           highlightedIndices: [index - 1],
           message: `Incremented index to ${index}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 7,
+          currentPseudoCodeLine: [7],
         }
       } else {
         yield {
@@ -117,7 +116,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
           swappingIndices: [index, index - 1],
           message: `Elements out of order. Preparing to swap index ${index} (${arr[index]}) and ${index - 1} (${arr[index - 1]}).`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 8,
+          currentPseudoCodeLine: [8],
         }
         ;[arr[index], arr[index - 1]] = [arr[index - 1], arr[index]]
         liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -129,7 +128,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
           swappingIndices: [index, index - 1],
           message: `Swapped. New values: ${arr[index]} (at ${index}), ${arr[index - 1]} (at ${index - 1}). Moving backward.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 9,
+          currentPseudoCodeLine: [9],
         }
         index--
         yield {
@@ -137,13 +136,13 @@ export const gnomeSortGenerator: SortGenerator = function* (
           highlightedIndices: [index + 1],
           message: `Decremented index to ${index}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 10,
+          currentPseudoCodeLine: [10],
         }
         yield {
           array: [...arr],
           message: `Finished swap block.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: 11,
+          currentPseudoCodeLine: [11],
         }
       }
     }
@@ -152,7 +151,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: `Loop finished.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 12,
+    currentPseudoCodeLine: [12],
   }
 
   yield {
@@ -161,7 +160,7 @@ export const gnomeSortGenerator: SortGenerator = function* (
     message: 'Gnome Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 13,
+    currentPseudoCodeLine: [13],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

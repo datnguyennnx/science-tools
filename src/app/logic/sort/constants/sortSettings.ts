@@ -9,5 +9,4 @@ export const DEFAULT_SPEED = 7
 export const MIN_SPEED = 1
 export const MAX_SPEED = 10
 
-export const MAX_ANIMATION_DELAY_MS = 500
-export const MIN_DELAY_MS = 50
+export const MIN_DELAY_MS = 0

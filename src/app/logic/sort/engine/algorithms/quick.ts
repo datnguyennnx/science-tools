@@ -2,8 +2,6 @@
 
 import { SortGenerator, SortStep, SortStats } from '../types'
 
-// Comparison function based on direction
-// Checks if `a` should be placed BEFORE `b`
 const shouldBeBefore = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
   return direction === 'asc' ? a < b : a > b
 }
@@ -22,7 +20,7 @@ const partitionGenerator = function* (
     array: [...arr],
     message: `partition(arr, ${low}, ${high})`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 6,
+    currentPseudoCodeLine: [8],
     activeRange: { start: low, end: high },
   }
   const pivot = arr[high]
@@ -36,7 +34,7 @@ const partitionGenerator = function* (
     message: `Pivot is ${pivot} at index ${high}.`,
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 7,
+    currentPseudoCodeLine: [9],
   }
 
   let i = low - 1 // Index of smaller/larger element (depending on direction)
@@ -45,7 +43,7 @@ const partitionGenerator = function* (
     array: [...arr],
     message: `Initialize i to ${i}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 8,
+    currentPseudoCodeLine: [10],
     activeRange: { start: low, end: high },
     highlightedIndices: [high],
   }
@@ -56,7 +54,7 @@ const partitionGenerator = function* (
       array: [...arr],
       message: `Inner loop: j = ${j}`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 9,
+      currentPseudoCodeLine: [11],
       highlightedIndices: [high, j],
       comparisonIndices: [i + 1, j],
       activeRange: { start: low, end: high },
@@ -72,7 +70,7 @@ const partitionGenerator = function* (
       message: `Comparing element ${arr[j]} at index ${j} with pivot ${pivot}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 10, // if (array[j] <= pivot)
+      currentPseudoCodeLine: [12],
     }
 
     liveStats.comparisons = (liveStats.comparisons || 0) + 1
@@ -83,7 +81,7 @@ const partitionGenerator = function* (
         array: [...arr],
         message: `Element ${arr[j]} should be before pivot. Increment i to ${i}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 11,
+        currentPseudoCodeLine: [13],
         highlightedIndices: [high, j, i],
         activeRange: { start: low, end: high },
       }
@@ -98,7 +96,7 @@ const partitionGenerator = function* (
         activeRange: { start: low, end: high },
         message: `Preparing to swap elements at indices ${i} (${arr[i]}) and ${j} (${arr[j]}).`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 12, // swap(array[i], array[j])
+        currentPseudoCodeLine: [14],
       }
       ;[arr[i], arr[j]] = [arr[j], arr[i]]
       liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -114,7 +112,7 @@ const partitionGenerator = function* (
         activeRange: { start: low, end: high },
         message: `Swapped. New values: ${arr[i]} (at ${i}) and ${arr[j]} (at ${j}).`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: 12, // still on swap line post-action
+        currentPseudoCodeLine: [14],
       }
     } else {
       yield {
@@ -126,7 +124,7 @@ const partitionGenerator = function* (
         message: `Element ${arr[j]} is in correct partition relative to pivot.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: 10, // still on if condition (else branch)
+        currentPseudoCodeLine: [12],
       }
     }
   }
@@ -135,7 +133,7 @@ const partitionGenerator = function* (
     array: [...arr],
     message: 'Finished inner loop for partitioning.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 13,
+    currentPseudoCodeLine: [16],
     activeRange: { start: low, end: high },
   }
 
@@ -150,7 +148,7 @@ const partitionGenerator = function* (
     activeRange: { start: low, end: high },
     message: `Preparing to place pivot ${pivot} in its final position. Swapping with element at ${pivotFinalIndex} (${arr[pivotFinalIndex]}).`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 14, // swap(array[i + 1], array[high])
+    currentPseudoCodeLine: [17],
   }
   ;[arr[pivotFinalIndex], arr[high]] = [arr[high], arr[pivotFinalIndex]]
   liveStats.swaps = (liveStats.swaps || 0) + 1
@@ -166,7 +164,7 @@ const partitionGenerator = function* (
     activeRange: { start: low, end: high },
     message: `Pivot ${arr[pivotFinalIndex]} is now at its sorted index ${pivotFinalIndex}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 14, // still on swap line post-action
+    currentPseudoCodeLine: [17],
   }
 
   yield {
@@ -174,7 +172,7 @@ const partitionGenerator = function* (
     array: [...arr],
     message: `Partition complete. Pivot index is ${pivotFinalIndex}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 15,
+    currentPseudoCodeLine: [18],
     activeRange: { start: low, end: high },
     highlightedIndices: [pivotFinalIndex],
   }
@@ -195,7 +193,7 @@ const quickSortRecursiveGenerator = function* (
     array: [...arr],
     message: `quickSort(arr, ${low}, ${high})`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: 0,
+    currentPseudoCodeLine: [0],
     activeRange: { start: low, end: high },
   }
   if (low < high) {
@@ -204,7 +202,7 @@ const quickSortRecursiveGenerator = function* (
       array: [...arr],
       message: `Condition low < high is true for [${low}...${high}].`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 1,
+      currentPseudoCodeLine: [1],
       activeRange: { start: low, end: high },
     }
 
@@ -223,7 +221,7 @@ const quickSortRecursiveGenerator = function* (
       array: [...arr],
       message: `Partition returned pivot index ${pivotIndex}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2,
+      currentPseudoCodeLine: [2],
       activeRange: { start: low, end: high },
       highlightedIndices: [pivotIndex],
     }
@@ -236,7 +234,7 @@ const quickSortRecursiveGenerator = function* (
       activeRange: { start: low, end: high },
       swappingIndices: null,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 2, // Still on pi = partition(...)
+      currentPseudoCodeLine: [2], // Still on pi = partition(...)
     }
 
     // Recursively sort elements before partition
@@ -245,7 +243,7 @@ const quickSortRecursiveGenerator = function* (
       array: [...arr],
       message: `Calling quickSort for left part: [${low}...${pivotIndex - 1}]`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 3,
+      currentPseudoCodeLine: [3],
       activeRange: { start: low, end: pivotIndex - 1 },
     }
     yield* quickSortRecursiveGenerator(
@@ -263,7 +261,7 @@ const quickSortRecursiveGenerator = function* (
       array: [...arr],
       message: `Calling quickSort for right part: [${pivotIndex + 1}...${high}]`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 4,
+      currentPseudoCodeLine: [4],
       activeRange: { start: pivotIndex + 1, end: high },
     }
     yield* quickSortRecursiveGenerator(
@@ -279,7 +277,7 @@ const quickSortRecursiveGenerator = function* (
       array: [...arr],
       message: `Finished recursive calls for range [${low}...${high}]`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: 5, // Closing brace of if
+      currentPseudoCodeLine: [5], // Closing brace of if
       activeRange: { start: low, end: high },
     }
   } else if (low === high) {
@@ -294,7 +292,7 @@ const quickSortRecursiveGenerator = function* (
       message: `Base case: Range [${low}...${high}] has one element, considered sorted.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 1, // if (low < high) is false
+      currentPseudoCodeLine: [1], // if (low < high) is false
     }
   } else {
     // Base case: empty range
@@ -307,7 +305,7 @@ const quickSortRecursiveGenerator = function* (
       message: `Base case: Range [${low}...${high}] is empty, skipping.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 1, // if (low < high) is false
+      currentPseudoCodeLine: [1], // if (low < high) is false
     }
   }
 }
@@ -338,7 +336,7 @@ export const quickSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: 0, // Or specific line for base case
+      currentPseudoCodeLine: [0], // Or specific line for base case
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -349,7 +347,7 @@ export const quickSortGenerator: SortGenerator = function* (
     message: 'Starting Quick Sort',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 0, // quickSort(arr, 0, n-1)
+    currentPseudoCodeLine: [0], // quickSort(arr, 0, n-1)
   }
 
   // Start the recursive sort
@@ -367,7 +365,7 @@ export const quickSortGenerator: SortGenerator = function* (
     message: 'Quick Sort Complete!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: 5, // End of main quickSort function
+    currentPseudoCodeLine: [6],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }
