@@ -29,6 +29,19 @@ const MemoizedSortChartDisplay = memo(function SortChartDisplay({
     }))
   }, [currentSortStep])
 
+  const cellKeys = useMemo<string[]>(() => {
+    if (!currentSortStep || !currentSortStep.array || currentSortStep.array.length === 0) {
+      return []
+    }
+    const keyMap = new Map<number, number>()
+    return currentSortStep.array.map(valueInArray => {
+      const occurrence = keyMap.get(valueInArray) || 0
+      const newKey = `bar-value-${valueInArray}-occurrence-${occurrence}`
+      keyMap.set(valueInArray, occurrence + 1)
+      return newKey
+    })
+  }, [currentSortStep])
+
   return (
     <AnimatePresence mode="wait">
       {chartData.length === 0 ? (
@@ -97,7 +110,7 @@ const MemoizedSortChartDisplay = memo(function SortChartDisplay({
 
                     return (
                       <Cell
-                        key={`bar-${value}-${index}`}
+                        key={cellKeys[index]}
                         fill={fill}
                         stroke={cellStroke}
                         strokeWidth={cellStrokeWidth}

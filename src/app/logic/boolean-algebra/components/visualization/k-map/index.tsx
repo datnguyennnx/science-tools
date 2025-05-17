@@ -208,8 +208,8 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
           <div
             className={`flex flex-col ${isFullscreen ? 'flex-row space-x-6' : 'space-y-2'} w-full`}
           >
-            {maps.map((mapData, index) => (
-              <div key={index} className="flex-1 border rounded-lg p-4 min-w-0">
+            {maps.map(mapData => (
+              <div key={mapData.title} className="flex-1 border rounded-lg p-4 min-w-0">
                 <h3 className="text-lg font-semibold mb-3 text-center">{mapData.title}</h3>
                 <KMapGrid
                   config={mapData.kMapConfig}

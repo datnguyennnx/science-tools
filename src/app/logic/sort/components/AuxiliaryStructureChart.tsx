@@ -73,8 +73,8 @@ const MemoizedAuxiliaryStructureChart = memo(function AuxiliaryStructureChart({
               cursor={{ fill: 'var(--muted-foreground)', fillOpacity: 0.1 }}
             />
             <Bar dataKey="value" fill="var(--chart-4)" radius={[2, 2, 0, 0]}>
-              {chartData.map((_entry, index) => (
-                <Cell key={`aux-bar-${_entry.name}-${index}`} fill="var(--chart-4)" />
+              {chartData.map(entry => (
+                <Cell key={entry.name} fill="var(--chart-4)" />
               ))}
             </Bar>
           </BarChart>

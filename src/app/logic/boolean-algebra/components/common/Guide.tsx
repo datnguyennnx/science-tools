@@ -337,8 +337,8 @@ export function Guide() {
             )}
 
             <div className="space-y-4">
-              {activeCategory.laws.map((law, index) => (
-                <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
+              {activeCategory.laws.map(law => (
+                <div key={law.name} className="border-b border-gray-200 pb-4 last:border-b-0">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h3 className="font-medium text-sm">{law.name}</h3>
