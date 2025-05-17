@@ -20,7 +20,7 @@ export function useSortableArray(initialSize: number = DEFAULT_ARRAY_SIZE): UseS
     )
     setArray(newArray)
     return newArray
-  }, []) // MAX_VALUE and MIN_VALUE are constants, no need for them in deps if imported directly
+  }, [])
 
   return {
     array,

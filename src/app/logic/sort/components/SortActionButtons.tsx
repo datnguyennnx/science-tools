@@ -27,18 +27,18 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
   togglePseudoCodeShortcut,
 }: SortActionButtonsProps): React.JSX.Element {
   return (
-    <div className="flex flex-col space-y-3">
+    <div className="flex flex-col space-y-2">
       <div className="flex items-center justify-between text-sm leading-none flex-wrap gap-2">
-        <span>Sort Control</span>
-        <div className="flex items-center space-x-3">
+        <p>Sort Control</p>
+        <div className="flex space-x-2">
           {toggleAlgorithmInfoShortcut && (
-            <span className="flex items-center text-xs text-muted-foreground whitespace-nowrap">
+            <span className="flex items-center text-sm leading-none flex-wrap text-muted-foreground whitespace-nowrap">
               Toggle Info:
               <Kbd>{toggleAlgorithmInfoShortcut}</Kbd>
             </span>
           )}
           {togglePseudoCodeShortcut && (
-            <span className="flex items-center text-xs text-muted-foreground whitespace-nowrap">
+            <span className="flex items-center text-sm leading-none flex-wrap text-muted-foreground whitespace-nowrap">
               Toggle Code:
               <Kbd>{togglePseudoCodeShortcut}</Kbd>
             </span>

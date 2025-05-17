@@ -9,8 +9,8 @@ import {
   getCommand,
   getShortcutForCommand,
   type CommandManagerRegistry,
-} from '../commandManager' // Adjusted path
-import { SortCommandType, type KeyBinding, type Command } from '../commands' // Adjusted path
+} from '../commandManager'
+import { SortCommandType, type KeyBinding, type Command } from '../commands'
 
 interface UseSortKeyboardCommandsProps {
   setShowAlgorithmInfo: React.Dispatch<React.SetStateAction<boolean>>

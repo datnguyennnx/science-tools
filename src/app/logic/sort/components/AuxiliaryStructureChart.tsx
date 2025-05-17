@@ -44,7 +44,7 @@ const MemoizedAuxiliaryStructureChart = memo(function AuxiliaryStructureChart({
           name: idx.toString(),
           value: val,
         }))
-  }, [structure.data]) // Depend on structure.data for memoization
+  }, [structure.data])
 
   return (
     <div className="w-full flex flex-col space-y-2">

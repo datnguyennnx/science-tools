@@ -90,7 +90,6 @@ export function useSortExecution({
     setCurrentRawSortStep(null)
     setTempLiveStats(null)
     // visualStartTimeRef is managed by useSortPerformance and reset there via resetPerformanceStats
-    // justResumedRef.current should also be reset if it influences behavior after reset
     justResumedRef.current = false
   }, [clearSortingTimeout])
 
@@ -216,7 +215,6 @@ export function useSortExecution({
     if (!isSorting || isPaused) return
     setIsPaused(true)
     clearSortingTimeout()
-    // Update delay display in live stats (via parent)
     const pausedStats = { ...tempLiveStats, delay: 'Paused' } as Partial<SortStats>
     setTempLiveStats(pausedStats)
     onLiveStatsUpdate(pausedStats)
@@ -246,12 +244,6 @@ export function useSortExecution({
       )
       setTempLiveStats(liveStatsForStep)
       onLiveStatsUpdate(liveStatsForStep)
-
-      // If it was the last step, the generator becomes done.
-      if (sortGeneratorRef.current.next.length === 0) {
-        // Heuristic check if generator is exhausted (might not be reliable for all generators)
-        // This check isn't robust. The `done` flag from `result` is the source of truth.
-      }
     } else {
       clearSortingTimeout()
       const finalAlgorithmResult = result.value
@@ -295,7 +287,7 @@ export function useSortExecution({
     calculateTimingStats,
     tempLiveStats,
     clearSortingTimeout,
-    currentRawSortStep, // Added currentRawSortStep
+    currentRawSortStep,
   ])
 
   // Effect to handle resume AND the initial start of the sort after state is set
@@ -308,8 +300,7 @@ export function useSortExecution({
         nextStep()
       }
     }
-  }, [isSorting, isPaused, nextStep]) // sortGeneratorRef is a ref, its .current change doesn't trigger re-render directly, so not in deps.
-  // nextStep dependency is important.
+  }, [isSorting, isPaused, nextStep])
 
   // Effect to update delay in live stats when speed changes while running
   useEffect(() => {
@@ -323,7 +314,7 @@ export function useSortExecution({
       onLiveStatsUpdate(updatedStats)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [speed, isSorting, isPaused, calculateDelay, onLiveStatsUpdate]) // tempLiveStats removed from deps to avoid loop on its own update
+  }, [speed, isSorting, isPaused, calculateDelay, onLiveStatsUpdate])
 
   // Effect to reset sorting state when the selected algorithm changes
   useEffect(() => {
@@ -332,7 +323,7 @@ export function useSortExecution({
       return
     }
 
-    resetExecution() // Use the new comprehensive reset
+    resetExecution()
   }, [selectedAlgorithm, resetExecution])
 
   return {
@@ -346,6 +337,6 @@ export function useSortExecution({
     resumeSort,
     stepForward,
     clearSortingTimeout,
-    resetExecution, // Expose the new reset function
+    resetExecution,
   }
 }

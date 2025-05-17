@@ -50,7 +50,6 @@ const MemoizedAuxiliaryStructuresDisplay = memo(function AuxiliaryStructuresDisp
   return (
     <div className="w-full">
       <h3 className="text-lg font-semibold text-foreground mb-3">Auxiliary Data Structures</h3>
-      {/* Apply grid layout to the container of slots */}
       <div
         className={`grid grid-cols-1 ${numActiveSlots > 1 ? 'md:grid-cols-2' : ''} gap-x-4 gap-y-6`}
       >
@@ -59,7 +58,6 @@ const MemoizedAuxiliaryStructuresDisplay = memo(function AuxiliaryStructuresDisp
             key={slot}
             className={`space-y-3 ${slotIndex > 0 && numActiveSlots > 1 ? 'pt-3 md:pt-0' : ''}`}
           >
-            {/* Slot title styling adjustment - ensure it's clearly part of its grid item */}
             {(numActiveSlots > 1 || slot !== 'default') && (
               <h4 className="text-md font-medium text-muted-foreground capitalize mb-2">
                 {slot

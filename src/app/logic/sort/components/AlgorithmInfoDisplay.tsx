@@ -58,16 +58,13 @@ const MemoizedAlgorithmInfoDisplay = memo(function AlgorithmInfoDisplay({
         <CardDescription>{randomQuote}</CardDescription>
       </CardHeader>
       <CardContent>
-        {/* Upper Section: Description, Image, Info */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-          {/* Left Column: Description */}
           <div className="md:col-span-2 space-y-2">
             <h3 className="text-lg font-semibold text-foreground mb-1">Description</h3>
             <p className="text-muted-foreground leading-relaxed text-sm whitespace-pre-line">
               {description}
             </p>
 
-            {/* Lower Section: Complexity Analysis */}
             {complexity && (
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold text-foreground mb-1">Complexity Analysis</h3>
@@ -99,7 +96,6 @@ const MemoizedAlgorithmInfoDisplay = memo(function AlgorithmInfoDisplay({
             )}
           </div>
 
-          {/* Right Column: Image and Origin */}
           <div className="flex flex-col items-center md:items-start md:col-span-1 space-y-4">
             {displayImgSrc && (
               <div className="relative w-full max-w-[160px] sm:max-w-[180px] md:max-w-[200px] aspect-[3/4] rounded-lg overflow-hidden shadow-lg group">

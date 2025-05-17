@@ -2,11 +2,7 @@
 
 import { memo } from 'react'
 import type { SortStep, AuxiliaryStructure } from '../engine/types'
-import type {
-  SortAlgorithm,
-  TimeComplexityCategory,
-  SpaceComplexityCategory,
-} from '../engine/algorithmRegistry'
+import type { SortAlgorithm } from '../engine/algorithmRegistry'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SortConfigControls } from './SortConfigControls'
 import { SortActionButtons } from './SortActionButtons'
@@ -35,12 +31,6 @@ interface SortVisualizerProps {
   algorithms: ReadonlyArray<SortAlgorithm>
   sortDirection: 'asc' | 'desc'
   setSortDirection: (direction: 'asc' | 'desc') => void
-  timeCategories: typeof TimeComplexityCategory
-  selectedTimeCategory: string
-  handleTimeCategoryChange: (category: string) => void
-  spaceCategories: typeof SpaceComplexityCategory
-  selectedSpaceCategory: string
-  handleSpaceCategoryChange: (category: string) => void
   auxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
   toggleAlgorithmInfoShortcut?: string
   togglePseudoCodeShortcut?: string
@@ -68,17 +58,10 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
   algorithms,
   sortDirection,
   setSortDirection,
-  timeCategories,
-  selectedTimeCategory,
-  handleTimeCategoryChange,
-  spaceCategories,
-  selectedSpaceCategory,
-  handleSpaceCategoryChange,
   auxiliaryStructures,
   toggleAlgorithmInfoShortcut,
   togglePseudoCodeShortcut,
 }: SortVisualizerProps): React.JSX.Element {
-  // Internal handlers remain for now, can be moved or simplified if props are passed directly
   const internalOnStart = () => {
     onStart()
   }
@@ -99,12 +82,6 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
   }
   const internalSetSortDirection = (direction: 'asc' | 'desc') => {
     setSortDirection(direction)
-  }
-  const internalHandleTimeCategoryChange = (category: string) => {
-    handleTimeCategoryChange(category)
-  }
-  const internalHandleSpaceCategoryChange = (category: string) => {
-    handleSpaceCategoryChange(category)
   }
 
   const hasAuxStructures = !!auxiliaryStructures && auxiliaryStructures.length > 0
@@ -129,12 +106,6 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
             algorithms={algorithms}
             sortDirection={sortDirection}
             setSortDirection={internalSetSortDirection}
-            timeCategories={timeCategories}
-            selectedTimeCategory={selectedTimeCategory}
-            handleTimeCategoryChange={internalHandleTimeCategoryChange}
-            spaceCategories={spaceCategories}
-            selectedSpaceCategory={selectedSpaceCategory}
-            handleSpaceCategoryChange={internalHandleSpaceCategoryChange}
           />
 
           <div className="flex flex-col gap-4 xl:w-auto">

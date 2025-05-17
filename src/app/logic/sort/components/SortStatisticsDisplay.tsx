@@ -43,7 +43,6 @@ const descriptions: Record<string, string> = {
 const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
   stats,
 }: SortStatisticsDisplayProps) {
-  // Timing metrics (separated to their own table)
   const timingMetrics = [
     {
       label: 'Delay',
@@ -62,9 +61,7 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
     },
   ]
 
-  // Combined metrics (basic + advanced metrics)
   const combinedMetrics = [
-    // Basic metrics
     {
       label: 'Num Elements',
       value: formatNum(stats.numElements),
@@ -85,7 +82,6 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
       value: formatNum(stats.swaps),
       description: descriptions.Swaps,
     },
-    // Advanced metrics
     {
       label: 'Main Array Writes',
       value: formatNum(stats.mainArrayWrites),
@@ -131,7 +127,6 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
 
   return (
     <section>
-      {/* Timing Metrics Table */}
       {validTimingMetrics.length > 0 && (
         <>
           <h3 className="text-sm font-medium mb-2">Timing Information</h3>
@@ -163,7 +158,6 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
         </>
       )}
 
-      {/* Combined Metrics Table (Basic + Advanced) */}
       {validCombinedMetrics.length > 0 && (
         <>
           <h3 className="text-sm font-medium mt-4 mb-2">Algorithm Performance</h3>

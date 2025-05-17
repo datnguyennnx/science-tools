@@ -15,7 +15,6 @@ import {
 import { useSortableArray } from './useSortableArray'
 import { useSortPerformance } from './useSortPerformance'
 import { useSortExecution } from './useSortExecution'
-// import { useDebouncedAuxiliaryStructures } from './useDebouncedAuxiliaryStructures'
 
 export interface UseSortControlsProps {
   initialSpeed?: number

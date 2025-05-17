@@ -1,4 +1,4 @@
-export const AUTHOR_RESPECT_QUOTES: ReadonlyArray<string> = [
+export const AUTHOR_RESPECT_QUOTES: readonly string[] = [
   'Always respect the authors whose intellectual contributions form the foundation of computer science.',
   'Standing on the shoulders of algorithmic giants who paved the way for modern computing.',
   'Honoring the brilliant minds behind these fundamental sorting algorithms.',
@@ -9,4 +9,4 @@ export const AUTHOR_RESPECT_QUOTES: ReadonlyArray<string> = [
   'We build upon the legacy of those who first charted the complex territories of computation.',
   'Every efficient algorithm is a testament to human ingenuity and the pursuit of optimal solutions.',
   'Behind every algorithm is a story of insight, dedication, and the drive to solve challenging problems.',
-] as const
+]

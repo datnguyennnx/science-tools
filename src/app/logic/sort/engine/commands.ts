@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 
 // Enum for command identifiers for type safety and easier refactoring
 export enum SortCommandType {

@@ -68,7 +68,7 @@ const MemoizedSortChartDisplay = memo(function SortChartDisplay({
                     const isCompared = currentSortStep.comparisonIndices?.includes(index)
                     const isSwapping = currentSortStep.swappingIndices?.includes(index)
 
-                    let fill = 'var(--sort-value)' // Default color
+                    let fill = 'var(--sort-value)'
                     let cellStroke = 'transparent'
                     let cellStrokeWidth = 0
                     let cellStrokeDasharray: string | undefined = undefined
@@ -76,16 +76,14 @@ const MemoizedSortChartDisplay = memo(function SortChartDisplay({
                     if (isSorted) {
                       fill = 'var(--sort-sorted)'
                     } else {
-                      // Apply special fill colors only if not sorted
                       if (isSwapping) {
-                        fill = 'var(--sort-swap)' // Highest priority for swapping visual
+                        fill = 'var(--sort-swap)'
                       } else if (isHighlighted) {
                         fill = 'var(--sort-highlight)'
                       } else if (isCompared) {
                         fill = 'var(--sort-compare)'
                       }
 
-                      // Apply borders only if not sorted
                       if (isSwapping) {
                         cellStroke = 'var(--sort-swap-border)'
                         cellStrokeDasharray = '4 4'

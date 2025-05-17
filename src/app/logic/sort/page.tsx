@@ -9,21 +9,12 @@ import {
   useSortTabView,
   useSortKeyboardCommands,
 } from './engine/hooks'
-import { TimeComplexityCategory, SpaceComplexityCategory } from './engine/algorithmRegistry'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function SortPage(): React.JSX.Element {
-  const {
-    selectedAlgorithmId,
-    setSelectedAlgorithmId,
-    selectedAlgorithm,
-    filteredAlgorithms,
-    selectedTimeCategory,
-    handleTimeCategoryChange,
-    selectedSpaceCategory,
-    handleSpaceCategoryChange,
-  } = useAlgorithmSelection()
+  const { selectedAlgorithmId, setSelectedAlgorithmId, selectedAlgorithm, filteredAlgorithms } =
+    useAlgorithmSelection()
 
   const {
     arraySize,
@@ -116,12 +107,6 @@ export default function SortPage(): React.JSX.Element {
           algorithms={filteredAlgorithms}
           sortDirection={sortDirection}
           setSortDirection={setSortDirection}
-          timeCategories={TimeComplexityCategory}
-          selectedTimeCategory={selectedTimeCategory}
-          handleTimeCategoryChange={handleTimeCategoryChange}
-          spaceCategories={SpaceComplexityCategory}
-          selectedSpaceCategory={selectedSpaceCategory}
-          handleSpaceCategoryChange={handleSpaceCategoryChange}
           auxiliaryStructures={auxiliaryStructures}
           toggleAlgorithmInfoShortcut={toggleAlgorithmInfoShortcut}
           togglePseudoCodeShortcut={togglePseudoCodeShortcut}
