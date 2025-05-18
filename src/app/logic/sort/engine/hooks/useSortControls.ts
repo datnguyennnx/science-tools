@@ -160,6 +160,10 @@ export const useSortControls = ({
           setSortDirectionState(pendingResetConfig.newSortDirection)
         }
 
+        // Update prevArraySizeRef to the size that was just configured.
+        // This prevents the useEffect watching currentArraySizeInternal from re-triggering a reset.
+        prevArraySizeRef.current = newSize
+
         setPendingResetConfig(null)
         setResetState('idle')
       })

@@ -89,12 +89,14 @@ export function useSortWorker(): UseSortWorkerReturn {
           setIsStopping(false)
           setIsRunning(false)
           setIsPaused(false)
+          setCurrentStep(null)
         } else if (type === 'error' || type === 'worker_error') {
           console.error('Error from sort worker:', message)
           setError(message || 'An unknown error occurred in the worker.')
           setIsRunning(false)
           setIsPaused(false)
           setIsStopping(false)
+          setCurrentStep(null)
         }
       }
 
@@ -104,6 +106,7 @@ export function useSortWorker(): UseSortWorkerReturn {
         setIsRunning(false)
         setIsPaused(false)
         setIsStopping(false)
+        setCurrentStep(null)
       }
     } catch (e) {
       console.error('Failed to initialize worker:', e)
