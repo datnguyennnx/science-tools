@@ -9,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
+import { ClipboardCopy } from 'lucide-react'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import type { SortStats } from '../engine/types'
 import type {
@@ -66,6 +68,7 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
   setPerformanceScenario,
 }: PseudoCodeDisplayProps): React.JSX.Element {
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguages>(initialLanguage)
+  const [isCopied, setIsCopied] = useState(false)
 
   const rawPseudoCodeLines = algorithmData?.pseudoCode
   const languageExamples = algorithmData?.languageExamples
@@ -206,13 +209,34 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
     languageExamples[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>] &&
     languageExamples[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>]!.length > 0
 
+  const handleCopy = async (): Promise<void> => {
+    let textToCopy = ''
+    if (showPlaintextPseudoCode) {
+      textToCopy = processedPseudoCodeLines
+        .map(line => '  '.repeat(line.indents) + line.code)
+        .join('\n')
+    } else if (showSyntaxHighlightedCode) {
+      textToCopy = codeStringToDisplayForSyntaxHighlight
+    }
+
+    if (textToCopy) {
+      try {
+        await navigator.clipboard.writeText(textToCopy)
+        setIsCopied(true)
+        setTimeout(() => setIsCopied(false), 2000)
+      } catch (err) {
+        console.error('Failed to copy text: ', err)
+      }
+    }
+  }
+
   return (
     <Card className="overflow-hidden flex flex-col h-full">
       {(hasRawPseudoCode || hasLanguageExamples) && (
         <CardHeader>
           <div className="flex flex-row justify-between items-center flex-wrap gap-2">
             <CardTitle>Algorithm Code</CardTitle>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center">
               {displayableLanguageOptions.length > 1 && (
                 <Select
                   value={currentLanguage}
@@ -245,6 +269,12 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
                   ))}
                 </SelectContent>
               </Select>
+              {(showPlaintextPseudoCode || showSyntaxHighlightedCode) && (
+                <Button variant="outline" size="sm" onClick={handleCopy} className="h-9 px-3">
+                  <ClipboardCopy className="mr-2 h-4 w-4" />
+                  {isCopied ? 'Copied!' : 'Copy'}
+                </Button>
+              )}
             </div>
           </div>
           <CardDescription>
