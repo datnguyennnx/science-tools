@@ -103,16 +103,18 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
   const hasLanguageExamples =
     languageExamples && Object.values(languageExamples).some(arr => arr && arr.length > 0)
 
-  const codeStringToDisplayForSyntaxHighlight = useMemo(() => {
-    if (currentLanguage === 'plaintext') return ''
+  const codeStringToDisplay = useMemo(() => {
+    if (currentLanguage === 'plaintext') {
+      return processedPseudoCodeLines.map(line => '  '.repeat(line.indents) + line.code).join('\n')
+    }
     return (
       languageExamples?.[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>]?.join('\n') ||
       ''
     )
-  }, [currentLanguage, languageExamples])
+  }, [currentLanguage, processedPseudoCodeLines, languageExamples])
 
   const actualDisplayLanguageForSyntaxHighlight = useMemo(() => {
-    if (currentLanguage === 'plaintext') return 'text'
+    if (currentLanguage === 'plaintext') return 'text' // Using 'text' for pseudo-code with oneDark
     return currentLanguage
   }, [currentLanguage])
 
@@ -187,7 +189,8 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
     })
   }, [hasRawPseudoCode, languageExamples])
 
-  if (!hasRawPseudoCode && !hasLanguageExamples && !hasStats) {
+  if (!codeStringToDisplay && !hasStats) {
+    // Simplified condition: if no code and no stats
     return (
       <Card className="h-full flex flex-col">
         <CardHeader>
@@ -202,26 +205,10 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
     )
   }
 
-  const showPlaintextPseudoCode = currentLanguage === 'plaintext' && hasRawPseudoCode
-  const showSyntaxHighlightedCode =
-    currentLanguage !== 'plaintext' &&
-    languageExamples &&
-    languageExamples[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>] &&
-    languageExamples[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>]!.length > 0
-
   const handleCopy = async (): Promise<void> => {
-    let textToCopy = ''
-    if (showPlaintextPseudoCode) {
-      textToCopy = processedPseudoCodeLines
-        .map(line => '  '.repeat(line.indents) + line.code)
-        .join('\n')
-    } else if (showSyntaxHighlightedCode) {
-      textToCopy = codeStringToDisplayForSyntaxHighlight
-    }
-
-    if (textToCopy) {
+    if (codeStringToDisplay) {
       try {
-        await navigator.clipboard.writeText(textToCopy)
+        await navigator.clipboard.writeText(codeStringToDisplay)
         setIsCopied(true)
         setTimeout(() => setIsCopied(false), 2000)
       } catch (err) {
@@ -269,7 +256,7 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
                   ))}
                 </SelectContent>
               </Select>
-              {(showPlaintextPseudoCode || showSyntaxHighlightedCode) && (
+              {codeStringToDisplay.length > 0 && (
                 <Button variant="outline" size="sm" onClick={handleCopy} className="h-9 px-3">
                   <ClipboardCopy className="mr-2 h-4 w-4" />
                   {isCopied ? 'Copied!' : 'Copy'}
@@ -288,60 +275,9 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
         </CardHeader>
       )}
 
-      {showPlaintextPseudoCode && processedPseudoCodeLines.length > 0 && (
-        <CardContent className="text-sm overflow-auto flex-grow no-scrollbar font-mono">
-          <div className="p-1">
-            {processedPseudoCodeLines.map((line: ProcessedPseudoCodeLine) => {
-              const style: React.CSSProperties = {
-                paddingLeft: `${line.indents * 1.5}rem`,
-                lineHeight: '1.5',
-                minHeight: '1.5em',
-                display: 'flex',
-              }
-              const isActive = activePseudoCodeLineIdsSet.has(line.id)
-              const isScenarioPath = scenarioPathLineIdsSet.has(line.id)
-
-              if (isActive && isScenarioPath) {
-                style.backgroundColor = 'var(--code-highlight-active-scenario-path)'
-              } else if (isActive) {
-                style.backgroundColor = 'var(--code-highlight-active)'
-              } else if (isScenarioPath) {
-                style.backgroundColor = 'var(--code-highlight-scenario-path)'
-              }
-
-              return (
-                <div key={line.id} style={style}>
-                  <span
-                    style={{
-                      minWidth: '3.0em',
-                      paddingRight: '1em',
-                      textAlign: 'right',
-                      color: '#888',
-                      userSelect: 'none',
-                    }}
-                  >
-                    {line.lineNumber}
-                  </span>
-                  <code
-                    style={{
-                      whiteSpace: 'pre-wrap',
-                      overflowWrap: 'break-word',
-                      flexGrow: 1,
-                      minWidth: 0,
-                    }}
-                  >
-                    {line.code}
-                  </code>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      )}
-
-      {showSyntaxHighlightedCode && (
+      {codeStringToDisplay.length > 0 && (
         <CardContent className="text-sm overflow-auto flex-grow no-scrollbar">
-          <Suspense fallback={<div className="p-4 text-center\">Loading code highlighter...</div>}>
+          <Suspense fallback={<div className="p-4 text-center">Loading code highlighter...</div>}>
             <SyntaxHighlighter
               language={actualDisplayLanguageForSyntaxHighlight}
               style={oneDark}
@@ -364,20 +300,29 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
                   whiteSpace: 'pre-wrap',
                 }
 
-                const isActiveSyntaxLine = mappedActiveLangLinesSet.has(lineNumber)
-                const isScenarioPathSyntaxLine = mappedScenarioPathLangLinesSet.has(lineNumber)
+                let isActiveLine = false
+                let isScenarioPathLine = false
 
-                if (isActiveSyntaxLine && isScenarioPathSyntaxLine) {
+                if (currentLanguage === 'plaintext') {
+                  const currentLineOriginalIndex = lineNumber - 1
+                  isActiveLine = activePseudoCodeLineIdsSet.has(currentLineOriginalIndex)
+                  isScenarioPathLine = scenarioPathLineIdsSet.has(currentLineOriginalIndex)
+                } else {
+                  isActiveLine = mappedActiveLangLinesSet.has(lineNumber)
+                  isScenarioPathLine = mappedScenarioPathLangLinesSet.has(lineNumber)
+                }
+
+                if (isActiveLine && isScenarioPathLine) {
                   style.backgroundColor = 'var(--code-highlight-active-scenario-path)'
-                } else if (isActiveSyntaxLine) {
+                } else if (isActiveLine) {
                   style.backgroundColor = 'var(--code-highlight-active)'
-                } else if (isScenarioPathSyntaxLine) {
+                } else if (isScenarioPathLine) {
                   style.backgroundColor = 'var(--code-highlight-scenario-path)'
                 }
                 return { style }
               }}
             >
-              {codeStringToDisplayForSyntaxHighlight}
+              {codeStringToDisplay}
             </SyntaxHighlighter>
           </Suspense>
         </CardContent>
