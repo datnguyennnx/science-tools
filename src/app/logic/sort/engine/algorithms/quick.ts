@@ -1,6 +1,6 @@
 'use client'
 
-import { SortGenerator, SortStep, SortStats } from '../types'
+import { SortGenerator, SortStep, SortStats, AuxiliaryStructure } from '../types'
 
 const shouldBeBefore = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
   return direction === 'asc' ? a < b : a > b
@@ -13,170 +13,102 @@ const partitionGenerator = function* (
   high: number,
   direction: 'asc' | 'desc',
   sortedIndices: Set<number>,
-  liveStats: Partial<SortStats>
+  liveStats: Partial<SortStats>,
+  depth: number // For message clarity
 ): Generator<SortStep, number, void> {
+  const pivotValue = arr[high]
+  let smallerElementBoundary = low - 1
+
   yield {
-    // Entering partition function
     array: [...arr],
-    message: `partition(arr, ${low}, ${high})`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [8],
     activeRange: { start: low, end: high },
-  }
-  const pivot = arr[high]
-  yield {
-    // pivot = array[high]
-    array: [...arr],
-    highlightedIndices: [high],
-    comparisonIndices: [...Array(high - low + 1).keys()].map(k => low + k),
+    highlightedIndices: [high], // Pivot
+    comparisonIndices: [], // No comparisons yet, just identifying pivot
+    message: `(Depth ${depth}) Partitioning [${low}...${high}]. Pivot P=${pivotValue} (A[${high}]). Boundary i=${smallerElementBoundary}.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [8, 9, 10], // partition func, pivot = arr[high], i = low - 1
     sortedIndices: Array.from(sortedIndices),
-    activeRange: { start: low, end: high },
-    message: `Pivot is ${pivot} at index ${high}.`,
-    currentStats: { ...liveStats },
-    swappingIndices: null,
-    currentPseudoCodeLine: [9],
   }
 
-  let i = low - 1 // Index of smaller/larger element (depending on direction)
-  yield {
-    // i = (low - 1)
-    array: [...arr],
-    message: `Initialize i to ${i}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [10],
-    activeRange: { start: low, end: high },
-    highlightedIndices: [high],
-  }
-
+  // Loop through elements (j) to compare with pivot
   for (let j = low; j < high; j++) {
-    yield {
-      // for (j = low; j <= high - 1; j++)
-      array: [...arr],
-      message: `Inner loop: j = ${j}`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [11],
-      highlightedIndices: [high, j],
-      comparisonIndices: [i + 1, j],
-      activeRange: { start: low, end: high },
-    }
-
-    // Highlight pivot and element being compared
-    yield {
-      array: [...arr],
-      highlightedIndices: [high, j],
-      comparisonIndices: [i + 1, j],
-      sortedIndices: Array.from(sortedIndices),
-      activeRange: { start: low, end: high },
-      message: `Comparing element ${arr[j]} at index ${j} with pivot ${pivot}.`,
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [12],
-    }
-
     liveStats.comparisons = (liveStats.comparisons || 0) + 1
-    if (shouldBeBefore(arr[j], pivot, direction)) {
-      i++
-      yield {
-        // i++
-        array: [...arr],
-        message: `Element ${arr[j]} should be before pivot. Increment i to ${i}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [13],
-        highlightedIndices: [high, j, i],
-        activeRange: { start: low, end: high },
-      }
+    let messageForThisIteration: string
+    let swappedInThisIteration = false
+    let finalSmallerBoundaryForYield = smallerElementBoundary // Capture state before potential change
 
-      // Yield state before swap
-      yield {
-        array: [...arr],
-        highlightedIndices: [],
-        comparisonIndices: [],
-        swappingIndices: [i, j], // Elements arr[i] and arr[j] about to be swapped
-        sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: low, end: high },
-        message: `Preparing to swap elements at indices ${i} (${arr[i]}) and ${j} (${arr[j]}).`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [14],
-      }
-      ;[arr[i], arr[j]] = [arr[j], arr[i]]
-      liveStats.swaps = (liveStats.swaps || 0) + 1
-      liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
+    if (shouldBeBefore(arr[j], pivotValue, direction)) {
+      smallerElementBoundary++
+      finalSmallerBoundaryForYield = smallerElementBoundary // Capture state after potential change
+      const valAtJBeforeSwap = arr[j] // Capture for message clarity
+      const valAtSBBeforeSwap = arr[smallerElementBoundary] // Capture for message clarity
 
-      // Yield state after swap
-      yield {
-        array: [...arr],
-        highlightedIndices: [i, j],
-        comparisonIndices: [],
-        swappingIndices: [i, j], // Show what was just swapped
-        sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: low, end: high },
-        message: `Swapped. New values: ${arr[i]} (at ${i}) and ${arr[j]} (at ${j}).`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [14],
+      // Perform swap only if j is not the same as smallerElementBoundary to avoid redundant writes/stats
+      if (j !== smallerElementBoundary) {
+        ;[arr[smallerElementBoundary], arr[j]] = [arr[j], arr[smallerElementBoundary]]
+        liveStats.swaps = (liveStats.swaps || 0) + 1
+        liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
+        swappedInThisIteration = true
+        messageForThisIteration = `(Depth ${depth}) A[${j}](${valAtJBeforeSwap}) ${direction === 'asc' ? '<' : '>'} P(${pivotValue}). Increment i to ${smallerElementBoundary}. Swap A[i]=A[${smallerElementBoundary}](${arr[smallerElementBoundary]}) (was ${valAtSBBeforeSwap}) with A[${j}]=A[${j}](${arr[j]}).`
+      } else {
+        // Element is smaller/greater than pivot but already in correct relative position, no actual swap needed, just boundary increment.
+        messageForThisIteration = `(Depth ${depth}) A[${j}](${valAtJBeforeSwap}) ${direction === 'asc' ? '<' : '>'} P(${pivotValue}). Increment i to ${smallerElementBoundary}. A[j] already in place relative to new boundary i, no swap needed.`
       }
     } else {
-      yield {
-        array: [...arr],
-        highlightedIndices: [high, j],
-        comparisonIndices: [i + 1, j],
-        sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: low, end: high },
-        message: `Element ${arr[j]} is in correct partition relative to pivot.`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [12],
-      }
+      messageForThisIteration = `(Depth ${depth}) A[${j}](${arr[j]}) not ${direction === 'asc' ? '<' : '>'} P(${pivotValue}). No swap. i remains ${smallerElementBoundary}.`
     }
-  }
-  yield {
-    // End of for loop
-    array: [...arr],
-    message: 'Finished inner loop for partitioning.',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [16],
-    activeRange: { start: low, end: high },
-  }
 
-  // Place pivot in its final sorted position
-  const pivotFinalIndex = i + 1
+    // Consolidated yield for each element j processed
+    yield {
+      array: [...arr],
+      activeRange: { start: low, end: high },
+      highlightedIndices: [high, j, finalSmallerBoundaryForYield].filter(
+        idx => idx >= low && idx <= high
+      ),
+      comparisonIndices: [j, high], // Element j vs pivot
+      // If a swap occurred, highlight the two indices that were swapped.
+      // If smallerElementBoundary was incremented, it's also a key index.
+      // Use finalSmallerBoundaryForYield to correctly highlight the boundary *after* this iteration's logic.
+      swappingIndices:
+        swappedInThisIteration && j !== finalSmallerBoundaryForYield
+          ? [finalSmallerBoundaryForYield, j]
+          : undefined,
+      message: messageForThisIteration,
+      currentStats: { ...liveStats },
+      // Pseudo code lines depend on whether a swap happened
+      currentPseudoCodeLine: swappedInThisIteration ? [11, 12, 13, 14] : [11, 12],
+      sortedIndices: Array.from(sortedIndices),
+    }
+  } // End for loop - Pseudo line 16
+
+  const pivotFinalIndex = smallerElementBoundary + 1
+  const valueBeingSwappedWithPivot = arr[pivotFinalIndex] // Value at the position where pivot will go
+
+  // Swap pivot to its final sorted position only if it's not already there.
+  if (pivotFinalIndex !== high) {
+    ;[arr[pivotFinalIndex], arr[high]] = [arr[high], arr[pivotFinalIndex]]
+    liveStats.swaps = (liveStats.swaps || 0) + 1
+    liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
+  }
+  sortedIndices.add(pivotFinalIndex)
+
   yield {
     array: [...arr],
-    highlightedIndices: [],
-    comparisonIndices: [],
-    swappingIndices: [pivotFinalIndex, high], // Pivot arr[high] and arr[pivotFinalIndex] about to be swapped
+    activeRange: { start: low, end: high },
+    highlightedIndices: [pivotFinalIndex], // Final pivot position
+    swappingIndices: pivotFinalIndex !== high ? [pivotFinalIndex, high] : undefined,
+    message:
+      `(Depth ${depth}) Placed pivot P=${arr[pivotFinalIndex]} into final sorted position A[${pivotFinalIndex}]` +
+      (pivotFinalIndex !== high
+        ? ` by swapping A[${high}] (original value ${arr[high]}, was ${valueBeingSwappedWithPivot} at target) with current P.`
+        : `. Pivot was already at A[${high}].`) +
+      ` Index ${pivotFinalIndex} is now sorted.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [17], // swap A[i+1] with A[high]
     sortedIndices: Array.from(sortedIndices),
-    activeRange: { start: low, end: high },
-    message: `Preparing to place pivot ${pivot} in its final position. Swapping with element at ${pivotFinalIndex} (${arr[pivotFinalIndex]}).`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [17],
-  }
-  ;[arr[pivotFinalIndex], arr[high]] = [arr[high], arr[pivotFinalIndex]]
-  liveStats.swaps = (liveStats.swaps || 0) + 1
-  liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-  sortedIndices.add(pivotFinalIndex) // The pivot is now sorted
-
-  yield {
-    array: [...arr],
-    highlightedIndices: [pivotFinalIndex],
-    comparisonIndices: [],
-    swappingIndices: [pivotFinalIndex, high], // Show what was just swapped to place pivot
-    sortedIndices: Array.from(sortedIndices),
-    activeRange: { start: low, end: high },
-    message: `Pivot ${arr[pivotFinalIndex]} is now at its sorted index ${pivotFinalIndex}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [17],
   }
 
-  yield {
-    // return (i + 1)
-    array: [...arr],
-    message: `Partition complete. Pivot index is ${pivotFinalIndex}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [18],
-    activeRange: { start: low, end: high },
-    highlightedIndices: [pivotFinalIndex],
-  }
-  return pivotFinalIndex // Return the pivot's final index
+  return pivotFinalIndex // Pseudo line 18: return i+1
 }
 
 // Recursive Quick Sort helper generator
@@ -186,127 +118,111 @@ const quickSortRecursiveGenerator = function* (
   high: number,
   direction: 'asc' | 'desc',
   sortedIndices: Set<number>,
-  liveStats: Partial<SortStats>
+  liveStats: Partial<SortStats>,
+  depth: number // For tracking recursion depth in messages
 ): Generator<SortStep, void, void> {
+  const currentSubArrayAuxId = `quicksort-subarray-${low}-${high}-${depth}`
+  const currentSubArrayAuxSlot = `quicksort-current-subarray`
+
+  const getCurrentSubArrayAux = (stepTitle: string): AuxiliaryStructure | null => {
+    if (low > high) return null
+    return {
+      id: `${currentSubArrayAuxId}-${stepTitle.replace(/\s+/g, '-').toLowerCase()}`,
+      title: `Depth ${depth}: Range [${low}-${high}] (${stepTitle})`,
+      data: arr.slice(low, high + 1).map((value, index) => ({
+        value,
+        originalIndex: low + index,
+        isSorted: sortedIndices.has(low + index),
+      })),
+      displaySlot: currentSubArrayAuxSlot,
+    }
+  }
+
   yield {
-    // quickSort(array, low, high)
     array: [...arr],
-    message: `quickSort(arr, ${low}, ${high})`,
+    activeRange: { start: low, end: high },
+    message: `(Depth ${depth}) quickSort([${low}...${high}]).`,
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [0],
-    activeRange: { start: low, end: high },
+    sortedIndices: Array.from(sortedIndices),
+    currentPassAuxiliaryStructure: getCurrentSubArrayAux('Start'),
   }
-  if (low < high) {
-    yield {
-      // if (low < high)
-      array: [...arr],
-      message: `Condition low < high is true for [${low}...${high}].`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [1],
-      activeRange: { start: low, end: high },
-    }
 
-    // Partition the array and get the pivot index
-    // pi = partition(array, low, high)
+  if (low < high) {
     const pivotIndex: number = yield* partitionGenerator(
       arr,
       low,
       high,
       direction,
       sortedIndices,
-      liveStats
+      liveStats,
+      depth
     )
+    // After partition, the pivot is in its sorted place.
     yield {
-      // After partition returns, conceptually at line 2
       array: [...arr],
-      message: `Partition returned pivot index ${pivotIndex}.`,
+      activeRange: { start: low, end: high }, // Keep full range for context of this call
+      highlightedIndices: [pivotIndex], // Pivot is now sorted
+      message: `(Depth ${depth}) Partitioned [${low}...${high}]. Pivot P=${arr[pivotIndex]} at A[${pivotIndex}] is now sorted.`,
       currentStats: { ...liveStats },
       currentPseudoCodeLine: [2],
-      activeRange: { start: low, end: high },
-      highlightedIndices: [pivotIndex],
-    }
-
-    // After partition, ensure swappingIndices is cleared before next recursive step if it was set by last step of partition
-    yield {
-      array: [...arr],
-      message: `Range [${low}...${high}] partitioned around pivot ${arr[pivotIndex]} at index ${pivotIndex}. Proceeding with recursion.`,
       sortedIndices: Array.from(sortedIndices),
-      activeRange: { start: low, end: high },
-      swappingIndices: null,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [2], // Still on pi = partition(...)
+      currentPassAuxiliaryStructure: getCurrentSubArrayAux('Partitioned'),
     }
 
-    // Recursively sort elements before partition
-    // quickSort(array, low, pi - 1)
-    yield {
-      array: [...arr],
-      message: `Calling quickSort for left part: [${low}...${pivotIndex - 1}]`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [3],
-      activeRange: { start: low, end: pivotIndex - 1 },
-    }
     yield* quickSortRecursiveGenerator(
       arr,
       low,
       pivotIndex - 1,
       direction,
       sortedIndices,
-      liveStats
+      liveStats,
+      depth + 1
     )
 
-    // Recursively sort elements after partition
-    // quickSort(array, pi + 1, high)
-    yield {
-      array: [...arr],
-      message: `Calling quickSort for right part: [${pivotIndex + 1}...${high}]`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [4],
-      activeRange: { start: pivotIndex + 1, end: high },
-    }
     yield* quickSortRecursiveGenerator(
       arr,
       pivotIndex + 1,
       high,
       direction,
       sortedIndices,
-      liveStats
+      liveStats,
+      depth + 1
     )
+    // Yield after both recursive calls for this level are done.
     yield {
-      // End of if (low < high) block
       array: [...arr],
-      message: `Finished recursive calls for range [${low}...${high}]`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [5], // Closing brace of if
       activeRange: { start: low, end: high },
-    }
-  } else if (low === high) {
-    // Base case: single element is considered sorted
-    sortedIndices.add(low)
-    yield {
-      array: [...arr],
-      highlightedIndices: [low],
-      comparisonIndices: [low],
+      message: `(Depth ${depth}) Sub-arrays for [${low}...${high}] (left of pivot, right of pivot) now sorted.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: [3, 4], // Corresponds to the two recursive calls being completed
       sortedIndices: Array.from(sortedIndices),
-      activeRange: { start: low, end: high },
-      message: `Base case: Range [${low}...${high}] has one element, considered sorted.`,
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [1], // if (low < high) is false
+      currentPassAuxiliaryStructure: getCurrentSubArrayAux('Sub-arrays Sorted'),
     }
   } else {
-    // Base case: empty range
+    if (low === high && low >= 0 && low < arr.length && !sortedIndices.has(low)) {
+      // Single element sub-array, if not already marked by partition, mark as sorted.
+      sortedIndices.add(low)
+    }
     yield {
       array: [...arr],
-      highlightedIndices: [],
-      comparisonIndices: [],
-      sortedIndices: Array.from(sortedIndices),
       activeRange: { start: low, end: high },
-      message: `Base case: Range [${low}...${high}] is empty, skipping.`,
+      message: `(Depth ${depth}) Base case for [${low}...${high}] (size ${high - low + 1}). Already sorted.`,
       currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [1], // if (low < high) is false
+      currentPseudoCodeLine: [1],
+      sortedIndices: Array.from(sortedIndices),
+      currentPassAuxiliaryStructure: getCurrentSubArrayAux('Base Case'),
     }
+  }
+  // Final yield for this specific quickSortRecursiveGenerator call, confirming its completion.
+  yield {
+    array: [...arr],
+    activeRange: { start: low, end: high }, // Still focused on the range this call was responsible for
+    message: `(Depth ${depth}) quickSort([${low}...${high}]) completed.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [5], // end if / end func for recursive call
+    sortedIndices: Array.from(sortedIndices),
+    currentPassAuxiliaryStructure: getCurrentSubArrayAux('Completed'),
   }
 }
 
@@ -325,7 +241,7 @@ export const quickSortGenerator: SortGenerator = function* (
     comparisons: 0,
     swaps: 0,
     mainArrayWrites: 0,
-    auxiliaryArrayWrites: 0, // Quick Sort (Lomuto) is in-place
+    auxiliaryArrayWrites: 0,
   }
 
   if (n <= 1) {
@@ -335,38 +251,39 @@ export const quickSortGenerator: SortGenerator = function* (
       sortedIndices: Array.from(sortedIndices),
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [0], // Or specific line for base case
+      currentPseudoCodeLine: [25, 26, 27],
     }
-    return { finalArray: arr, stats: liveStats as SortStats }
+    return { finalArray: arr, stats: liveStats as SortStats, finalAuxiliaryStructures: null }
   }
 
   yield {
     array: [...arr],
     sortedIndices: Array.from(sortedIndices),
-    message: 'Starting Quick Sort',
+    message: 'Starting Quick Sort.',
     currentStats: { ...liveStats },
-    swappingIndices: null,
-    currentPseudoCodeLine: [0], // quickSort(arr, 0, n-1)
+    currentPseudoCodeLine: [25],
+    // Optionally, show initial full array as an auxiliary structure if desired
+    // currentPassAuxiliaryStructure: { id: 'initial-array', title: 'Initial State', data: arr.map((v, i)=>({value: v, originalIndex: i}))}
   }
 
-  // Start the recursive sort
-  yield* quickSortRecursiveGenerator(arr, 0, n - 1, direction, sortedIndices, liveStats)
+  yield* quickSortRecursiveGenerator(arr, 0, n - 1, direction, sortedIndices, liveStats, 0)
 
-  // Ensure all indices are marked sorted in the final step if any were missed (shouldn't happen with Lomuto if base cases are handled)
-  if (sortedIndices.size < n) {
-    for (let i = 0; i < n; i++) sortedIndices.add(i)
+  // Final pass to ensure all indices are in sortedIndices, though pivot placement should cover this.
+  for (let k = 0; k < n; k++) {
+    if (!sortedIndices.has(k)) sortedIndices.add(k)
   }
 
-  // Final sorted state confirmation
   yield {
     array: [...arr],
-    sortedIndices: Array.from(sortedIndices),
+    sortedIndices: Array.from(sortedIndices), // All should be sorted
     message: 'Quick Sort Complete!',
     currentStats: { ...liveStats },
-    swappingIndices: null,
-    currentPseudoCodeLine: [6],
+    currentPseudoCodeLine: [30], // Corresponds to end of main function
   }
 
-  return { finalArray: arr, stats: liveStats as SortStats }
+  return {
+    finalArray: arr,
+    stats: liveStats as SortStats,
+    finalAuxiliaryStructures: null, // No specific final structure beyond the sorted array itself
+  }
 }

@@ -8,15 +8,21 @@ export type SortStep = {
   activeRange?: { start: number; end: number }
   tempSubArray?: ReadonlyArray<{ value: number; originalIndex: number }>
   mainArrayLabel?: string
-  auxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
+  currentPassAuxiliaryStructure?: AuxiliaryStructure | null
+  historicalAuxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
   currentStats?: Partial<SortStats>
   currentPseudoCodeLine?: number[]
+  activeKeyInfo?: {
+    value: number
+    originalIndex: number
+    currentIndex: number | null
+  } | null
 }
 
 export interface SortResult {
   finalArray: number[]
   stats: SortStats
-  finalAuxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
+  finalAuxiliaryStructures?: AuxiliaryStructure | ReadonlyArray<AuxiliaryStructure> | null
 }
 
 export type SortGenerator = (

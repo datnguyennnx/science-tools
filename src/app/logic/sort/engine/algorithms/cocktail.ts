@@ -40,9 +40,9 @@ export const cocktailSortGenerator: SortGenerator = function* (
   const arr = [...initialArray]
   const n = arr.length
   const sortedIndices = new Set<number>()
-  let swapped = true // Pseudo line 1: swapped = true
-  let start = 0 // Pseudo line 2: start = 0
-  let end = n - 1 // Pseudo line 3: end = array.length - 1
+  let swapped = true // Pseudo line 2
+  let start = 0 // Pseudo line 3
+  let end = n - 1 // Pseudo line 4
 
   const liveStats: Partial<SortStats> = {
     algorithmName: 'Cocktail Shaker Sort',
@@ -54,13 +54,16 @@ export const cocktailSortGenerator: SortGenerator = function* (
   }
 
   if (n <= 1) {
+    if (n === 1) sortedIndices.add(0)
     yield {
       array: [...arr],
-      sortedIndices: n === 1 ? [0] : [],
+      sortedIndices: Array.from(sortedIndices),
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [0, 1], // procedure, n = length
       swappingIndices: null,
-      currentPseudoCodeLine: [0], // cocktailSort(array) { -> initialization covers lines 0-3
+      comparisonIndices: [],
+      activeRange: { start: 0, end: n > 0 ? n - 1 : 0 },
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -71,225 +74,190 @@ export const cocktailSortGenerator: SortGenerator = function* (
     message: 'Starting Cocktail Shaker Sort.',
     activeRange: { start, end },
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: [0, 2, 3, 4], // Covers lines up to while swapped
     swappingIndices: null,
-    currentPseudoCodeLine: [0], // cocktailSort(array) {
+    comparisonIndices: [],
   }
 
-  // Pseudo line 4: while (swapped)
+  let passCount = 0
   while (swapped) {
-    swapped = false // Pseudo line 5: swapped = false
+    // Pseudo line 5
+    passCount++
+    swapped = false // Pseudo line 6
 
     yield {
       array: [...arr],
-      message: `Forward pass: [${start}...${end}]. Bubbling ${direction === 'asc' ? 'largest' : 'smallest'} to end.`,
+      message: `Pass ${passCount} (Forward): Bubbling ${direction === 'asc' ? 'largest' : 'smallest'} from index ${start} to ${end}.`,
       activeRange: { start, end },
       sortedIndices: Array.from(sortedIndices),
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [5, 6, 8], // while swapped, swapped=false, for i = start...
       swappingIndices: null,
-      currentPseudoCodeLine: [6],
+      comparisonIndices: [],
     }
-    // Pseudo line 6: for (i = start; i < end; i++)
+
     for (let i = start; i < end; i++) {
-      yield {
-        array: [...arr],
-        highlightedIndices: [i, i + 1],
-        comparisonIndices: [i, i + 1],
-        sortedIndices: Array.from(sortedIndices),
-        activeRange: { start, end },
-        message: `Comparing ${arr[i]} and ${arr[i + 1]}`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [9],
-      }
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
+      const val1 = arr[i]
+      const val2 = arr[i + 1]
+      let message = `Forward pass: Comparing ${val1} (A[${i}]) and ${val2} (A[${i + 1}]).`
+      let swappedThisStep = false
+
       if (shouldSwapForward(arr[i], arr[i + 1], direction)) {
-        yield {
-          array: [...arr],
-          highlightedIndices: [],
-          comparisonIndices: [],
-          swappingIndices: [i, i + 1],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start, end },
-          message: `Preparing to swap ${arr[i]} and ${arr[i + 1]}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [10],
-        }
         ;[arr[i], arr[i + 1]] = [arr[i + 1], arr[i]]
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
         swapped = true
-        yield {
-          array: [...arr],
-          highlightedIndices: [i, i + 1],
-          swappingIndices: [i, i + 1],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start, end },
-          message: `Swapped. New values: ${arr[i]} (at ${i}) and ${arr[i + 1]} (at ${i + 1}).`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [11],
-        }
+        swappedThisStep = true
+        message += ` Swapped. New: A[${i}]=${arr[i]}, A[${i + 1}]=${arr[i + 1]}.`
+      } else {
+        message += ` No swap.`
+      }
+
+      yield {
+        array: [...arr],
+        message: message,
+        highlightedIndices: [i, i + 1],
+        comparisonIndices: [i, i + 1],
+        swappingIndices: swappedThisStep ? [i, i + 1] : null,
+        sortedIndices: Array.from(sortedIndices),
+        activeRange: { start, end },
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: swappedThisStep ? [9, 10, 11] : [9], // if swapped, includes swap and set flag lines
       }
     }
 
-    yield {
-      array: [...arr],
-      sortedIndices: Array.from(sortedIndices),
-      message: 'End of forward pass elements scan.',
-      activeRange: { start, end },
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [13],
-    }
-
-    // Pseudo line 12: if (!swapped)
     if (!swapped) {
+      // Pseudo line 15
+      // Mark all remaining as sorted
+      for (let k = 0; k < n; ++k) sortedIndices.add(k) // Ensure all are marked if we exit early
       yield {
         array: [...arr],
+        message: 'No swaps in forward pass. Array is sorted.',
+        activeRange: { start: 0, end: n - 1 }, // Show full range as sorted
         sortedIndices: Array.from(sortedIndices),
-        message: 'No swaps in forward pass, array is sorted.',
-        activeRange: { start, end },
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: [15, 28], // if not swapped then break (and end while)
         swappingIndices: null,
-        currentPseudoCodeLine: [15],
+        comparisonIndices: [],
       }
       break
     }
 
-    // Pseudo line 15: swapped = false (reset for backward pass)
-    // This is implicitly handled by the logic, but we can yield a step for clarity
-    // Or, the next `swapped = false` at the start of the backward pass block covers this.
-    // The pseudo code has an explicit `swapped = false` here.
-
-    sortedIndices.add(end)
+    sortedIndices.add(end) // Mark current end as sorted
     yield {
       array: [...arr],
+      message: `Forward pass complete. Element ${arr[end]} (at index ${end}) is sorted.`,
+      highlightedIndices: [end],
+      activeRange: { start, end: end - 1 }, // Next active range shown
       sortedIndices: Array.from(sortedIndices),
-      message: `End of forward pass. Index ${end} is sorted.`,
-      activeRange: { start, end },
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [13, 17], // end for (forward), end = end - 1
       swappingIndices: null,
-      currentPseudoCodeLine: [13],
+      comparisonIndices: [],
     }
-    // Pseudo line 16: end = end - 1
-    end--
-    yield {
-      array: [...arr],
-      sortedIndices: Array.from(sortedIndices),
-      message: `Decremented end to ${end}. Preparing for backward pass.`,
-      activeRange: { start, end },
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [17],
-    }
+    end-- // Pseudo line 17
 
-    swapped = false
-    yield {
-      array: [...arr],
-      message: `Backward pass: [${start}...${end}]. Bubbling ${direction === 'asc' ? 'smallest' : 'largest'} to start.`,
-      activeRange: { start, end },
-      sortedIndices: Array.from(sortedIndices),
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [18],
-    }
-
-    for (let i = end; i > start; i--) {
+    // If start collapsed past end, array is sorted (e.g. n=2, after 1 forward pass, end becomes 0, start is 0. start >= end implies sorted)
+    if (start > end) {
+      swapped = false // Ensure loop terminates
+      // All elements should be in sortedIndices by now. If not, add remaining.
+      for (let k = 0; k < n; ++k) if (!sortedIndices.has(k)) sortedIndices.add(k)
       yield {
         array: [...arr],
-        highlightedIndices: [i - 1, i],
-        comparisonIndices: [i - 1, i],
+        message: `Array fully sorted after forward pass completion (start=${start}, end=${end}).`,
+        activeRange: { start: 0, end: n - 1 },
         sortedIndices: Array.from(sortedIndices),
-        activeRange: { start, end },
-        message: `Comparing ${arr[i - 1]} and ${arr[i]}`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: [17], // Context after end decremented
         swappingIndices: null,
-        currentPseudoCodeLine: [21],
+        comparisonIndices: [],
       }
+      break // Break main while loop
+    }
+
+    swapped = false // Pseudo line 18
+    yield {
+      array: [...arr],
+      message: `Pass ${passCount} (Backward): Bubbling ${direction === 'asc' ? 'smallest' : 'largest'} from index ${end} to ${start}.`,
+      activeRange: { start, end },
+      sortedIndices: Array.from(sortedIndices),
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: [18, 20], // swapped=false, for i = end -1 ...
+      swappingIndices: null,
+      comparisonIndices: [],
+    }
+
+    // Backward pass: `i` goes from `end` (new end) down to `start + 1`
+    // Comparison is `arr[i-1]` with `arr[i]`
+    for (let i = end; i > start; i--) {
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
+      const val1 = arr[i - 1]
+      const val2 = arr[i]
+      let message = `Backward pass: Comparing ${val1} (A[${i - 1}]) and ${val2} (A[${i}]).`
+      let swappedThisStep = false
+
       if (shouldSwapBackward(arr[i - 1], arr[i], direction)) {
-        yield {
-          array: [...arr],
-          highlightedIndices: [],
-          comparisonIndices: [],
-          swappingIndices: [i - 1, i],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start, end },
-          message: `Preparing to swap ${arr[i - 1]} and ${arr[i]}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [22],
-        }
         ;[arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
         swapped = true
-        yield {
-          array: [...arr],
-          highlightedIndices: [i - 1, i],
-          swappingIndices: [i - 1, i],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start, end },
-          message: `Swapped. New values: ${arr[i - 1]} (at ${i - 1}) and ${arr[i]} (at ${i}).`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [23],
-        }
+        swappedThisStep = true
+        message += ` Swapped. New: A[${i - 1}]=${arr[i - 1]}, A[${i}]=${arr[i]}.`
+      } else {
+        message += ` No swap.`
       }
-    }
 
-    yield {
-      array: [...arr],
-      sortedIndices: Array.from(sortedIndices),
-      message: 'End of backward pass elements scan.',
-      activeRange: { start, end },
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [25],
+      yield {
+        array: [...arr],
+        message: message,
+        highlightedIndices: [i - 1, i],
+        comparisonIndices: [i - 1, i],
+        swappingIndices: swappedThisStep ? [i - 1, i] : null,
+        sortedIndices: Array.from(sortedIndices),
+        activeRange: { start, end },
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: swappedThisStep ? [21, 22, 23] : [21], // if swapped, includes swap and set flag lines
+      }
     }
 
     sortedIndices.add(start)
     yield {
       array: [...arr],
+      message: `Backward pass complete. Element ${arr[start]} (at index ${start}) is sorted.`,
+      highlightedIndices: [start],
+      activeRange: { start: start + 1, end }, // Next active range
       sortedIndices: Array.from(sortedIndices),
-      message: `End of backward pass. Index ${start} is sorted.`,
-      activeRange: { start, end },
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [25, 27], // end for (backward), start = start + 1
       swappingIndices: null,
-      currentPseudoCodeLine: [25],
+      comparisonIndices: [],
     }
+    start++ // Pseudo line 27
 
-    start++
-    yield {
-      array: [...arr],
-      sortedIndices: Array.from(sortedIndices),
-      message: `Incremented start to ${start}.`,
-      activeRange: { start, end },
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [27],
+    if (!swapped && passCount > 0) {
+      // Check if no swaps in the *entire* last full pass (forward + backward)
+      // This condition is actually caught by the while(swapped) at the beginning of the next iteration
+      // or the break in the forward pass. If we reach here and swapped is false from backward pass,
+      // the while loop condition `while(swapped)` will terminate it.
+      // The initial `if (!swapped)` after forward pass is the primary early exit.
     }
+  } // Pseudo line 28: end while
 
-    yield {
-      array: [...arr],
-      sortedIndices: Array.from(sortedIndices),
-      message: swapped
-        ? 'Continuing to next iteration.'
-        : 'No swaps in backward pass, array is sorted.',
-      activeRange: { start, end },
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [5], // Re-checking while condition; plaintext[5]
-    }
-    if (!swapped) break
+  // Ensure all elements are marked as sorted if loop terminates early or completes
+  for (let k = 0; k < n; ++k) {
+    if (!sortedIndices.has(k)) sortedIndices.add(k) // Ensure all are marked
   }
-
-  for (let k = start; k <= end; k++) sortedIndices.add(k)
 
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()],
+    sortedIndices: Array.from(sortedIndices),
     message: 'Cocktail Shaker Sort Complete!',
+    activeRange: { start: 0, end: n - 1 },
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: [29], // end procedure
     swappingIndices: null,
-    currentPseudoCodeLine: [29],
+    comparisonIndices: [],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

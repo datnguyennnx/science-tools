@@ -20,10 +20,6 @@ const formatPercent = (p?: number) => (p != null ? `${p}%` : '-')
 const descriptions: Record<string, string> = {
   'Num Elements': 'Total number of elements in the array being sorted.',
   'Unique Elements': 'Number of unique values in the array being sorted.',
-  'Visual Time':
-    'Estimated time (in seconds) spent on visualization, including delays and rendering steps.',
-  'Sort Time':
-    'Actual time (in seconds) taken by the sorting algorithm to complete its operations, excluding visualization delays.',
   Comparisons: 'Total number of times two elements were compared during the sort.',
   Swaps: 'Total number of times two elements were exchanged in the main array.',
   Reversals: 'Total number of times a segment of the array was reversed (e.g., in Pancake Sort).',
@@ -42,19 +38,6 @@ const descriptions: Record<string, string> = {
 const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
   stats,
 }: SortStatisticsDisplayProps) {
-  const timingMetrics = [
-    {
-      label: 'Visual Time',
-      value: stats.visualTime,
-      description: descriptions['Visual Time'],
-    },
-    {
-      label: 'Sort Time',
-      value: stats.sortTime,
-      description: descriptions['Sort Time'],
-    },
-  ]
-
   const combinedMetrics = [
     {
       label: 'Num Elements',
@@ -108,10 +91,9 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
     },
   ]
 
-  const validTimingMetrics = timingMetrics.filter(metric => metric.value !== '-')
   const validCombinedMetrics = combinedMetrics.filter(metric => metric.value !== '-')
 
-  if (validCombinedMetrics.length === 0 && validTimingMetrics.length === 0) {
+  if (validCombinedMetrics.length === 0) {
     return (
       <section className="p-4 text-sm text-muted-foreground">
         No statistics available for this algorithm.
@@ -121,37 +103,6 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
 
   return (
     <section>
-      {validTimingMetrics.length > 0 && (
-        <>
-          <h3 className="text-sm font-medium mb-2">Timing Information</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {validTimingMetrics.map(metric => (
-                  <TableHead key={metric.label}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>{metric.label}</span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p className="text-xs text-muted-foreground">{metric.description}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                {validTimingMetrics.map(metric => (
-                  <TableCell key={metric.label}>{metric.value}</TableCell>
-                ))}
-              </TableRow>
-            </TableBody>
-          </Table>
-        </>
-      )}
-
       {validCombinedMetrics.length > 0 && (
         <>
           <h3 className="text-sm font-medium mt-4 mb-2">Algorithm Performance</h3>
@@ -181,12 +132,6 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
             </TableBody>
           </Table>
         </>
-      )}
-
-      {validCombinedMetrics.length === 0 && validTimingMetrics.some(m => m.value !== '-') && (
-        <div className="mt-4 p-4 text-center text-sm text-muted-foreground border-t border-dashed">
-          This algorithm does not utilize specific auxiliary data structures for visualization.
-        </div>
       )}
     </section>
   )

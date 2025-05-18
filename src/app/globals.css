@@ -73,13 +73,20 @@
   --color-sort-compare: var(--sort-compare);
   --color-sort-sorted: var(--sort-sorted);
   --color-sort-swap: var(--sort-swap); /* Added for swap state */
+  --color-sort-swap-border: var(--sort-swap-border);
+  --color-sort-compare-border: var(--sort-compare-border);
 
   /* Custom Error Colors */
-  --error-background: oklch(0.95 0.1 30 / 50%); /* Lighter red background */
-  --error-border: oklch(0.85 0.15 30 / 70%); /* Light red border */
-  --error-text: oklch(0.6 0.2 25); /* Darker red text */
-  --error-text-strong: oklch(0.5 0.22 25); /* Even darker red for strong text/headings */
-  --error-icon: oklch(0.65 0.22 25); /* Red for icons */
+  --error-background: var(--error-bg);
+  --error-border: var(--error-border);
+  --error-text: var(--error-text);
+  --error-text-strong: var(--error-text-strong);
+  --error-icon: var(--error-icon);
+
+  /* Pseudo-code Highlighting Colors */
+  --code-highlight-active: var(--code-active-bg);
+  --code-highlight-scenario-path: var(--code-scenario-path-bg);
+  --code-highlight-active-scenario-path: var(--code-active-scenario-path-bg);
 }
 
 :root {
@@ -121,12 +128,28 @@
   --font-geist-sans: system-ui, sans-serif;
   --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Sort Visualization Colors */
-  --sort-value: oklch(0.7 0.1 260); /* More saturated blue */
-  --sort-highlight: oklch(0.8 0.18 90); /* Bright Yellow */
-  --sort-compare: oklch(0.65 0.22 25); /* Vibrant Red-Orange */
-  --sort-sorted: oklch(0.7 0.18 145); /* Clearer Green */
-  --sort-swap: oklch(0.65 0.22 310); /* New: Vibrant Magenta/Purple for swap */
+  /* Sort Visualization Colors (Light Theme) - Optimized */
+  --sort-value: oklch(0.65 0.12 260); /* Blue: neutral starting state */
+  --sort-highlight: oklch(0.78 0.18 85); /* Gold: attention/focus */
+  --sort-compare: oklch(0.68 0.22 25); /* Red-orange: active comparison */
+  --sort-sorted: oklch(0.65 0.18 145); /* Green: successfully sorted */
+  --sort-swap: oklch(0.67 0.2 320); /* Purple: swap operation */
+  --sort-swap-border: oklch(0.58 0.24 320); /* Darker purple border */
+  --sort-compare-border: oklch(0.58 0.24 25); /* Darker orange border */
+
+  /* Custom Error Colors (Light Mode) - Optimized */
+  --error-bg: oklch(0.95 0.08 25 / 40%); /* Light red background with transparency */
+  --error-border: oklch(0.85 0.15 25 / 70%); /* Light red border */
+  --error-text: oklch(0.58 0.21 25); /* Dark red text for readability */
+  --error-text-strong: oklch(0.48 0.22 25); /* Even darker red for strong text/headings */
+  --error-icon: oklch(0.65 0.22 25); /* Red for icons */
+
+  /* Pseudo-code Highlighting Colors (Light Theme) - Light Gray */
+  --code-active-bg: oklch(0.88 0.03 240 / 40%); /* Light bluish-gray with subtle tint */
+  --code-scenario-path-bg: oklch(0.9 0.02 145 / 35%); /* Light grayish-green with subtle tint */
+  --code-active-scenario-path-bg: oklch(
+    0.87 0.03 190 / 45%
+  ); /* Light grayish-teal with subtle tint */
 }
 
 .dark {
@@ -178,19 +201,28 @@
   --kmap-group-pair: var(--chart-3);
   --kmap-group-single: var(--chart-4);
 
-  /* Sort Visualization Colors (Dark) */
-  --sort-value: oklch(0.6 0.1 260); /* Deeper blue */
-  --sort-highlight: oklch(0.75 0.18 90); /* Slightly muted Yellow */
-  --sort-compare: oklch(0.6 0.22 25); /* Similar Red-Orange */
-  --sort-sorted: oklch(0.6 0.18 145); /* Deeper Green */
-  --sort-swap: oklch(0.6 0.22 310); /* New: Vibrant Magenta/Purple for swap (darker) */
+  /* Sort Visualization Colors (Dark Theme) - Optimized */
+  --sort-value: oklch(0.58 0.12 260); /* Deeper blue */
+  --sort-highlight: oklch(0.72 0.19 85); /* Vibrant gold */
+  --sort-compare: oklch(0.62 0.22 25); /* Bright red-orange */
+  --sort-sorted: oklch(0.58 0.19 145); /* Rich green */
+  --sort-swap: oklch(0.62 0.21 320); /* Vibrant purple */
+  --sort-swap-border: oklch(0.54 0.24 320); /* Deeper purple border */
+  --sort-compare-border: oklch(0.54 0.24 25); /* Deeper orange border */
 
-  /* Custom Error Colors (Dark Mode) */
-  --error-background: oklch(0.3 0.15 25 / 20%); /* Darker, less saturated red background */
-  --error-border: oklch(0.4 0.18 25 / 50%); /* Dark red border */
-  --error-text: oklch(0.8 0.15 25); /* Lighter red text for dark mode */
-  --error-text-strong: oklch(0.85 0.16 25); /* Even lighter red for strong text/headings */
-  --error-icon: oklch(0.75 0.17 25); /* Lighter red for icons in dark mode */
+  /* Custom Error Colors (Dark Mode) - Optimized */
+  --error-bg: oklch(0.28 0.12 25 / 30%); /* Darker red background with transparency */
+  --error-border: oklch(0.38 0.18 25 / 60%); /* Dark red border with transparency */
+  --error-text: oklch(0.82 0.15 25); /* Lighter red text for dark mode readability */
+  --error-text-strong: oklch(0.88 0.16 25); /* Even lighter red for strong text in dark mode */
+  --error-icon: oklch(0.78 0.17 25); /* Light red for icons in dark mode */
+
+  /* Pseudo-code Highlighting Colors (Dark Theme) - Dark Gray */
+  --code-active-bg: oklch(0.3 0.03 240 / 50%); /* Dark bluish-gray with subtle tint */
+  --code-scenario-path-bg: oklch(0.32 0.02 145 / 45%); /* Dark grayish-green with subtle tint */
+  --code-active-scenario-path-bg: oklch(
+    0.31 0.03 190 / 55%
+  ); /* Dark grayish-teal with subtle tint */
 }
 
 @layer utilities {

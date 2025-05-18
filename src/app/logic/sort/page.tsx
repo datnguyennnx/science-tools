@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { AlgorithmInfoDisplay, SortVisualizer, PseudoCodeDisplay } from './components'
-import type { SupportedLanguages } from './components/PseudoCodeDisplay'
 import {
   useSortControls,
   useAlgorithmSelection,
@@ -32,17 +31,15 @@ export default function SortPage(): React.JSX.Element {
     isPaused,
     liveSortStats,
     finalSortStats,
-    auxiliaryStructures,
+    performanceScenario,
+    setPerformanceScenario,
     startSort,
     pauseSort,
+    resumeSort,
     resetSort,
-    stepForward,
   } = useSortControls({
     selectedAlgorithm: selectedAlgorithm || undefined,
   })
-
-  const [currentPseudoCodeLanguage, setCurrentPseudoCodeLanguage] =
-    useState<SupportedLanguages>('cpp')
 
   const [showAlgorithmInfo, setShowAlgorithmInfo] = useState<boolean>(true)
   const [showPseudoCode, setShowPseudoCode] = useState<boolean>(true)
@@ -89,8 +86,8 @@ export default function SortPage(): React.JSX.Element {
           currentSortStep={currentSortStep}
           onStart={startSort}
           onPause={pauseSort}
+          onResume={resumeSort}
           onReset={resetSort}
-          onStepForward={stepForward}
           onNewArray={resetSort}
           isSorting={isSorting}
           isPaused={isPaused}
@@ -107,7 +104,6 @@ export default function SortPage(): React.JSX.Element {
           algorithms={filteredAlgorithms}
           sortDirection={sortDirection}
           setSortDirection={setSortDirection}
-          auxiliaryStructures={auxiliaryStructures}
           toggleAlgorithmInfoShortcut={toggleAlgorithmInfoShortcut}
           togglePseudoCodeShortcut={togglePseudoCodeShortcut}
         />
@@ -165,9 +161,10 @@ export default function SortPage(): React.JSX.Element {
                     <PseudoCodeDisplay
                       algorithmData={selectedAlgorithm}
                       activeLines={currentSortStep?.currentPseudoCodeLine}
-                      language={currentPseudoCodeLanguage}
-                      onLanguageChange={setCurrentPseudoCodeLanguage}
+                      initialLanguage={'cpp'}
                       sortStats={displayedSortStats}
+                      performanceScenario={performanceScenario}
+                      setPerformanceScenario={setPerformanceScenario}
                     />
                   </TabsContent>
                 </motion.div>
@@ -207,9 +204,10 @@ export default function SortPage(): React.JSX.Element {
                 <PseudoCodeDisplay
                   algorithmData={selectedAlgorithm}
                   activeLines={currentSortStep?.currentPseudoCodeLine}
-                  language={currentPseudoCodeLanguage}
-                  onLanguageChange={setCurrentPseudoCodeLanguage}
+                  initialLanguage={'cpp'}
                   sortStats={displayedSortStats}
+                  performanceScenario={performanceScenario}
+                  setPerformanceScenario={setPerformanceScenario}
                 />
               </motion.div>
             )}

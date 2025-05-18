@@ -2,60 +2,118 @@
 
 import { SortGenerator, SortStats, SortStep } from '../types'
 
-const isSorted = (
-  arr: number[],
+const isSortedGenerator = function* (
+  arr: ReadonlyArray<number>,
   direction: 'asc' | 'desc',
-  liveStats: Partial<SortStats>
-): boolean => {
-  for (let i = 0; i < arr.length - 1; i++) {
-    liveStats.comparisons = (liveStats.comparisons || 0) + 1
-    if (direction === 'asc' ? arr[i] > arr[i + 1] : arr[i] < arr[i + 1]) {
-      return false
+  liveStats: Partial<SortStats>,
+  attemptNumber?: number
+): Generator<SortStep, boolean, void> {
+  const n = arr.length
+  if (n <= 1) {
+    yield {
+      array: [...arr],
+      message: `Attempt ${attemptNumber || 'Initial'}: Array has ${n} element(s), considered sorted.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: [7], // Corresponds to "for i = 0 to length of list - 2" (vacuously true)
+      sortedIndices: [...Array(n).keys()],
+      swappingIndices: null,
     }
+    return true
+  }
+
+  // Pseudo line 6: procedure isSorted(list, direction)
+  yield {
+    array: [...arr],
+    message: `Attempt ${attemptNumber || 'N/A'} (isSorted): Starting check for sorted order.`,
+    highlightedIndices: [...Array(n).keys()], // Highlight the whole range being checked
+    comparisonIndices: [],
+    swappingIndices: null,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [6, 7], // procedure isSorted, for i = ...
+  }
+
+  // Pseudo line 7: for i = 0 to length of list - 2
+  for (let i = 0; i < n - 1; i++) {
+    liveStats.comparisons = (liveStats.comparisons || 0) + 1
+    const val1 = arr[i]
+    const val2 = arr[i + 1]
+    yield {
+      array: [...arr],
+      highlightedIndices: [i, i + 1],
+      comparisonIndices: [i, i + 1],
+      swappingIndices: null,
+      message: `Attempt ${attemptNumber || 'N/A'} (isSorted): Comparing A[${i}] (${val1}) and A[${i + 1}] (${val2}).`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: [7, 8], // for loop and if condition
+    }
+
+    // Pseudo line 8: if (direction == ASC and list[i] > list[i + 1]) or (direction == DESC and list[i] < list[i + 1]) then
+    const outOfOrder = direction === 'asc' ? val1 > val2 : val1 < val2
+    if (outOfOrder) {
+      yield {
+        array: [...arr],
+        highlightedIndices: [i, i + 1],
+        comparisonIndices: [i, i + 1],
+        swappingIndices: null,
+        message: `Attempt ${attemptNumber || 'N/A'} (isSorted): A[${i}] (${val1}) and A[${i + 1}] (${val2}) are out of order. Array not sorted.`,
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: [8, 9], // if condition true, return false
+      }
+      return false // Pseudo line 9: return false
+    }
+  }
+  // Pseudo line 11: end for
+  // Pseudo line 12: return true
+  yield {
+    array: [...arr],
+    message: `Attempt ${attemptNumber || 'N/A'} (isSorted): All elements checked. Array appears sorted for this attempt.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [11, 12], // end for, return true
+    sortedIndices: [...Array(n).keys()],
+    swappingIndices: null,
   }
   return true
 }
 
 const shuffleGenerator = function* (
   arr: number[],
-  liveStats: Partial<SortStats>
+  liveStats: Partial<SortStats>,
+  attemptNumber?: number
 ): Generator<SortStep, void, void> {
   const n = arr.length
+  yield {
+    array: [...arr],
+    message: `Attempt ${attemptNumber || 'N/A'} (Shuffle): Starting Fisher-Yates shuffle.`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [15, 16], // procedure shuffle, for i = ...
+    highlightedIndices: [...Array(n).keys()], // Highlight whole array being shuffled
+    swappingIndices: null,
+  }
   for (let i = n - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(Math.random() * (i + 1)) // Pseudo line 17
 
-    yield {
-      array: [...arr],
-      highlightedIndices: [],
-      comparisonIndices: [],
-      swappingIndices: [i, j],
-      message: `Shuffle: Preparing to swap elements at index ${i} (${arr[i]}) and ${j} (${arr[j]}).`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [18],
-    }
+    // const valI = arr[i]; // Value before swap
+    // const valJ = arr[j]; // Value before swap
 
-    const temp = arr[i]
-    arr[i] = arr[j]
-    arr[j] = temp
+    ;[arr[i], arr[j]] = [arr[j], arr[i]] // Pseudo line 18
     liveStats.swaps = (liveStats.swaps || 0) + 1
     liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
 
     yield {
-      array: [...arr],
-      highlightedIndices: [i, j],
-      comparisonIndices: [],
-      swappingIndices: [i, j],
-      message: `Shuffle: Swapped. New values: ${arr[i]} (at ${i}) and ${arr[j]} (at ${j}).`,
+      array: [...arr], // Array state *after* the swap
+      highlightedIndices: [i, j], // Elements involved in the swap
+      swappingIndices: [i, j], // Indicate these were swapped
+      message: `Attempt ${attemptNumber || 'N/A'} (Shuffle): Swapped A[${i}] (now ${arr[i]}) with A[${j}] (now ${arr[j]}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [18],
+      currentPseudoCodeLine: [17, 18], // j = random, swap(...)
     }
   }
   yield {
     array: [...arr],
-    message: 'Shuffle complete for this attempt.',
+    message: `Attempt ${attemptNumber || 'N/A'}: Shuffle complete.`,
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: [20],
+    currentPseudoCodeLine: [19, 20], // end for (shuffle), end procedure (shuffle)
   }
 }
 
@@ -83,7 +141,7 @@ export const bogoSortGenerator: SortGenerator = function* (
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: [0],
+      currentPseudoCodeLine: [0], // procedure bogoSort
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -93,32 +151,33 @@ export const bogoSortGenerator: SortGenerator = function* (
     message: 'Starting Bogo Sort ("The Patient Sort")... This might take a while!',
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: [0],
+    currentPseudoCodeLine: [0], // procedure bogoSort
   }
 
   let attempts = 0
-  const MAX_ATTEMPTS = 100000
+  const MAX_ATTEMPTS = 100000 // Safety break for practical visualization
 
-  let sorted = isSorted(arr, direction, liveStats)
+  let sortedResult = yield* isSortedGenerator(arr, direction, liveStats, attempts + 1)
+
   yield {
     array: [...arr],
-    message: sorted
-      ? `Initial array is already sorted after ${liveStats.comparisons} comparisons.`
-      : `Initial array not sorted after ${liveStats.comparisons} comparisons. Starting shuffles.`,
+    message: sortedResult
+      ? `Initial array is already sorted after ${liveStats.comparisons} comparisons (Attempt 1).`
+      : `Initial array not sorted (Attempt 1). Starting shuffles.`,
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: [1],
+    currentPseudoCodeLine: [1], // while not isSorted
   }
 
-  while (!sorted) {
+  while (!sortedResult) {
     attempts++
     if (attempts > MAX_ATTEMPTS) {
       yield {
         array: [...arr],
-        message: `Bogo Sort stopped after ${MAX_ATTEMPTS} shuffles (Safety Break). Array may not be sorted.`,
+        message: `Bogo Sort stopped after ${MAX_ATTEMPTS} shuffles (Safety Break). Array may not be sorted. Total comparisons: ${liveStats.comparisons}.`,
         currentStats: { ...liveStats },
         swappingIndices: null,
-        currentPseudoCodeLine: [1],
+        currentPseudoCodeLine: [1], // Still in the while loop conceptually
       }
       return { finalArray: arr, stats: liveStats as SortStats }
     }
@@ -126,41 +185,40 @@ export const bogoSortGenerator: SortGenerator = function* (
     yield {
       array: [...arr],
       message: `Attempt ${attempts}: Array not sorted. Shuffling...`,
-      highlightedIndices: [...Array(n).keys()],
+      highlightedIndices: [...Array(n).keys()], // Highlight whole array during shuffle
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: [2],
+      currentPseudoCodeLine: [2], // shuffle(list)
     }
 
-    yield* shuffleGenerator(arr, liveStats)
+    yield* shuffleGenerator(arr, liveStats, attempts)
 
     yield {
       array: [...arr],
       message: `Attempt ${attempts}: Array shuffled. Checking if sorted...`,
-      highlightedIndices: [],
+      highlightedIndices: [], // Clear shuffle highlight
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: [1],
+      currentPseudoCodeLine: [1], // while not isSorted (checking condition)
     }
-    sorted = isSorted(arr, direction, liveStats)
+    sortedResult = yield* isSortedGenerator(arr, direction, liveStats, attempts)
     yield {
       array: [...arr],
-      message: sorted
-        ? `Attempt ${attempts}: Sorted!`
-        : `Attempt ${attempts}: Still not sorted after ${liveStats.comparisons} total comparisons.`,
+      message: sortedResult
+        ? `Attempt ${attempts}: Sorted! Total comparisons: ${liveStats.comparisons}.`
+        : `Attempt ${attempts}: Still not sorted. Total comparisons: ${liveStats.comparisons}.`,
       currentStats: { ...liveStats },
       swappingIndices: null,
-      currentPseudoCodeLine: sorted ? [3] : [1],
+      currentPseudoCodeLine: sortedResult ? [3] : [1], // end while (if sorted) or back to while
     }
   }
 
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()],
-    message: `Bogo Sort Complete after ${attempts} attempt(s)! Total comparisons: ${liveStats.comparisons}.`,
+    message: `Bogo Sort Complete after ${attempts} attempt(s)! Total comparisons: ${liveStats.comparisons}. Total swaps: ${liveStats.swaps}.`,
     currentStats: { ...liveStats },
     swappingIndices: null,
-    currentPseudoCodeLine: [4],
+    currentPseudoCodeLine: [4], // end procedure
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

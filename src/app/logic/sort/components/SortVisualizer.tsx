@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import type { SortStep, AuxiliaryStructure } from '../engine/types'
+import type { SortStep } from '../engine/types'
 import type { SortAlgorithm } from '../engine/algorithmRegistry'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SortConfigControls } from './SortConfigControls'
@@ -13,8 +13,9 @@ interface SortVisualizerProps {
   currentSortStep: SortStep | null
   onStart: () => void
   onPause: () => void
+  onResume: () => void
   onReset: () => void
-  onStepForward: () => void
+  onStepForward?: () => void
   onNewArray: () => void
   isSorting: boolean
   isPaused: boolean
@@ -31,7 +32,6 @@ interface SortVisualizerProps {
   algorithms: ReadonlyArray<SortAlgorithm>
   sortDirection: 'asc' | 'desc'
   setSortDirection: (direction: 'asc' | 'desc') => void
-  auxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
   toggleAlgorithmInfoShortcut?: string
   togglePseudoCodeShortcut?: string
 }
@@ -40,6 +40,7 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
   currentSortStep,
   onStart,
   onPause,
+  onResume,
   onReset,
   onStepForward,
   onNewArray,
@@ -58,7 +59,6 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
   algorithms,
   sortDirection,
   setSortDirection,
-  auxiliaryStructures,
   toggleAlgorithmInfoShortcut,
   togglePseudoCodeShortcut,
 }: SortVisualizerProps): React.JSX.Element {
@@ -68,11 +68,16 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
   const internalOnPause = () => {
     onPause()
   }
+  const internalOnResume = () => {
+    onResume()
+  }
   const internalOnReset = () => {
     onReset()
   }
   const internalOnStepForward = () => {
-    onStepForward()
+    if (onStepForward) {
+      onStepForward()
+    }
   }
   const internalOnNewArray = () => {
     onNewArray()
@@ -84,7 +89,11 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
     setSortDirection(direction)
   }
 
-  const hasAuxStructures = !!auxiliaryStructures && auxiliaryStructures.length > 0
+  const hasAuxStructures = !!(
+    currentSortStep?.currentPassAuxiliaryStructure ||
+    (currentSortStep?.historicalAuxiliaryStructures &&
+      currentSortStep.historicalAuxiliaryStructures.length > 0)
+  )
 
   return (
     <Card>
@@ -113,6 +122,7 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
               onNewArray={internalOnNewArray}
               onStart={internalOnStart}
               onPause={internalOnPause}
+              onResume={internalOnResume}
               onStepForward={internalOnStepForward}
               onReset={internalOnReset}
               isSorting={isSorting}
@@ -127,7 +137,8 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
         <SortChartDisplay currentSortStep={currentSortStep} />
         {hasAuxStructures && (
           <AuxiliaryStructuresDisplay
-            auxiliaryStructures={auxiliaryStructures}
+            currentPassAuxiliaryStructure={currentSortStep?.currentPassAuxiliaryStructure}
+            historicalAuxiliaryStructures={currentSortStep?.historicalAuxiliaryStructures}
             separateSection={false}
           />
         )}

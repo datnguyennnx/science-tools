@@ -18,7 +18,7 @@ export const combSortGenerator: SortGenerator = function* (
   const arr = [...initialArray]
   const n = arr.length
   let gap = n
-  let swapped = true
+  let swapped = true // Initialize swapped to true to enter the loop
 
   const liveStats: Partial<SortStats> = {
     algorithmName: 'Comb Sort',
@@ -29,18 +29,16 @@ export const combSortGenerator: SortGenerator = function* (
     auxiliaryArrayWrites: 0,
   }
 
-  // Comb sort doesn't inherently track sorted indices easily like Bubble/Selection
-  // We'll only mark as sorted at the very end.
-  const sortedIndices = new Set<number>()
+  const sortedIndices = new Set<number>() // Keep track of sorted indices, primarily for final state
 
   if (n <= 1) {
+    if (n === 1 && !sortedIndices.has(0)) sortedIndices.add(0)
     yield {
       array: [...arr],
-      sortedIndices: [...Array(n).keys()],
+      sortedIndices: Array.from(sortedIndices),
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [0],
+      currentPseudoCodeLine: [0, 1], // procedure, n = length (then check if n <=1 implicitly)
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -50,91 +48,41 @@ export const combSortGenerator: SortGenerator = function* (
     sortedIndices: Array.from(sortedIndices),
     message: 'Starting Comb Sort.',
     currentStats: { ...liveStats },
-    swappingIndices: null,
-    currentPseudoCodeLine: [0],
+    // PT Lines: 0 (procedure), 1 (n=len), 2 (gap=n), 3 (shrinkFactor), 4 (swapped=true)
+    currentPseudoCodeLine: [0, 1, 2, 3, 4],
   }
 
+  let passNumber = 0
   // Main loop continues until the gap is 1 and no swaps occurred in the last pass
   while (gap > 1 || swapped) {
-    yield {
-      array: [...arr],
-      message: `Checking while condition (gap=${gap}, swapped=${swapped}).`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [6],
-    }
+    passNumber++
 
     // Calculate the next gap
-    const nextGap = Math.floor(gap / SHRINK_FACTOR)
-    yield {
-      array: [...arr],
-      message: `Calculating next gap: floor(${gap} / ${SHRINK_FACTOR}) = ${nextGap}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [7],
-    }
-
-    gap = nextGap
-
+    // const oldGap = gap; // Not strictly needed for message if new message format is used
+    gap = Math.floor(gap / SHRINK_FACTOR)
     if (gap < 1) {
-      yield {
-        array: [...arr],
-        message: `Gap was < 1 (${gap}), setting gap to 1.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [8],
-      }
       gap = 1
-      yield {
-        array: [...arr],
-        message: `Gap is now ${gap}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [9],
-      }
-    } else {
-      yield {
-        array: [...arr],
-        message: `Gap updated to ${gap}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [7],
-      }
     }
+    swapped = false // Reset swapped for the new pass
 
-    swapped = false
     yield {
       array: [...arr],
-      message: `Reset swapped to false for current pass with gap ${gap}.`,
+      message: `Pass ${passNumber}: Gap set to ${gap}. Preparing for comparisons.`,
       currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [12],
+      // PT Lines: 6 (while), 7 (gap calc), 8,9,10 (gap < 1 check), 12 (swapped = false), 13 (for loop upcoming)
+      currentPseudoCodeLine: [6, 7, 8, 9, 10, 12, 13],
     }
 
     // Compare elements with the current gap
     for (let i = 0; i <= n - 1 - gap; i++) {
       const j = i + gap
-
-      yield {
-        array: [...arr],
-        highlightedIndices: [i, j],
-        comparisonIndices: [i, j],
-        sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: i, end: j },
-        message: `Comparing elements at index ${i} (${arr[i]}) and index ${j} (${arr[j]}) with gap ${gap}.`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [14],
-      }
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      if (shouldSwap(arr[i], arr[j], direction)) {
-        yield {
-          array: [...arr],
-          highlightedIndices: [],
-          comparisonIndices: [],
-          swappingIndices: [i, j],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start: i, end: j },
-          message: `Preparing to swap elements at indices ${i} (${arr[i]}) and ${j} (${arr[j]}).`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [15],
-        }
-        ;[arr[i], arr[j]] = [arr[j], arr[i]]
+
+      const val1 = arr[i] // Value before potential swap
+      const val2 = arr[j] // Value before potential swap
+
+      if (shouldSwap(val1, val2, direction)) {
+        ;[arr[i], arr[j]] = [val2, val1] // Use pre-swap values for clarity in assignment
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
         swapped = true
@@ -142,55 +90,61 @@ export const combSortGenerator: SortGenerator = function* (
         yield {
           array: [...arr],
           highlightedIndices: [i, j],
-          comparisonIndices: [],
+          comparisonIndices: [i, j],
           swappingIndices: [i, j],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start: i, end: j },
-          message: `Swapped. New values ${arr[i]} (at ${i}) and ${arr[j]} (at ${j}).`,
+          activeRange: { start: i, end: j }, // Range of comparison
+          message: `Pass ${passNumber}, Gap ${gap}: Compared A[${i}] (${val1}) and A[${j}] (${val2}). Swapped.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: [16],
+          currentPseudoCodeLine: [14, 15, 16], // PT Lines: if list[i] > list[i+gap], swap, swapped = true
         }
       } else {
+        // Yield for non-swap comparison for better step-by-step visualization
         yield {
           array: [...arr],
           highlightedIndices: [i, j],
-          comparisonIndices: [],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start: i, end: j },
-          message: `No swap needed for elements at indices ${i} and ${j}.`,
-          currentStats: { ...liveStats },
+          comparisonIndices: [i, j],
           swappingIndices: null,
-          currentPseudoCodeLine: [14],
+          activeRange: { start: i, end: j },
+          message: `Pass ${passNumber}, Gap ${gap}: Compared A[${i}] (${val1}) and A[${j}] (${val2}). No swap.`,
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: [14, 17], // PT Lines: if list[i] > list[i+gap] (condition false), end if
         }
       }
-    }
+    } // End of for loop for comparisons
 
     yield {
       array: [...arr],
-      message: `End of pass with gap ${gap}. Swapped this pass: ${swapped}`,
+      message: `Pass ${passNumber} with gap ${gap} complete. Swapped this pass: ${swapped}.`,
       currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [18],
+      currentPseudoCodeLine: [18], // PT Line: end for (inner loop)
     }
 
+    // Optimization: if gap is 1 and no swaps occurred in the last pass, the array is sorted
     if (gap === 1 && !swapped) {
+      // All elements are now sorted
+      for (let k = 0; k < n; ++k) sortedIndices.add(k)
       yield {
         array: [...arr],
-        message: 'Gap is 1 and no swaps occurred, array is sorted.',
+        sortedIndices: Array.from(sortedIndices),
+        message: 'Comb Sort optimization: Gap is 1 and no swaps in this pass. Array is sorted.',
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [20],
+        currentPseudoCodeLine: [21, 22, 23], // PT Lines: if gap == 1 and swapped == false, break, end if
       }
-      break
+      break // Exit while loop
     }
+  } // End of while loop (gap > 1 || swapped)
+
+  // Ensure all indices are marked sorted if loop finished without early exit
+  if (sortedIndices.size < n) {
+    for (let i = 0; i < n; ++i) sortedIndices.add(i)
   }
 
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()],
+    sortedIndices: Array.from(sortedIndices),
     message: 'Comb Sort Complete!',
     currentStats: { ...liveStats },
-    swappingIndices: null,
-    currentPseudoCodeLine: [24],
+    currentPseudoCodeLine: [24, 26, 27], // PT Lines: end while, return list, end procedure
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

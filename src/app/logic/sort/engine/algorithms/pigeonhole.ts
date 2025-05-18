@@ -29,307 +29,277 @@ export const pigeonholeSortGenerator: SortGenerator = function* (
 
   if (n <= 1) {
     holesAuxStructure.title = 'Pigeonholes (Completed)'
-    holesAuxStructure.data = n === 1 ? [{ value: 1, originalIndex: 0, label: 'Hole 0' }] : []
+    holesAuxStructure.data =
+      n === 1 ? [{ value: 1, originalIndex: 0, name: `Hole for ${arr[0]}` }] : []
     yield {
       array: [...arr],
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
       currentPseudoCodeLine: [0], // pigeonholeSort(array, n)
-      auxiliaryStructures: [holesAuxStructure],
+      currentPassAuxiliaryStructure: { ...holesAuxStructure },
     }
     return {
       finalArray: arr,
       stats: liveStats as SortStats,
-      finalAuxiliaryStructures: [holesAuxStructure],
+      finalAuxiliaryStructures: [{ ...holesAuxStructure }],
     }
   }
 
+  holesAuxStructure.title = 'Pigeonholes (Starting)'
   yield {
     array: [...arr],
     mainArrayLabel: 'Input Array',
     message: 'Starting Pigeonhole Sort.',
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [0], // pigeonholeSort(array, n)
-    auxiliaryStructures: [holesAuxStructure],
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
   }
 
   // 1. Find minimum and maximum values
   let min = arr[0]
   let max = arr[0]
-  holesAuxStructure.title = 'Pigeonholes (Finding Min/Max)'
+
+  holesAuxStructure.title = 'Pigeonholes (Scanning for Min/Max)'
   yield {
     array: [...arr],
     mainArrayLabel: 'Input Array',
-    highlightedIndices: [0],
-    message: `Finding min/max. Current min: ${min}, max: ${max}.`,
+    highlightedIndices: [...Array(n).keys()], // Highlight whole array being scanned
+    message: `Phase 1: Finding min/max values by scanning all ${n} elements. Initial min: ${min}, max: ${max}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [1],
-    auxiliaryStructures: [holesAuxStructure],
+    currentPseudoCodeLine: [1, 2],
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
   }
+
   for (let i = 1; i < n; i++) {
-    yield {
-      array: [...arr],
-      mainArrayLabel: 'Input Array',
-      highlightedIndices: [i],
-      message: `Checking index ${i}. Current min: ${min}, max: ${max}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [1],
-      auxiliaryStructures: [holesAuxStructure],
-    }
-    liveStats.comparisons = (liveStats.comparisons || 0) + 1
+    // No yield inside this loop for individual comparisons to consolidate steps
+    liveStats.comparisons = (liveStats.comparisons || 0) + 1 // Comparison for min
     if (arr[i] < min) {
       min = arr[i]
-      yield {
-        array: [...arr],
-        mainArrayLabel: 'Input Array',
-        highlightedIndices: [i],
-        message: `New min found: ${min}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [1],
-        auxiliaryStructures: [holesAuxStructure],
-      }
-    } else {
-      liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      if (arr[i] > max) {
-        max = arr[i]
-        yield {
-          array: [...arr],
-          mainArrayLabel: 'Input Array',
-          highlightedIndices: [i],
-          message: `New max found: ${max}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [2],
-          auxiliaryStructures: [holesAuxStructure],
-        }
-      }
+    }
+    liveStats.comparisons = (liveStats.comparisons || 0) + 1 // Comparison for max
+    if (arr[i] > max) {
+      max = arr[i]
     }
   }
+
   holesAuxStructure.title = 'Pigeonholes (Min/Max Found)'
   yield {
     array: [...arr],
     mainArrayLabel: 'Input Array',
-    message: `Min value: ${min}, Max value: ${max}.`,
+    message: `Phase 1 Complete. Min value: ${min}, Max value: ${max}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [2],
-    auxiliaryStructures: [holesAuxStructure],
+    currentPseudoCodeLine: [1, 2], // Still relates to finding min/max outcome
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
   }
 
   const range = max - min + 1
+  holesAuxStructure.title = 'Pigeonholes (Range Calculated)'
   yield {
     array: [...arr],
     mainArrayLabel: 'Input Array',
-    message: `Calculated range: ${range}.`,
+    message: `Calculated range of values: ${range}.`,
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [3], // range = max - min + 1
-    auxiliaryStructures: [holesAuxStructure],
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
   }
 
   // 2. Create pigeonholes (array of arrays/lists)
   const holes: number[][] = Array.from({ length: range }, () => [])
   liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + range
 
-  const updateHolesAuxStructure = (h: number[][], titleSuffix: string) => {
+  const updateHolesAuxStructure = (
+    h: ReadonlyArray<ReadonlyArray<number>>,
+    titleSuffix: string,
+    currentMinVal: number
+  ) => {
+    holesAuxStructure.id = `${holesAuxId}-${titleSuffix.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
     holesAuxStructure.data = h.map((holeContent, idx) => ({
       value: holeContent.length,
       originalIndex: idx, // This is the hole index relative to 0 (maps to value min + idx)
-      label: `Hole ${idx} (Val ${min + idx}): ${holeContent.length} items`,
+      name: `Hole ${idx} (Val ${currentMinVal + idx})`,
+      count: holeContent.length,
     }))
     holesAuxStructure.title = `Pigeonholes (${titleSuffix})`
   }
 
-  updateHolesAuxStructure(holes, 'Initialized')
+  updateHolesAuxStructure(holes, 'Initialized', min)
   yield {
     array: [...arr],
     mainArrayLabel: 'Input Array',
-    auxiliaryStructures: [holesAuxStructure],
-    message: `Created ${range} pigeonholes for values from ${min} to ${max}.`,
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
+    message: `Phase 2: Created ${range} empty pigeonholes for values from ${min} to ${max}.`,
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [5],
   }
 
   // 3. Scatter: Put elements into their corresponding pigeonholes
+  // Yield before starting the scatter loop
+  updateHolesAuxStructure(holes, 'Ready to Scatter', min)
+  yield {
+    array: [...arr],
+    mainArrayLabel: 'Input Array',
+    message: 'Phase 3: Scattering elements into pigeonholes.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [7], // for each element in list
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
+  }
+
   for (let i = 0; i < n; i++) {
     const value = arr[i]
     const holeIndex = value - min
-    updateHolesAuxStructure(holes, 'Scattering') // Show state before adding
-    yield {
-      array: [...arr],
-      mainArrayLabel: 'Input Array',
-      highlightedIndices: [i],
-      message: `Processing element ${arr[i]} for scattering.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [7],
-      auxiliaryStructures: [holesAuxStructure],
-    }
+
     holes[holeIndex].push(value)
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
-    updateHolesAuxStructure(holes, 'Scattering') // Show state after adding
+
+    // Yield once per element scattered, showing its destination and updated holes
+    updateHolesAuxStructure(holes, `Scattering ${value} to Hole ${holeIndex}`, min)
     yield {
       array: [...arr],
       mainArrayLabel: 'Input Array',
-      highlightedIndices: [i],
-      comparisonIndices: [holeIndex],
-      auxiliaryStructures: [holesAuxStructure],
-      message: `Placing element ${value} (from index ${i}) into hole ${holeIndex} (value ${min + holeIndex}).`,
+      highlightedIndices: [i], // Element being scattered
+      message: `Scattering element ${value} (from input index ${i}) into Hole ${holeIndex} (for value ${min + holeIndex}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [8],
+      currentPseudoCodeLine: [7, 8], // for each element, place in hole
+      currentPassAuxiliaryStructure: { ...holesAuxStructure },
+      // Potentially use historicalAuxiliaryStructures to show state *before* this specific scatter if needed
     }
   }
-  updateHolesAuxStructure(holes, 'Scattered')
+
+  updateHolesAuxStructure(holes, 'All Scattered', min)
   yield {
     array: [...arr],
-    mainArrayLabel: 'Input Array (Before Gather)',
-    auxiliaryStructures: [holesAuxStructure],
-    message: 'Finished scattering elements into holes. Starting gather phase.',
+    mainArrayLabel: 'Input Array (Scattering Complete)',
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
+    message: 'Phase 3 Complete. All elements scattered. Starting gather phase.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [11],
+    currentPseudoCodeLine: [11], // end for (scattering)
   }
 
   let currentIndex = 0
   const outputArr = [...arr]
 
   // Inlining the logic from the removed processHole sub-generator:
+  // Yield before starting the gather loop
+  updateHolesAuxStructure(holes, 'Ready to Gather', min)
+  yield {
+    array: [...outputArr].map((v, j) => (j < currentIndex ? v : NaN)), // Show empty/partially filled output
+    mainArrayLabel: 'Output Array (Building)',
+    message: 'Phase 4: Gathering elements from pigeonholes.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [12], // for each hole...
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
+  }
+
   if (direction === 'asc') {
     for (let i = 0; i < range; i++) {
-      // For each hole
-      updateHolesAuxStructure(holes, `Gathering from Hole ${i}`)
+      if (holes[i].length === 0) continue // Skip empty holes quickly
+
+      const currentHoleValue = min + i
+      const numInHole = holes[i].length
+      updateHolesAuxStructure(holes, `Gathering from Hole ${i} (Val ${currentHoleValue})`, min)
       yield {
         array: [...outputArr].map((v, j) => (j < currentIndex ? v : NaN)),
-        mainArrayLabel: 'Output Array (Gathering)',
-        auxiliaryStructures: [holesAuxStructure],
-        comparisonIndices: [i],
-        message: `Processing hole ${i} (value ${min + i}) for ascending order. Contains: [${holes[i].join(', ')}]`,
+        mainArrayLabel: 'Output Array (Building)',
+        currentPassAuxiliaryStructure: { ...holesAuxStructure },
+        message: `Asc: Gathering ${numInHole} element(s) from Hole ${i} (value ${currentHoleValue}). Output to A[${currentIndex}...].`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [12],
+        currentPseudoCodeLine: [12, 14], // for each hole, for each item in hole
       }
-      while (holes[i].length > 0) {
-        // For each element in the current hole
-        const value = holes[i].shift()! // Get element from hole
-        liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1 // For shift
 
-        updateHolesAuxStructure(holes, `Placing from Hole ${i}`)
-        yield {
-          array: [...outputArr].map((v, k) => (k < currentIndex ? v : NaN)),
-          mainArrayLabel: 'Output Array (Placing)',
-          highlightedIndices: [currentIndex],
-          comparisonIndices: [i],
-          auxiliaryStructures: [holesAuxStructure],
-          message: `Placing value ${value} from hole ${i} into array index ${currentIndex}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [14],
-        }
+      while (holes[i].length > 0) {
+        const value = holes[i].shift()!
+        liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
         outputArr[currentIndex] = value
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
+        const placedIndex = currentIndex
+        currentIndex++
 
-        const placedValue = outputArr[currentIndex] // for message
-        currentIndex++ // Increment current index for the main output array
-
-        updateHolesAuxStructure(holes, `Placed from Hole ${i}`)
+        // Yield once per element gathered
+        updateHolesAuxStructure(
+          holes,
+          `Took ${value} from Hole ${i}, Output Idx ${placedIndex}`,
+          min
+        )
         yield {
           array: [...outputArr].map((v, k) => (k < currentIndex ? v : NaN)),
-          mainArrayLabel: 'Output Array (Placed)',
-          highlightedIndices: [currentIndex - 1],
-          comparisonIndices: [i],
-          auxiliaryStructures: [holesAuxStructure],
-          message: `Placed ${placedValue} at index ${currentIndex - 1}. Hole ${i} size now ${holes[i].length}.`,
+          mainArrayLabel: 'Output Array (Element Placed)',
+          highlightedIndices: [placedIndex],
+          currentPassAuxiliaryStructure: { ...holesAuxStructure },
+          message: `Asc: Placed ${value} at Output[${placedIndex}]. Hole ${i} (Val ${currentHoleValue}) size now ${holes[i].length}.`,
           currentStats: { ...liveStats },
-          currentPseudoCodeLine: [15],
+          currentPseudoCodeLine: [15], // list[index++] = element
         }
-      }
-      updateHolesAuxStructure(holes, `Finished Hole ${i}`)
-      yield {
-        array: [...outputArr].map((v, j) => (j < currentIndex ? v : NaN)),
-        mainArrayLabel: 'Output Array (Gathering)',
-        auxiliaryStructures: [holesAuxStructure],
-        message: `Finished gathering from hole ${i}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [16],
       }
     }
   } else {
     // Descending order
     for (let i = range - 1; i >= 0; i--) {
-      // Iterate holes in reverse for descending
-      updateHolesAuxStructure(holes, `Gathering from Hole ${i}`)
+      if (holes[i].length === 0) continue
+
+      const currentHoleValue = min + i
+      const numInHole = holes[i].length
+      updateHolesAuxStructure(holes, `Gathering from Hole ${i} (Val ${currentHoleValue})`, min)
       yield {
         array: [...outputArr].map((v, j) => (j < currentIndex ? v : NaN)),
-        mainArrayLabel: 'Output Array (Gathering)',
-        auxiliaryStructures: [holesAuxStructure],
-        comparisonIndices: [i],
-        message: `Processing hole ${i} (value ${min + i}) for descending order. Contains: [${holes[i].join(', ')}]`,
+        mainArrayLabel: 'Output Array (Building)',
+        currentPassAuxiliaryStructure: { ...holesAuxStructure },
+        message: `Desc: Gathering ${numInHole} element(s) from Hole ${i} (value ${currentHoleValue}). Output to A[${currentIndex}...].`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [12],
+        currentPseudoCodeLine: [12, 14],
       }
+
       while (holes[i].length > 0) {
-        // For each element in the current hole
         const value = holes[i].shift()!
         liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
-
-        updateHolesAuxStructure(holes, `Placing from Hole ${i}`)
-        yield {
-          array: [...outputArr].map((v, k) => (k < currentIndex ? v : NaN)),
-          mainArrayLabel: 'Output Array (Placing)',
-          highlightedIndices: [currentIndex],
-          comparisonIndices: [i],
-          auxiliaryStructures: [holesAuxStructure],
-          message: `Placing value ${value} from hole ${i} into array index ${currentIndex}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [14],
-        }
         outputArr[currentIndex] = value
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
-
-        const placedValue = outputArr[currentIndex]
+        const placedIndex = currentIndex
         currentIndex++
 
-        updateHolesAuxStructure(holes, `Placed from Hole ${i}`)
+        updateHolesAuxStructure(
+          holes,
+          `Took ${value} from Hole ${i}, Output Idx ${placedIndex}`,
+          min
+        )
         yield {
           array: [...outputArr].map((v, k) => (k < currentIndex ? v : NaN)),
-          mainArrayLabel: 'Output Array (Placed)',
-          highlightedIndices: [currentIndex - 1],
-          comparisonIndices: [i],
-          auxiliaryStructures: [holesAuxStructure],
-          message: `Placed ${placedValue} at index ${currentIndex - 1}. Hole ${i} size now ${holes[i].length}.`,
+          mainArrayLabel: 'Output Array (Element Placed)',
+          highlightedIndices: [placedIndex],
+          currentPassAuxiliaryStructure: { ...holesAuxStructure },
+          message: `Desc: Placed ${value} at Output[${placedIndex}]. Hole ${i} (Val ${currentHoleValue}) size now ${holes[i].length}.`,
           currentStats: { ...liveStats },
           currentPseudoCodeLine: [15],
         }
       }
-      updateHolesAuxStructure(holes, `Finished Hole ${i}`)
-      yield {
-        array: [...outputArr].map((v, j) => (j < currentIndex ? v : NaN)),
-        mainArrayLabel: 'Output Array (Gathering)',
-        auxiliaryStructures: [holesAuxStructure],
-        message: `Finished gathering from hole ${i}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [16],
-      }
     }
   }
-  updateHolesAuxStructure(holes, 'Gathering Complete') // Holes should be empty now
+
+  updateHolesAuxStructure(holes, 'Gathering Complete', min)
   yield {
-    array: [...outputArr].map((v, i) => (i < currentIndex ? v : NaN)),
-    mainArrayLabel: 'Output Array (Gathering)',
-    message: 'Finished gathering from all holes.',
+    array: [...outputArr], // Show fully populated array
+    mainArrayLabel: 'Output Array (Sorted)',
+    message: 'Phase 4 Complete. Finished gathering from all holes.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [17],
-    auxiliaryStructures: [holesAuxStructure],
+    currentPseudoCodeLine: [17], // end for (gathering)
+    currentPassAuxiliaryStructure: { ...holesAuxStructure }, // Holes should be empty
+    sortedIndices: [...Array(n).keys()],
   }
 
-  updateHolesAuxStructure(holes, 'Sort Complete')
+  updateHolesAuxStructure(holes, 'Sort Complete', min)
   yield {
     array: [...outputArr],
     mainArrayLabel: 'Sorted Array',
     sortedIndices: [...Array(n).keys()],
     message: 'Pigeonhole Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [18],
-    auxiliaryStructures: [holesAuxStructure],
+    currentPseudoCodeLine: [18], // return list
+    currentPassAuxiliaryStructure: { ...holesAuxStructure },
   }
 
   return {
     finalArray: outputArr,
     stats: liveStats as SortStats,
-    finalAuxiliaryStructures: [holesAuxStructure],
+    finalAuxiliaryStructures: [{ ...holesAuxStructure }],
   }
 }

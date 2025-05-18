@@ -25,8 +25,10 @@ export const cycleSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [0, 1],
       swappingIndices: null,
-      currentPseudoCodeLine: [0],
+      comparisonIndices: [],
+      highlightedIndices: [],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -35,292 +37,213 @@ export const cycleSortGenerator: SortGenerator = function* (
     array: [...arr],
     message: 'Starting Cycle Sort.',
     currentStats: { ...liveStats },
-    swappingIndices: null,
     currentPseudoCodeLine: [0],
+    sortedIndices: Array.from(sortedIndices),
+    swappingIndices: null,
+    comparisonIndices: [],
+    highlightedIndices: [],
   }
 
-  for (let cycleStart = 0; cycleStart <= n - 2; cycleStart++) {
-    yield {
-      array: [...arr],
-      highlightedIndices: [cycleStart],
-      sortedIndices: Array.from(sortedIndices),
-      message: `Considering cycle starting at index ${cycleStart} (value: ${arr[cycleStart]}).`,
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [2],
-    }
-
+  for (let cycleStart = 0; cycleStart < n - 1; cycleStart++) {
     let itemInHand = arr[cycleStart]
+    const originalItemFromCycleStart = itemInHand
+
     yield {
       array: [...arr],
       highlightedIndices: [cycleStart],
       sortedIndices: Array.from(sortedIndices),
-      message: `Item in hand = ${itemInHand}.`,
+      message: `Pass ${cycleStart + 1}/${n - 1}: Considering cycle for item ${originalItemFromCycleStart} (at A[${cycleStart}]). Item in hand: ${itemInHand}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [2, 3],
       swappingIndices: null,
-      currentPseudoCodeLine: [3],
-    }
-    let pos = cycleStart
-    yield {
-      array: [...arr],
-      highlightedIndices: [cycleStart],
-      sortedIndices: Array.from(sortedIndices),
-      message: `Initial position for item = ${pos}.`,
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [4],
+      comparisonIndices: [],
     }
 
-    for (let i = cycleStart + 1; i < n; i++) {
+    let pos = cycleStart
+    const scanStartIndexForPos = cycleStart + 1
+    for (let i = scanStartIndexForPos; i < n; i++) {
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      yield {
-        array: [...arr],
-        highlightedIndices: [cycleStart],
-        comparisonIndices: [i],
-        sortedIndices: Array.from(sortedIndices),
-        message: `Finding position for ${itemInHand}: comparing with ${arr[i]}.`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [5],
-      }
       if (
         (direction === 'asc' && arr[i] < itemInHand) ||
         (direction === 'desc' && arr[i] > itemInHand)
       ) {
         pos++
-        yield {
-          array: [...arr],
-          highlightedIndices: [cycleStart, i],
-          comparisonIndices: [i],
-          sortedIndices: Array.from(sortedIndices),
-          message: `Element ${arr[i]} is smaller (asc) / larger (desc). Incrementing pos to ${pos}.`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [7],
-        }
       }
     }
+
     yield {
       array: [...arr],
-      highlightedIndices: [cycleStart],
+      highlightedIndices: [cycleStart, pos],
+      activeRange: { start: scanStartIndexForPos, end: n - 1 },
       sortedIndices: Array.from(sortedIndices),
-      message: `Finished finding initial position for ${itemInHand}. Correct position: ${pos}.`,
+      message: `Finding pos for item ${itemInHand} (from A[${cycleStart}]): Scanned A[${scanStartIndexForPos}...${n - 1}]. Calculated initial position is ${pos}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [4, 5, 6, 7, 8, 9],
       swappingIndices: null,
-      currentPseudoCodeLine: [9],
+      comparisonIndices: [],
     }
 
     if (pos === cycleStart) {
+      if (!sortedIndices.has(cycleStart)) sortedIndices.add(cycleStart)
       yield {
         array: [...arr],
         highlightedIndices: [cycleStart],
         sortedIndices: Array.from(sortedIndices),
-        message: `Element ${itemInHand} at index ${cycleStart} is already in its correct sorted position.`,
+        message: `Item ${itemInHand} (at A[${cycleStart}]) is already in its correct sorted position.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: [11, 12],
         swappingIndices: null,
-        currentPseudoCodeLine: [11],
+        comparisonIndices: [],
       }
-      sortedIndices.add(cycleStart)
       continue
     }
 
-    liveStats.comparisons = (liveStats.comparisons || 0) + 1
-    while (itemInHand === arr[pos]) {
+    const posBeforeDuplicateCheck = pos
+    while (pos < n && itemInHand === arr[pos]) {
+      liveStats.comparisons = (liveStats.comparisons || 0) + 1
+      pos++
+    }
+    if (pos !== posBeforeDuplicateCheck) {
       yield {
         array: [...arr],
-        highlightedIndices: [pos],
+        highlightedIndices: [cycleStart, posBeforeDuplicateCheck, pos],
         sortedIndices: Array.from(sortedIndices),
-        message: `Duplicate of ${itemInHand} found at target position ${pos}. Advancing position.`,
+        message: `Item ${itemInHand} (from A[${cycleStart}]): Found duplicates. Advanced target position from ${posBeforeDuplicateCheck} to ${pos}.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: [14, 15, 16],
         swappingIndices: null,
-        currentPseudoCodeLine: [15],
+        comparisonIndices: [],
       }
-      pos++
-      if (pos >= n) break
-      liveStats.comparisons = (liveStats.comparisons || 0) + 1
-    }
-    yield {
-      array: [...arr],
-      highlightedIndices: [pos],
-      sortedIndices: Array.from(sortedIndices),
-      message: `Final target position for ${itemInHand} is ${pos}.`,
-      currentStats: { ...liveStats },
-      swappingIndices: null,
-      currentPseudoCodeLine: [17],
     }
 
-    if (pos >= n && itemInHand === arr[n - 1] && pos === n) {
-    } else if (pos !== cycleStart) {
-      yield {
-        array: [...arr],
-        highlightedIndices: [],
-        comparisonIndices: [],
-        swappingIndices: [pos, cycleStart],
-        sortedIndices: Array.from(sortedIndices),
-        message: `Preparing to place ${itemInHand} (originally from index ${cycleStart}) into position ${pos}. Swapping with ${arr[pos]}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [20],
-      }
+    if (pos < n && pos !== cycleStart) {
+      const valAtPosBeforeSwap = arr[pos]
       ;[itemInHand, arr[pos]] = [arr[pos], itemInHand]
       liveStats.swaps = (liveStats.swaps || 0) + 1
       liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-      yield {
-        array: [...arr],
-        highlightedIndices: [pos],
-        swappingIndices: [pos, cycleStart],
-        sortedIndices: Array.from(sortedIndices),
-        message: `Element ${arr[pos]} placed at index ${pos}. New item in hand: ${itemInHand}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [20],
-      }
-    }
-    yield {
-      array: [...arr],
-      highlightedIndices: [pos],
-      sortedIndices: Array.from(sortedIndices),
-      message: `Initial placement complete for item from cycleStart ${cycleStart}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [21],
-    }
-
-    while (pos !== cycleStart) {
+      if (!sortedIndices.has(pos)) sortedIndices.add(pos)
       yield {
         array: [...arr],
         highlightedIndices: [pos, cycleStart],
+        swappingIndices: [pos, cycleStart],
         sortedIndices: Array.from(sortedIndices),
-        message: `Continuing cycle. Current item in hand: ${itemInHand}. Target cycleStart: ${cycleStart}.`,
+        message: `Placed ${arr[pos]} (was ${originalItemFromCycleStart}) at A[${pos}]. Item in hand is now ${itemInHand} (was ${valAtPosBeforeSwap}).`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [23],
+        currentPseudoCodeLine: [18, 19, 20],
+        comparisonIndices: [],
       }
-      pos = cycleStart
+    } else if (pos >= n) {
       yield {
         array: [...arr],
-        highlightedIndices: [pos],
+        message: `Item ${itemInHand} position ${pos} is out of bounds. Cycle for ${originalItemFromCycleStart} may be stuck or finished. Consider last element sorted. `,
+        highlightedIndices: [cycleStart],
         sortedIndices: Array.from(sortedIndices),
-        message: `Reset pos to cycleStart: ${cycleStart}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [24],
+        currentPseudoCodeLine: [18],
+        swappingIndices: null,
+        comparisonIndices: [],
       }
-      for (let i = cycleStart + 1; i < n; i++) {
+      if (!sortedIndices.has(cycleStart)) sortedIndices.add(cycleStart)
+      continue
+    }
+
+    while (pos !== cycleStart && pos < n) {
+      const currentItemInHandOriginalValue = itemInHand
+      pos = cycleStart
+      const scanStartIndexForCyclePos = cycleStart + 1
+      for (let i = scanStartIndexForCyclePos; i < n; i++) {
         liveStats.comparisons = (liveStats.comparisons || 0) + 1
-        yield {
-          array: [...arr],
-          comparisonIndices: [i],
-          highlightedIndices: [i],
-          sortedIndices: Array.from(sortedIndices),
-          message: `Cycle rotation: Finding position for item ${itemInHand}. Comparing with ${arr[i]}.`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [25],
-        }
         if (
           (direction === 'asc' && arr[i] < itemInHand) ||
           (direction === 'desc' && arr[i] > itemInHand)
         ) {
           pos++
-          yield {
-            array: [...arr],
-            comparisonIndices: [i],
-            highlightedIndices: [i, pos],
-            sortedIndices: Array.from(sortedIndices),
-            message: `Element ${arr[i]} is smaller (asc) / larger (desc). Incrementing pos to ${pos}.`,
-            currentStats: { ...liveStats },
-            swappingIndices: null,
-            currentPseudoCodeLine: [27],
-          }
         }
       }
       yield {
         array: [...arr],
-        highlightedIndices: [pos],
+        highlightedIndices: [pos, cycleStart],
+        activeRange: { start: scanStartIndexForCyclePos, end: n - 1 },
         sortedIndices: Array.from(sortedIndices),
-        message: `Finished finding next position in cycle for ${itemInHand}. Correct position: ${pos}.`,
+        message: `Continuing cycle: Finding pos for current item ${itemInHand}. Scanned A[${scanStartIndexForCyclePos}...${n - 1}]. Calculated position is ${pos}.`,
         currentStats: { ...liveStats },
+        currentPseudoCodeLine: [23, 24, 25, 26, 27, 28],
         swappingIndices: null,
-        currentPseudoCodeLine: [29],
+        comparisonIndices: [],
       }
 
-      liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      while (itemInHand === arr[pos]) {
-        yield {
-          array: [...arr],
-          highlightedIndices: [pos],
-          sortedIndices: Array.from(sortedIndices),
-          message: `Duplicate of ${itemInHand} found at target position ${pos}. Advancing position.`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [31],
-        }
-        pos++
-        if (pos >= n) break
+      const posBeforeCycleDupCheck = pos
+      while (pos < n && itemInHand === arr[pos]) {
         liveStats.comparisons = (liveStats.comparisons || 0) + 1
+        pos++
       }
-      yield {
-        array: [...arr],
-        highlightedIndices: [pos],
-        sortedIndices: Array.from(sortedIndices),
-        message: `Final target position in cycle for ${itemInHand} is ${pos}.`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [33],
+      if (pos !== posBeforeCycleDupCheck) {
+        yield {
+          array: [...arr],
+          highlightedIndices: [cycleStart, posBeforeCycleDupCheck, pos],
+          sortedIndices: Array.from(sortedIndices),
+          message: `Continuing cycle: Item ${itemInHand} (for current cycle element) found duplicates. Advanced target position from ${posBeforeCycleDupCheck} to ${pos}.`,
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: [29, 30, 31],
+          swappingIndices: null,
+          comparisonIndices: [],
+        }
       }
 
-      if (pos >= n && itemInHand === arr[n - 1] && pos === n) {
-      } else if (pos !== cycleStart || (pos === cycleStart && itemInHand !== arr[pos])) {
-        const isFinalPlacementInCycle = pos === cycleStart
-        const originalElementAtPos = arr[pos]
+      if (pos >= n) {
         yield {
           array: [...arr],
-          highlightedIndices: [],
+          message: `Continuing cycle: Item ${itemInHand} position ${pos} is out of bounds. Cycle for ${originalItemFromCycleStart} ending.`,
+          highlightedIndices: [cycleStart],
+          sortedIndices: Array.from(sortedIndices),
+          currentStats: { ...liveStats },
+          currentPseudoCodeLine: [32],
+          swappingIndices: null,
           comparisonIndices: [],
-          swappingIndices: [pos, -1],
-          sortedIndices: Array.from(sortedIndices),
-          message: `Cycle rotation: Preparing to place item ${itemInHand} into position ${pos}. Swapping with ${originalElementAtPos}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [36],
         }
-        ;[itemInHand, arr[pos]] = [arr[pos], itemInHand]
-        liveStats.swaps = (liveStats.swaps || 0) + 1
-        liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-        yield {
-          array: [...arr],
-          highlightedIndices: [pos],
-          swappingIndices: [pos, -1],
-          sortedIndices: Array.from(sortedIndices),
-          message: `Element ${arr[pos]} placed at index ${pos}. New item in hand: ${itemInHand}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [36],
-        }
-        if (isFinalPlacementInCycle && itemInHand === initialArray[cycleStart]) {
-        }
+        break
       }
+
+      if (pos === cycleStart) {
+        break
+      }
+
+      const valAtPosBeforeCycleSwap = arr[pos]
+      ;[itemInHand, arr[pos]] = [arr[pos], itemInHand]
+      liveStats.swaps = (liveStats.swaps || 0) + 1
+      liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
+      if (!sortedIndices.has(pos)) sortedIndices.add(pos)
+
       yield {
         array: [...arr],
-        highlightedIndices: [pos],
+        highlightedIndices: [pos, cycleStart],
+        swappingIndices: [pos, cycleStart],
         sortedIndices: Array.from(sortedIndices),
-        message: `Cycle rotation placement complete.`,
+        message: `Continuing cycle: Placed ${arr[pos]} (was ${currentItemInHandOriginalValue}) at A[${pos}]. Item in hand is now ${itemInHand} (was ${valAtPosBeforeCycleSwap}).`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [38],
+        currentPseudoCodeLine: [32],
+        comparisonIndices: [],
       }
     }
-    sortedIndices.add(cycleStart)
+
+    if (!sortedIndices.has(cycleStart)) sortedIndices.add(cycleStart)
+
     yield {
       array: [...arr],
       highlightedIndices: [cycleStart],
       sortedIndices: Array.from(sortedIndices),
-      message: `Cycle for original index ${cycleStart} complete. Element ${arr[cycleStart]} is sorted.`,
+      message: `Cycle starting with item ${originalItemFromCycleStart} (from A[${cycleStart}]) complete. A[${cycleStart}] is now ${arr[cycleStart]}.`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [22, 33],
       swappingIndices: null,
-      currentPseudoCodeLine: [39],
+      comparisonIndices: [],
     }
   }
 
-  if (n > 0 && !sortedIndices.has(n - 1)) {
-    sortedIndices.add(n - 1)
-  }
-
-  if (sortedIndices.size < n) {
-    for (let k = 0; k < n; ++k) sortedIndices.add(k)
+  for (let k = 0; k < n; k++) {
+    if (!sortedIndices.has(k)) {
+      sortedIndices.add(k)
+    }
   }
 
   yield {
@@ -328,8 +251,10 @@ export const cycleSortGenerator: SortGenerator = function* (
     sortedIndices: Array.from(sortedIndices),
     message: 'Cycle Sort Complete!',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: [35, 36],
     swappingIndices: null,
-    currentPseudoCodeLine: [40],
+    comparisonIndices: [],
+    highlightedIndices: [...Array(n).keys()].filter(i => sortedIndices.has(i)),
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

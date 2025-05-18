@@ -8,10 +8,10 @@ import { SortGenerator, SortStats, AuxiliaryStructure } from '../types'
 
 export const countingSortGenerator: SortGenerator = function* (
   initialArray: number[],
-  direction: 'asc' | 'desc' = 'asc' // Direction affects output placement
+  direction: 'asc' | 'desc' = 'asc'
 ) {
-  const arr = [...initialArray]
-  const n = arr.length
+  const arrForMainDisplay = [...initialArray] // Use this for primary array viz unless actively building output
+  const n = initialArray.length
 
   const liveStats: Partial<SortStats> = {
     algorithmName: 'Counting Sort',
@@ -19,284 +19,204 @@ export const countingSortGenerator: SortGenerator = function* (
     comparisons: 0,
     mainArrayWrites: 0,
     auxiliaryArrayWrites: 0,
-    swaps: 0, // Counting sort doesn't typically swap
+    swaps: 0,
   }
 
   const countAuxId = 'counting-sort-counts'
-  const countDisplaySlot = 'counting-sort-main-slot'
-  let countAuxStructure: AuxiliaryStructure = {
-    id: countAuxId,
-    title: 'Count Array (Initial)',
-    data: [],
+  const countDisplaySlot = 'counting-sort-counts-slot'
+  const outputAuxId = 'counting-sort-output'
+  const outputDisplaySlot = 'counting-sort-output-slot'
+
+  const createCountAux = (
+    counts: ReadonlyArray<number>,
+    titleSuffix: string,
+    minValForOffset?: number
+  ): AuxiliaryStructure => ({
+    id: `${countAuxId}-${titleSuffix.toLowerCase().replace(/\s+/g, '-')}`,
+    title: `Count Array (${titleSuffix})`,
+    data: counts.map((val, idx) => ({
+      value: val,
+      name: minValForOffset !== undefined ? (idx + minValForOffset).toString() : idx.toString(),
+      id: `count-item-${idx}`,
+    })),
     displaySlot: countDisplaySlot,
-  }
+  })
+
+  const createOutputAux = (
+    outputArr: ReadonlyArray<number | undefined | null>,
+    titleSuffix: string
+  ): AuxiliaryStructure => ({
+    id: `${outputAuxId}-${titleSuffix.toLowerCase().replace(/\s+/g, '-')}`,
+    title: `Output Array (${titleSuffix})`,
+    data: outputArr.map((val, idx) => ({
+      value: val === undefined || val === null || Number.isNaN(val) ? NaN : val,
+      originalIndex: idx,
+    })),
+    displaySlot: outputDisplaySlot,
+  })
 
   if (n <= 1) {
+    const finalCountAux = createCountAux([], 'N/A for Small Array')
+    const finalOutputAux = createOutputAux(n === 1 ? [initialArray[0]] : [], 'Final')
     yield {
-      array: [...arr],
+      array: [...initialArray],
       sortedIndices: n === 1 ? [0] : [],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [0], // Or a general "pre-condition met" line
-      auxiliaryStructures: [countAuxStructure], // Ensure even empty state has it
+      currentPseudoCodeLine: [0, 1, 2],
+      currentPassAuxiliaryStructure: finalCountAux,
+      historicalAuxiliaryStructures: [finalOutputAux],
     }
     return {
-      finalArray: arr,
+      finalArray: [...initialArray],
       stats: liveStats as SortStats,
-      finalAuxiliaryStructures: [countAuxStructure],
+      finalAuxiliaryStructures: [finalCountAux, finalOutputAux],
     }
   }
 
-  // 1. Find the maximum element to determine the range
-  let max = arr[0] // Assuming arr[0] exists due to n > 1 check
-  // No explicit comparison stat for initializing max, but loops below will count.
-  countAuxStructure.title = 'Count Array (Finding Max)'
-  yield {
-    array: [...arr],
-    highlightedIndices: [0],
-    message: `Starting Counting Sort. Finding maximum value. Current max: ${max}`,
-    mainArrayLabel: 'Input Array',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [0], // General start
-    auxiliaryStructures: [countAuxStructure],
-  }
+  // Phase 1: Find Min and Max
+  let minVal = initialArray[0]
+  let maxVal = initialArray[0]
   for (let i = 1; i < n; i++) {
     liveStats.comparisons = (liveStats.comparisons || 0) + 1
-    yield {
-      array: [...arr],
-      highlightedIndices: [i],
-      message: `Checking index ${i} (value ${arr[i]}). Current max: ${max}`,
-      mainArrayLabel: 'Input Array',
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [0], // Still part of finding max, related to input array
-      auxiliaryStructures: [countAuxStructure],
-    }
-    if (arr[i] > max) {
-      max = arr[i]
-      yield {
-        array: [...arr],
-        highlightedIndices: [i],
-        message: `New maximum found: ${max} at index ${i}`,
-        mainArrayLabel: 'Input Array',
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [0], // Still part of finding max
-        auxiliaryStructures: [countAuxStructure],
-      }
-    }
+    if (initialArray[i] < minVal) minVal = initialArray[i]
+    liveStats.comparisons = (liveStats.comparisons || 0) + 1
+    if (initialArray[i] > maxVal) maxVal = initialArray[i]
   }
 
-  const countSize = max + 1
-  const count: number[] = new Array(countSize).fill(0)
-  liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + countSize // For .fill(0)
+  const range = maxVal - minVal + 1
+  const count: number[] = new Array(range).fill(0)
+  liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + range // For initializing count array
 
-  countAuxStructure = {
-    id: countAuxId,
-    title: 'Count Array (Initialized)',
-    data: [...count],
-    displaySlot: countDisplaySlot,
-  }
   yield {
-    array: [...arr],
-    highlightedIndices: [],
+    array: [...arrForMainDisplay],
     mainArrayLabel: 'Input Array',
-    auxiliaryStructures: [countAuxStructure],
-    message: `Initialized count array of size ${countSize}. Max value is ${max}.`,
+    message: `Phase 1 (Find Min/Max) Complete. Min: ${minVal}, Max: ${maxVal}. Range: ${range}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [6],
+    currentPseudoCodeLine: [4, 6, 7], // Covers findMinMax, create count array
+    currentPassAuxiliaryStructure: createCountAux(count, 'Initialized to Zeros', minVal),
+    historicalAuxiliaryStructures: [createOutputAux(new Array(n).fill(undefined), 'Initial')],
   }
 
-  // 2. Count occurrences of each element
-  // Loop corresponds to "for each number in array:"
+  // Phase 2: Count Occurrences
   for (let i = 0; i < n; i++) {
-    // Highlight line 3 before entering the loop or at the first step of the loop
-    countAuxStructure.title = 'Count Array (Counting)'
-    countAuxStructure.data = [...count] // Show data *before* update for this step
-    yield {
-      array: [...arr],
-      highlightedIndices: [i],
-      mainArrayLabel: 'Input Array',
-      auxiliaryStructures: [countAuxStructure],
-      message: `About to count element ${arr[i]} at index ${i}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [8],
-    }
-
-    count[arr[i]]++
+    count[initialArray[i] - minVal]++
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
-    countAuxStructure.data = [...count] // Show data *after* update
-    yield {
-      array: [...arr],
-      highlightedIndices: [i], // Highlight the element being counted
-      mainArrayLabel: 'Input Array',
-      auxiliaryStructures: [countAuxStructure],
-      message: `Counting element ${arr[i]} at index ${i}. Incrementing count at index ${arr[i]}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [9],
-    }
   }
-
-  // 3. Modify count array to store cumulative counts
-  countAuxStructure.title = 'Count Array (Before Cumulative)'
-  countAuxStructure.data = [...count]
   yield {
-    array: [...arr],
-    highlightedIndices: [],
+    array: [...arrForMainDisplay],
     mainArrayLabel: 'Input Array',
-    auxiliaryStructures: [countAuxStructure],
-    message: 'Calculating cumulative counts.',
+    message: `Phase 2 (Count Occurrences) Complete. Counts: ${count.join(', ')}`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [12],
-  }
-  // Loop corresponds to "for i from 1 to count.length - 1:"
-  for (let i = 1; i < countSize; i++) {
-    countAuxStructure.title = 'Count Array (Cumulative)'
-    countAuxStructure.data = [...count] // Show data *before* update
-    yield {
-      array: [...arr],
-      highlightedIndices: [],
-      comparisonIndices: [i - 1, i],
-      mainArrayLabel: 'Input Array',
-      auxiliaryStructures: [countAuxStructure],
-      message: `About to update cumulative count at index ${i}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [12],
-    }
-    count[i] += count[i - 1]
-    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
-    countAuxStructure.data = [...count] // Show data *after* update
-    yield {
-      array: [...arr],
-      highlightedIndices: [], // No specific array highlight
-      comparisonIndices: [i - 1, i], // Show indices used in cumulative sum
-      mainArrayLabel: 'Input Array',
-      auxiliaryStructures: [countAuxStructure],
-      message: `Updating cumulative count at index ${i}. New value: ${count[i]}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [13],
-    }
+    currentPseudoCodeLine: [8, 10], // Covers counting loop
+    currentPassAuxiliaryStructure: createCountAux(count, 'Occurrences Counted', minVal),
+    historicalAuxiliaryStructures: [createOutputAux(new Array(n).fill(undefined), 'Initial')],
   }
 
-  // 4. Build the output array based on counts
-  const output: number[] = new Array(n)
-  // liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + n; // For initializing output array, though it's often not counted
-
-  countAuxStructure.title = 'Count Array (Final Cumulative)'
-  countAuxStructure.data = [...count]
+  // Phase 3: Calculate Cumulative Counts (for ascending or descending)
+  const cumulativeCountTitlePart =
+    direction === 'asc' ? 'Ascending Cumulative' : 'Desc. Prep. Cumulative'
+  if (direction === 'asc') {
+    for (let i = 1; i < range; i++) {
+      count[i] += count[i - 1]
+      liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
+    }
+  } else {
+    // For descending, a common way is to sum from right-to-left, or adjust placement logic.
+    // Here, we use standard cumulative sum and adjust placement. Or, sum normally and subtract from total.
+    // For simpler visualization of counts: sum normally, placement logic will differ.
+    for (let i = 1; i < range; i++) {
+      count[i] += count[i - 1]
+      liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
+    }
+  }
   yield {
-    array: new Array(n).fill(NaN), // Show empty output array using NaN as placeholder
-    mainArrayLabel: 'Output Array (Building)',
-    highlightedIndices: [],
-    auxiliaryStructures: [countAuxStructure],
-    message: 'Building sorted output array using cumulative counts.',
+    array: [...arrForMainDisplay],
+    mainArrayLabel: 'Input Array',
+    message: `Phase 3 (${cumulativeCountTitlePart} Counts) Complete. Counts: ${count.join(', ')}`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [16],
+    currentPseudoCodeLine: [12, 14], // Covers cumulative sum loop
+    currentPassAuxiliaryStructure: createCountAux(count, cumulativeCountTitlePart, minVal),
+    historicalAuxiliaryStructures: [createOutputAux(new Array(n).fill(undefined), 'Initial')],
   }
 
-  // Iterate backwards for stability (though stability is less critical if only numbers)
-  // Loop corresponds to "for i from array.length - 1 down to 0:"
+  // Phase 4: Build Output Array
+  const outputArray = new Array(n).fill(undefined)
+  liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + n // For initializing output array
+
+  // Create a stable copy of counts for this phase as 'count' array will be modified.
+  const stableCountsForOutputPhase = createCountAux(count, 'Stable for Output Build', minVal)
+  const tempCountsForPlacement = [...count] // This will be decremented
+
+  yield {
+    array: [...arrForMainDisplay],
+    mainArrayLabel: 'Input Array (Context)',
+    message: 'Phase 4 (Build Output Array) Started.',
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [16, 17], // Covers output array creation and loop start
+    currentPassAuxiliaryStructure: createOutputAux(outputArray, 'Building'),
+    historicalAuxiliaryStructures: [stableCountsForOutputPhase],
+  }
+
   for (let i = n - 1; i >= 0; i--) {
-    const value = arr[i]
+    const value = initialArray[i]
+    const countIndex = value - minVal
     let outputIndex: number
 
-    // The lookup count[value] is an operation.
-    // The calculation count[value] - 1 is an operation.
-    // These are not direct comparisons between elements of `arr`.
-    countAuxStructure.title = 'Count Array (Decrementing)'
-    countAuxStructure.data = [...count] // Show data *before* decrement
-    yield {
-      array: [...output].map(v => (v === undefined ? NaN : v)),
-      mainArrayLabel: 'Output Array (Placing)',
-      highlightedIndices: [],
-      comparisonIndices: [i],
-      auxiliaryStructures: [countAuxStructure],
-      message: `Processing element ${value} from original array at index ${i}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [17],
-    }
-
     if (direction === 'asc') {
-      outputIndex = count[value] - 1
-      output[outputIndex] = value
-      liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
-      // Yield after placing the element
-      yield {
-        array: [...output].map(v => (v === undefined ? NaN : v)),
-        mainArrayLabel: 'Output Array (Placing)',
-        highlightedIndices: [outputIndex],
-        comparisonIndices: [i],
-        auxiliaryStructures: [countAuxStructure], // Still shows count *before* decrement for this specific element's placement logic
-        message: `Placed element ${value} into output index ${outputIndex}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [20],
-      }
-      count[value]--
-      liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
+      outputIndex = tempCountsForPlacement[countIndex] - 1
+      tempCountsForPlacement[countIndex]--
     } else {
-      // For descending, standard counting sort is stable; we sort ascending then reverse.
-      // So this part of logic is essentially for ascending placement.
-      outputIndex = count[value] - 1
-      output[outputIndex] = value
-      liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
-      // Yield after placing the element
-      yield {
-        array: [...output].map(v => (v === undefined ? NaN : v)),
-        mainArrayLabel: 'Output Array (Placing)',
-        highlightedIndices: [outputIndex],
-        comparisonIndices: [i],
-        auxiliaryStructures: [countAuxStructure], // Still shows count *before* decrement
-        message: `Placed element ${value} into output index ${outputIndex}. (Descending logic follows ascending placement then reverse)`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [20],
-      }
-      count[value]--
-      liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
+      // direction === 'desc'
+      outputIndex = n - tempCountsForPlacement[countIndex]
+      tempCountsForPlacement[countIndex]--
     }
-
-    // Yield state showing placement in output array and decrementing count
-    countAuxStructure.data = [...count] // Now show count *after* decrement
-    yield {
-      array: [...output].map(v => (v === undefined ? NaN : v)), // Show output progress (use NaN for undefined)
-      mainArrayLabel: 'Output Array (Placing)',
-      highlightedIndices: [outputIndex], // Highlight where the element was placed
-      comparisonIndices: [i], // Highlight element from original array being placed
-      auxiliaryStructures: [countAuxStructure],
-      message: `Placing element ${value} (from original index ${i}) into output index ${outputIndex}. Decremented count for ${value}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [21],
-    }
+    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1 // for tempCountsForPlacement modification
+    outputArray[outputIndex] = value
+    liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1 // This is effectively a main array write if output is final destination
+    // Or aux write if output is an intermediate structure.
+    // Let's count it as main for now as it's the sorted result placeholder.
+    // No yield per element, consolidate to end of phase.
   }
 
-  // Handle descending order by reversing the ascending output
-  if (direction === 'desc') {
-    output.reverse() // In-place reverse
-    liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + n // Approximate n writes for reverse
-    countAuxStructure.title = 'Count Array (Final State After Decrements)' // Title remains relevant
-    yield {
-      array: [...output],
-      mainArrayLabel: 'Output Array (Reversed)',
-      highlightedIndices: [],
-      message: 'Reversing array for descending order.',
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [25],
-      auxiliaryStructures: [countAuxStructure],
-    }
-  }
+  const finalCountsAfterPlacement = createCountAux(
+    tempCountsForPlacement,
+    'After Placement',
+    minVal
+  )
+  const finalOutputArrayDisplay = createOutputAux(outputArray, 'Built')
 
-  // Final sorted state confirmation
-  countAuxStructure.title = 'Count Array (Final State After Sort)'
   yield {
-    array: [...output],
+    array: [...outputArray].map(v => (Number.isNaN(v) ? NaN : v)), // Show the final sorted output array as main
     mainArrayLabel: 'Sorted Array',
-    sortedIndices: [...Array(n).keys()], // All indices are sorted conceptually
+    message: `Phase 4 (Build Output Array) Complete. Output: [${outputArray.join(',')}]`,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [21], // Covers end of build loop
+    currentPassAuxiliaryStructure: finalOutputArrayDisplay,
+    historicalAuxiliaryStructures: [finalCountsAfterPlacement],
+    sortedIndices: [...Array(n).keys()],
+  }
+
+  // Phase 5: Copy Output to Main Array (if initialArray was not directly modified, which it wasn't here)
+  // This step is conceptual as outputArray is now the sorted version.
+  // If the problem required modifying initialArray in-place, a copy loop would be here.
+  // For this generator, outputArray holds the result.
+
+  // Final Completion
+  yield {
+    array: [...outputArray].map(v => (Number.isNaN(v) ? NaN : v)),
+    mainArrayLabel: 'Sorted Array',
     message: 'Counting Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [31],
-    auxiliaryStructures: [countAuxStructure],
+    currentPseudoCodeLine: [26, 27], // return list, end procedure
+    sortedIndices: [...Array(n).keys()],
+    currentPassAuxiliaryStructure: finalOutputArrayDisplay, // Keep showing final output
+    historicalAuxiliaryStructures: [finalCountsAfterPlacement], // And final counts
   }
 
   return {
-    finalArray: output,
+    finalArray: outputArray.map(v => (Number.isNaN(v) ? 0 : (v as number))), // Ensure numbers for final result
     stats: liveStats as SortStats,
-    finalAuxiliaryStructures: [countAuxStructure],
+    finalAuxiliaryStructures: [finalCountsAfterPlacement, finalOutputArrayDisplay],
   }
 }

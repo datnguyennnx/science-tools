@@ -3,9 +3,15 @@
 import { SortGenerator, SortStats } from '../types'
 
 // Comparison function based on direction
-const shouldSwapComparison = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
-  // Check if 'a' should come AFTER 'b' based on the direction
-  return direction === 'asc' ? a < b : a > b
+const shouldBeConsideredExtreme = (
+  candidateValue: number,
+  currentExtremeValue: number,
+  direction: 'asc' | 'desc'
+): boolean => {
+  // True if candidateValue should replace currentExtremeValue
+  return direction === 'asc'
+    ? candidateValue < currentExtremeValue
+    : candidateValue > currentExtremeValue
 }
 
 export const selectionSortGenerator: SortGenerator = function* (
@@ -22,16 +28,17 @@ export const selectionSortGenerator: SortGenerator = function* (
     comparisons: 0,
     swaps: 0,
     mainArrayWrites: 0,
-    auxiliaryArrayWrites: 0, // No auxiliary structures
+    auxiliaryArrayWrites: 0,
   }
 
   if (n <= 1) {
+    if (n === 1) sortedIndices.add(0)
     yield {
       array: [...arr],
-      sortedIndices: [...Array(n).keys()],
+      sortedIndices: Array.from(sortedIndices),
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [0], // Corresponds to function definition
+      currentPseudoCodeLine: [0, 1, 2], // Covers procedure, n=length, if n<=1 then return
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
@@ -39,169 +46,104 @@ export const selectionSortGenerator: SortGenerator = function* (
   yield {
     array: [...arr],
     sortedIndices: Array.from(sortedIndices),
-    message: 'Starting Selection Sort',
-    activeRange: { start: 0, end: n - 1 }, // Initially, the whole array is unsorted
+    message: 'Starting Selection Sort.',
+    activeRange: { start: 0, end: n - 1 },
     currentStats: { ...liveStats },
-    swappingIndices: null,
-    currentPseudoCodeLine: [0], // function selectionSort(array, n) {
+    currentPseudoCodeLine: [0], // procedure selectionSort
   }
 
   for (let i = 0; i < n - 1; i++) {
+    let extremeIndex = i
+    const currentSearchRange = { start: i, end: n - 1 }
+
+    // Yield 1: Start of Pass i - Announce search for extreme element for arr[i]
     yield {
       array: [...arr],
-      message: `Outer loop: i = ${i}`,
+      message: `Pass ${i + 1}/${n - 1}: Finding ${direction === 'asc' ? 'minimum' : 'maximum'} for A[${i}]. Initial extreme: A[${extremeIndex}] (${arr[extremeIndex]}). Searching in A[${i}...${n - 1}].`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [2], // for (let i = 0; i < n - 1; i++) {
-      activeRange: { start: i, end: n - 1 },
+      currentPseudoCodeLine: [2, 3], // for i = ..., extremeIndex = i
+      activeRange: currentSearchRange,
+      highlightedIndices: [i, extremeIndex], // Target position and current extreme candidate
       sortedIndices: Array.from(sortedIndices),
-      swappingIndices: null,
-    }
-    let minIndex = i // Index of the minimum/maximum element in the unsorted portion
-    yield {
-      array: [...arr],
-      message: `minIndex = ${minIndex}`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [3], // let minIndex = i;
-      highlightedIndices: [i],
-      comparisonIndices: [i],
-      activeRange: { start: i, end: n - 1 },
-      sortedIndices: Array.from(sortedIndices),
-      swappingIndices: null,
     }
 
-    // Find the index of the minimum/maximum element in the unsorted part
+    // Inner loop: Find the index of the minimum/maximum element in the unsorted part (A[i...n-1])
+    // No yields inside this inner loop for individual comparisons.
     for (let j = i + 1; j < n; j++) {
-      yield {
-        array: [...arr],
-        message: `Inner loop: j = ${j}`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [4], // for (let j = i + 1; j < n; j++) {
-        highlightedIndices: [minIndex, j],
-        comparisonIndices: [minIndex, j],
-        activeRange: { start: i, end: n - 1 },
-        sortedIndices: Array.from(sortedIndices),
-        swappingIndices: null,
-      }
-
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      yield {
-        array: [...arr],
-        highlightedIndices: [minIndex, j],
-        comparisonIndices: [minIndex, j],
-        sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: i, end: n - 1 },
-        message: `Comparing element at current ${direction === 'asc' ? 'min' : 'max'} index ${minIndex} (${arr[minIndex]}) with element at index ${j} (${arr[j]})`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [5],
+      if (shouldBeConsideredExtreme(arr[j], arr[extremeIndex], direction)) {
+        extremeIndex = j
       }
-      if (shouldSwapComparison(arr[j], arr[minIndex], direction)) {
-        const oldMinIndex = minIndex
-        minIndex = j
-        yield {
-          array: [...arr],
-          highlightedIndices: [oldMinIndex, j],
-          comparisonIndices: [minIndex],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start: i, end: n - 1 },
-          message: `New ${direction === 'asc' ? 'minimum' : 'maximum'} found at index ${minIndex} (${arr[minIndex]})`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [6],
-        }
-      } else {
-        yield {
-          array: [...arr],
-          highlightedIndices: [minIndex, j],
-          comparisonIndices: [minIndex],
-          sortedIndices: Array.from(sortedIndices),
-          activeRange: { start: i, end: n - 1 },
-          message: `Element at index ${minIndex} remains the current ${direction === 'asc' ? 'minimum' : 'maximum'}.`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [7], // Point to 'end if' for the inner if
-        }
-      }
-    } // End inner loop (j)
-    yield {
-      array: [...arr],
-      message: 'End of inner for loop',
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [8],
-      activeRange: { start: i, end: n - 1 },
-      sortedIndices: Array.from(sortedIndices),
-      swappingIndices: null,
     }
 
-    if (minIndex !== i) {
+    // Yield 2: After Inner Loop - Announce the found extreme element for pass i
+    yield {
+      array: [...arr],
+      message: `Pass ${i + 1}/${n - 1}: Found ${direction === 'asc' ? 'minimum' : 'maximum'} for A[${i}] is A[${extremeIndex}] (${arr[extremeIndex]}). Scanned A[${i + 1}...${n - 1}].`,
+      highlightedIndices: [i, extremeIndex], // Target position i and the found extreme index
+      activeRange: currentSearchRange,
+      sortedIndices: Array.from(sortedIndices),
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: [4, 5, 6, 8], // Covers inner loop scan and identification of extremeIndex
+    }
+
+    // Swap if the found extreme element is not already at position i
+    if (extremeIndex !== i) {
+      // Yield 3: Announce impending swap
       yield {
-        array: [...arr],
-        highlightedIndices: [],
-        comparisonIndices: [],
-        swappingIndices: [i, minIndex],
+        array: [...arr], // Array state *before* the swap
+        message: `Pass ${i + 1}/${n - 1}: About to swap target A[${i}] (${arr[i]}) with found extreme A[${extremeIndex}] (${arr[extremeIndex]}).`,
+        swappingIndices: [i, extremeIndex],
+        highlightedIndices: [i, extremeIndex],
+        activeRange: currentSearchRange,
         sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: i, end: n - 1 },
-        message: `Preparing to swap element at index ${i} (${arr[i]}) with found ${direction === 'asc' ? 'minimum' : 'maximum'} at index ${minIndex} (${arr[minIndex]})`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [9],
+        currentPseudoCodeLine: [10], // Corresponds to the swap(...) line in pseudo-code
       }
-      ;[arr[i], arr[minIndex]] = [arr[minIndex], arr[i]]
+
+      // Perform the swap
+      ;[arr[i], arr[extremeIndex]] = [arr[extremeIndex], arr[i]]
       liveStats.swaps = (liveStats.swaps || 0) + 1
       liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-      yield {
-        array: [...arr],
-        highlightedIndices: [i, minIndex],
-        comparisonIndices: [],
-        swappingIndices: [i, minIndex],
-        sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: i, end: n - 1 },
-        message: `Swapped elements. New value at index ${i} is ${arr[i]}.`,
-        currentStats: { ...liveStats },
-        currentPseudoCodeLine: [10],
-      }
     } else {
+      // Yield if no swap is needed (already in place)
       yield {
         array: [...arr],
+        message: `Pass ${i + 1}/${n - 1}: Element A[${i}] (${arr[i]}) is already the correct ${direction === 'asc' ? 'minimum' : 'maximum'}. No swap needed.`,
         highlightedIndices: [i],
-        comparisonIndices: [],
+        activeRange: currentSearchRange,
         sortedIndices: Array.from(sortedIndices),
-        activeRange: { start: i, end: n - 1 },
-        message: `Element at index ${i} (${arr[i]}) is already in its sorted position for this pass. No swap needed.`,
         currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [11], // Point to 'end if' for the outer if
+        currentPseudoCodeLine: [9, 11], // Corresponds to `if extremeIndex != i` (false) and `end if` for the swap block
       }
-    }
-    yield {
-      array: [...arr],
-      message: 'End of if (minIndex !== i) block',
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [11],
-      activeRange: { start: i + 1, end: n - 1 },
-      sortedIndices: Array.from(sortedIndices),
-      swappingIndices: null,
     }
 
     sortedIndices.add(i)
+    // Yield 4: After Swap / Pass Complete
+    yield {
+      array: [...arr],
+      message: `Pass ${i + 1}/${n - 1} complete. A[${i}] (${arr[i]}) is now sorted.`,
+      highlightedIndices: [i],
+      comparisonIndices: [],
+      swappingIndices: null,
+      sortedIndices: Array.from(sortedIndices),
+      activeRange: { start: i + 1, end: n - 1 },
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: [12],
+    }
   } // End outer loop (i)
-  yield {
-    array: [...arr],
-    message: 'End of outer for loop',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [12],
-    sortedIndices: Array.from(sortedIndices),
-    swappingIndices: null,
+
+  // Ensure the last element is marked as sorted (it will be by logic, but explicitly add)
+  if (n > 0 && !sortedIndices.has(n - 1)) {
+    sortedIndices.add(n - 1)
   }
 
-  if (n > 0) sortedIndices.add(n - 1) // Ensure last element is marked sorted
-
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()],
+    sortedIndices: Array.from(sortedIndices),
     message: 'Selection Sort Complete!',
     currentStats: { ...liveStats },
-    swappingIndices: null,
-    currentPseudoCodeLine: [13],
+    currentPseudoCodeLine: [14], // end procedure
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

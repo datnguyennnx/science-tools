@@ -1,8 +1,7 @@
 'use client'
 
-import { SortGenerator } from './types'
+import type { SortGenerator, AuxiliaryStructure } from './types'
 import { SORT_ALGORITHMS } from './algorithms-data'
-import type { SupportedLanguages } from '../components/PseudoCodeDisplay'
 
 export interface AlgorithmComplexity {
   time: {
@@ -29,7 +28,7 @@ export const SpaceComplexityCategory = {
 } as const
 
 type TimeCategory = (typeof TimeComplexityCategory)[keyof typeof TimeComplexityCategory]
-type SpaceCategory = (typeof SpaceComplexityCategory)[keyof typeof SpaceComplexityCategory]
+export type SpaceCategory = (typeof SpaceComplexityCategory)[keyof typeof SpaceComplexityCategory]
 
 export function mapComplexityToCategory(complexity: string): {
   time?: TimeCategory
@@ -91,23 +90,49 @@ export interface AlgorithmOrigin {
   year?: string | number
 }
 
+// Defines the types of performance scenarios for which paths can be highlighted
+export type PerformanceScenario = 'average' | 'best' | 'worst'
+
+// Maps performance scenarios to arrays of pseudo-code line IDs to highlight
+export type PerformanceScenarioPaths = Partial<Record<PerformanceScenario, number[]>>
+
+// Maps a pseudo-code line ID to its corresponding line numbers in actual code languages
+export type PseudoCodeLanguageMap = Partial<
+  Record<'c' | 'cpp' | 'python' | 'java' | 'javascript', number[]>
+>
+
+export type PseudoCodeLineMapping = {
+  [pseudoCodeLineId: number]: PseudoCodeLanguageMap
+}
+
+export interface SortAlgorithmTimeComplexity {
+  best: string
+  average: string
+  worst: string
+}
+
+export interface SortAlgorithmComplexity {
+  time: SortAlgorithmTimeComplexity
+  space: string
+}
+
 export interface SortAlgorithm {
   id: string
   name: string
   description: string
   generator: SortGenerator
-  complexity: AlgorithmComplexity
+  complexity: SortAlgorithmComplexity
+  auxiliaryStructures?: AuxiliaryStructure[]
+  pseudoCode?: string[]
+  performancePaths?: PerformanceScenarioPaths
+  pseudoCodeMapping?: PseudoCodeLineMapping
+  languageExamples?: {
+    c?: string[]
+    cpp?: string[]
+    python?: string[]
+  }
   origin?: AlgorithmOrigin
   img?: string
-  pseudoCodes?: Record<SupportedLanguages, string[]>
-  pseudoCodeMapping?: {
-    [plaintextLineNumber: number]: {
-      c?: number[]
-      cpp?: number[]
-      python?: number[]
-      // Add other languages here if needed in the future
-    }
-  }
   hasAdvancedAuxiliaryVisuals?: boolean
 }
 

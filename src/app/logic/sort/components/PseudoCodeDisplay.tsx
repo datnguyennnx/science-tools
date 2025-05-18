@@ -1,6 +1,6 @@
 'use client'
 
-import { lazy, memo, Suspense, CSSProperties, useMemo } from 'react'
+import { lazy, memo, Suspense, CSSProperties, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Select,
@@ -11,230 +11,356 @@ import {
 } from '@/components/ui/select'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import type { SortStats } from '../engine/types'
-import type { SortAlgorithm } from '../engine/algorithmRegistry'
+import type {
+  SortAlgorithm,
+  PerformanceScenario,
+  PseudoCodeLineMapping,
+  PseudoCodeLanguageMap,
+} from '../engine/algorithmRegistry'
 import { SortStatisticsDisplay } from './SortStatisticsDisplay'
 
 const SyntaxHighlighter = lazy(() =>
   import('react-syntax-highlighter').then(module => ({ default: module.Prism }))
 )
 
-export type SupportedLanguages = 'c' | 'cpp' | 'python' | 'plaintext'
+export type SupportedLanguages = 'plaintext' | 'c' | 'cpp' | 'python'
+
+// Define the processed pseudo-code line structure directly here
+interface ProcessedPseudoCodeLine {
+  id: number // Unique ID for the line (e.g., original line index)
+  lineNumber: number // Display line number (1-indexed)
+  code: string // The actual pseudo-code text
+  indents: number // Number of indentations
+}
+
+const DEFAULT_INDENT_SIZE = 2 // Assume 2 spaces per indent level
 
 interface PseudoCodeDisplayProps {
   algorithmData?: SortAlgorithm
   activeLines?: number[]
-  language: SupportedLanguages
-  onLanguageChange: (newLanguage: SupportedLanguages) => void
+  initialLanguage?: SupportedLanguages
   sortStats?: Readonly<SortStats>
+  performanceScenario: PerformanceScenario
+  setPerformanceScenario: (scenario: PerformanceScenario) => void
 }
 
 const languageOptions: Array<{ value: SupportedLanguages; label: string }> = [
+  { value: 'plaintext', label: 'Pseudo-code' },
   { value: 'c', label: 'C' },
   { value: 'cpp', label: 'C++' },
   { value: 'python', label: 'Python' },
-  { value: 'plaintext', label: 'Plain Text' },
+]
+
+const performanceScenarioOptions: Array<{ value: PerformanceScenario; label: string }> = [
+  { value: 'best', label: 'Best Case' },
+  { value: 'average', label: 'Average Case' },
+  { value: 'worst', label: 'Worst Case' },
 ]
 
 const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
   algorithmData,
   activeLines,
-  language,
-  onLanguageChange,
+  initialLanguage = 'plaintext',
   sortStats,
+  performanceScenario,
+  setPerformanceScenario,
 }: PseudoCodeDisplayProps): React.JSX.Element {
-  const currentPseudoCodeLines = algorithmData?.pseudoCodes?.[language]
-  const hasPseudoCode =
-    currentPseudoCodeLines &&
-    Array.isArray(currentPseudoCodeLines) &&
-    currentPseudoCodeLines.length > 0
+  const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguages>(initialLanguage)
+
+  const rawPseudoCodeLines = algorithmData?.pseudoCode
+  const languageExamples = algorithmData?.languageExamples
+  const pseudoCodeMapping = algorithmData?.pseudoCodeMapping
+
+  const processedPseudoCodeLines: ProcessedPseudoCodeLine[] = useMemo(() => {
+    if (!rawPseudoCodeLines || rawPseudoCodeLines.length === 0) {
+      return []
+    }
+    return rawPseudoCodeLines.map((line, index) => {
+      let indents = 0
+      let code = line
+      const match = line.match(/^(\\s*)/)
+      if (match) {
+        const leadingSpaces = match[1].length
+        indents = Math.floor(leadingSpaces / DEFAULT_INDENT_SIZE)
+        code = line.substring(leadingSpaces)
+      }
+      return {
+        id: index, // Use original index as ID
+        lineNumber: index + 1,
+        code: code,
+        indents: indents,
+      }
+    })
+  }, [rawPseudoCodeLines])
+
+  const hasRawPseudoCode = useMemo(() => {
+    return processedPseudoCodeLines.length > 0
+  }, [processedPseudoCodeLines])
+
+  const hasLanguageExamples =
+    languageExamples && Object.values(languageExamples).some(arr => arr && arr.length > 0)
+
+  const codeStringToDisplayForSyntaxHighlight = useMemo(() => {
+    if (currentLanguage === 'plaintext') return ''
+    return (
+      languageExamples?.[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>]?.join('\n') ||
+      ''
+    )
+  }, [currentLanguage, languageExamples])
+
+  const actualDisplayLanguageForSyntaxHighlight = useMemo(() => {
+    if (currentLanguage === 'plaintext') return 'text'
+    return currentLanguage
+  }, [currentLanguage])
+
   const hasStats = !!sortStats && Object.keys(sortStats).length > 0
   const algorithmName = algorithmData?.name
 
-  const preprocessedMapping = useMemo(() => {
-    if (
-      !algorithmData?.pseudoCodeMapping ||
-      language === 'plaintext' ||
-      !algorithmData.pseudoCodeMapping
-    ) {
-      return null
-    }
+  const activePseudoCodeLineIdsSet = useMemo(() => {
+    return activeLines ? new Set(activeLines) : new Set<number>()
+  }, [activeLines])
 
-    const mapping = algorithmData.pseudoCodeMapping
-    const directMap = new Map<number, number[]>()
-
-    for (const ptLineStr in mapping) {
-      const ptLine = parseInt(ptLineStr, 10) // ptLine is 0-indexed key from pseudoCodeMapping
-      const langSpecificLines1Indexed =
-        mapping[ptLine]?.[language as Exclude<SupportedLanguages, 'plaintext'>]
-      if (langSpecificLines1Indexed) {
-        directMap.set(
-          ptLine,
-          langSpecificLines1Indexed.map(l => l - 1) // Convert 1-indexed to 0-indexed here
-        )
-      }
-    }
-    return directMap
-  }, [algorithmData, language])
-
-  const languageSpecificActiveLinesSet = useMemo(() => {
-    if (!activeLines || activeLines.length === 0) {
+  const mappedActiveLangLinesSet = useMemo(() => {
+    if (currentLanguage === 'plaintext' || !pseudoCodeMapping || !activeLines) {
       return new Set<number>()
     }
-
-    if (language === 'plaintext') {
-      // Assuming activeLines from engine are 0-indexed and directly map to plaintext lines.
-      // The SyntaxHighlighter component expects 0-indexed lines in this Set for highlighting.
-      return new Set(activeLines)
-    }
-
-    if (!preprocessedMapping || !algorithmData?.pseudoCodeMapping) {
-      return new Set<number>()
-    }
-
-    const lines = new Set<number>()
-    activeLines.forEach(ptLine => {
-      // ptLine from activeLines is 0-indexed from the engine.
-      const mappedLines = preprocessedMapping.get(ptLine)
-      if (mappedLines) {
-        mappedLines.forEach(l => lines.add(l))
+    const mappedLines = new Set<number>()
+    activeLines.forEach(activePtId => {
+      const lineMapping = pseudoCodeMapping as PseudoCodeLineMapping
+      const langSpecificLines =
+        lineMapping[activePtId]?.[currentLanguage as keyof PseudoCodeLanguageMap]
+      if (langSpecificLines) {
+        langSpecificLines.forEach(l => mappedLines.add(l))
       }
     })
-    return lines
-  }, [activeLines, language, preprocessedMapping, algorithmData?.pseudoCodeMapping])
+    return mappedLines
+  }, [currentLanguage, pseudoCodeMapping, activeLines])
 
-  if (!hasPseudoCode && !hasStats) {
+  const scenarioPathLineIdsSet = useMemo(() => {
+    if (
+      !algorithmData?.performancePaths ||
+      !performanceScenario ||
+      performanceScenario === 'average'
+    ) {
+      return new Set<number>()
+    }
+    const pathLineIds = algorithmData.performancePaths[performanceScenario]
+    return pathLineIds ? new Set(pathLineIds) : new Set<number>()
+  }, [algorithmData, performanceScenario])
+
+  const mappedScenarioPathLangLinesSet = useMemo(() => {
+    if (
+      currentLanguage === 'plaintext' ||
+      !pseudoCodeMapping ||
+      !algorithmData?.performancePaths ||
+      !performanceScenario ||
+      performanceScenario === 'average'
+    ) {
+      return new Set<number>()
+    }
+
+    const pathLineIds = algorithmData.performancePaths[performanceScenario]
+    if (!pathLineIds) return new Set<number>()
+
+    const mappedLines = new Set<number>()
+    pathLineIds.forEach(ptId => {
+      const lineMapping = pseudoCodeMapping as PseudoCodeLineMapping
+      const langSpecificLines = lineMapping[ptId]?.[currentLanguage as keyof PseudoCodeLanguageMap]
+      if (langSpecificLines) {
+        langSpecificLines.forEach(l => mappedLines.add(l))
+      }
+    })
+    return mappedLines
+  }, [currentLanguage, pseudoCodeMapping, algorithmData, performanceScenario])
+
+  const displayableLanguageOptions = useMemo(() => {
+    return languageOptions.filter(opt => {
+      if (opt.value === 'plaintext') return hasRawPseudoCode
+      return (
+        languageExamples &&
+        languageExamples[opt.value as Exclude<SupportedLanguages, 'plaintext'>] &&
+        languageExamples[opt.value as Exclude<SupportedLanguages, 'plaintext'>]!.length > 0
+      )
+    })
+  }, [hasRawPseudoCode, languageExamples])
+
+  if (!hasRawPseudoCode && !hasLanguageExamples && !hasStats) {
     return (
       <Card className="h-full flex flex-col">
         <CardHeader>
           <CardTitle>Algorithm Details</CardTitle>
-          <CardDescription>
-            {algorithmName
-              ? `Details for ${algorithmName}`
-              : 'No algorithm selected or details available.'}
-          </CardDescription>
         </CardHeader>
         <CardContent className="flex-grow flex items-center justify-center">
           <p className="text-muted-foreground">
-            {algorithmName
-              ? 'Pseudo-code and statistics not available.'
-              : 'Select an algorithm to view its details.'}
+            No details available for {algorithmName || 'the selected algorithm'}.
           </p>
         </CardContent>
       </Card>
     )
   }
 
-  const codeString = hasPseudoCode ? currentPseudoCodeLines.join('\n') : ''
-  const highlighterLanguage = language === 'plaintext' ? 'text' : language
+  const showPlaintextPseudoCode = currentLanguage === 'plaintext' && hasRawPseudoCode
+  const showSyntaxHighlightedCode =
+    currentLanguage !== 'plaintext' &&
+    languageExamples &&
+    languageExamples[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>] &&
+    languageExamples[currentLanguage as Exclude<SupportedLanguages, 'plaintext'>]!.length > 0
 
   return (
-    <Card>
-      {hasPseudoCode && (
+    <Card className="overflow-hidden flex flex-col h-full">
+      {(hasRawPseudoCode || hasLanguageExamples) && (
         <CardHeader>
-          <div className="flex flex-row justify-between items-center">
-            <CardTitle>Algorithm Pseudo-code</CardTitle>
-            <Select
-              value={language}
-              onValueChange={value => onLanguageChange(value as SupportedLanguages)}
-            >
-              <SelectTrigger className="w-fit space-x-2">
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent>
-                {languageOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-row justify-between items-center flex-wrap gap-2">
+            <CardTitle>Algorithm Code</CardTitle>
+            <div className="flex gap-2 flex-wrap">
+              {displayableLanguageOptions.length > 1 && (
+                <Select
+                  value={currentLanguage}
+                  onValueChange={value => setCurrentLanguage(value as SupportedLanguages)}
+                >
+                  <SelectTrigger className="w-fit space-x-2 h-9">
+                    <SelectValue placeholder="Language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {displayableLanguageOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select
+                value={performanceScenario}
+                onValueChange={value => setPerformanceScenario(value as PerformanceScenario)}
+              >
+                <SelectTrigger className="w-fit space-x-2 h-9">
+                  <SelectValue placeholder="Scenario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {performanceScenarioOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <CardDescription>
-            {`Step-by-step logic for ${algorithmName || 'the selected algorithm'}`}
+            {`Logic for ${algorithmName || 'the selected algorithm'}${
+              currentLanguage !== 'plaintext'
+                ? ` (${languageOptions.find(l => l.value === currentLanguage)?.label || currentLanguage})`
+                : ' (Pseudo-code)'
+            }`}
+            {` - Scenario: ${performanceScenarioOptions.find(s => s.value === performanceScenario)?.label || performanceScenario}`}
           </CardDescription>
         </CardHeader>
       )}
 
-      {hasPseudoCode && (
-        <CardContent className="text-sm no-scrollbar">
-          <Suspense fallback={<div className="p-4 text-center">Loading code highlighter...</div>}>
+      {showPlaintextPseudoCode && processedPseudoCodeLines.length > 0 && (
+        <CardContent className="text-sm overflow-auto flex-grow no-scrollbar font-mono">
+          <div className="p-1">
+            {processedPseudoCodeLines.map((line: ProcessedPseudoCodeLine) => {
+              const style: React.CSSProperties = {
+                paddingLeft: `${line.indents * 1.5}rem`,
+                lineHeight: '1.5',
+                minHeight: '1.5em',
+                display: 'flex',
+              }
+              const isActive = activePseudoCodeLineIdsSet.has(line.id)
+              const isScenarioPath = scenarioPathLineIdsSet.has(line.id)
+
+              if (isActive && isScenarioPath) {
+                style.backgroundColor = 'var(--code-highlight-active-scenario-path)'
+              } else if (isActive) {
+                style.backgroundColor = 'var(--code-highlight-active)'
+              } else if (isScenarioPath) {
+                style.backgroundColor = 'var(--code-highlight-scenario-path)'
+              }
+
+              return (
+                <div key={line.id} style={style}>
+                  <span
+                    style={{
+                      minWidth: '3.0em',
+                      paddingRight: '1em',
+                      textAlign: 'right',
+                      color: '#888',
+                      userSelect: 'none',
+                    }}
+                  >
+                    {line.lineNumber}
+                  </span>
+                  <code
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      overflowWrap: 'break-word',
+                      flexGrow: 1,
+                      minWidth: 0,
+                    }}
+                  >
+                    {line.code}
+                  </code>
+                </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      )}
+
+      {showSyntaxHighlightedCode && (
+        <CardContent className="text-sm overflow-auto flex-grow no-scrollbar">
+          <Suspense fallback={<div className="p-4 text-center\">Loading code highlighter...</div>}>
             <SyntaxHighlighter
-              language={highlighterLanguage}
+              language={actualDisplayLanguageForSyntaxHighlight}
               style={oneDark}
               showLineNumbers
               wrapLines={true}
               lineNumberStyle={
                 {
-                  minWidth: '3em',
+                  minWidth: '3.5em',
+                  paddingRight: '1em',
                   textAlign: 'right',
-                  color: '#777',
+                  color: '#888',
+                  userSelect: 'none',
                 } as CSSProperties
               }
               lineProps={(lineNumber: number) => {
                 const style: React.CSSProperties = {
                   display: 'block',
                   width: '100%',
-                  wordBreak: 'break-all',
+                  wordBreak: 'break-word',
                   whiteSpace: 'pre-wrap',
                 }
 
-                // lineNumber is 1-indexed from SyntaxHighlighter
-                const lineIndexZeroBased = lineNumber - 1
+                const isActiveSyntaxLine = mappedActiveLangLinesSet.has(lineNumber)
+                const isScenarioPathSyntaxLine = mappedScenarioPathLangLinesSet.has(lineNumber)
 
-                if (languageSpecificActiveLinesSet.size > 0 && currentPseudoCodeLines) {
-                  const actualLineContent = currentPseudoCodeLines[lineIndexZeroBased] ?? ''
-                  const trimmedLine = actualLineContent.trim()
-                  // Common comment patterns: //, #, ; (assembly), /* ... */, <!-- ... -->
-                  // Regex simplified for common single-line comments in typical pseudo-code languages
-                  const isIgnorableLine = /^\s*($|(\/\/|#|;|\/\*|\*\/|<!--|-->|--)).*$/.test(
-                    trimmedLine
-                  )
-
-                  if (languageSpecificActiveLinesSet.has(lineIndexZeroBased) && !isIgnorableLine) {
-                    style.backgroundColor = 'rgba(255, 255, 255, 0.2)'
-                    style.fontWeight = 'bold'
-                  }
+                if (isActiveSyntaxLine && isScenarioPathSyntaxLine) {
+                  style.backgroundColor = 'var(--code-highlight-active-scenario-path)'
+                } else if (isActiveSyntaxLine) {
+                  style.backgroundColor = 'var(--code-highlight-active)'
+                } else if (isScenarioPathSyntaxLine) {
+                  style.backgroundColor = 'var(--code-highlight-scenario-path)'
                 }
                 return { style }
               }}
-              customStyle={
-                {
-                  margin: 0,
-                  borderRadius: '0.375rem',
-                  backgroundColor: 'var(--syntax-bg, #282c34)',
-                  fontSize: '0.75rem',
-                  lineHeight: '1.75',
-                } as CSSProperties
-              }
-              codeTagProps={{
-                style: {
-                  fontFamily: 'var(--font-mono)',
-                } as CSSProperties,
-              }}
             >
-              {codeString}
+              {codeStringToDisplayForSyntaxHighlight}
             </SyntaxHighlighter>
           </Suspense>
         </CardContent>
       )}
 
       {hasStats && (
-        <>
-          {!hasPseudoCode && (
-            <CardHeader>
-              <CardTitle>Performance Metrics</CardTitle>
-              <CardDescription>
-                {`Performance data for ${algorithmName || 'the selected algorithm'}`}
-              </CardDescription>
-            </CardHeader>
-          )}
-          <CardContent>
-            <SortStatisticsDisplay stats={sortStats} />
-          </CardContent>
-        </>
+        <CardContent className="border-t pt-4">
+          <SortStatisticsDisplay stats={sortStats} />
+        </CardContent>
       )}
     </Card>
   )
 })
 
+MemoizedPseudoCodeDisplay.displayName = 'PseudoCodeDisplay'
 export { MemoizedPseudoCodeDisplay as PseudoCodeDisplay }

@@ -1,6 +1,6 @@
 'use client'
 
-import { SortGenerator, SortStep, SortStats } from '../types'
+import { SortGenerator, SortStep, SortStats, AuxiliaryStructure } from '../types'
 
 interface TreeNode {
   value: number
@@ -10,10 +10,34 @@ interface TreeNode {
   id: number // Let's use a simple counter for unique ID for visualization
 }
 
+interface BstVizNode {
+  value: number
+  id: number
+  isHighlighted?: boolean
+}
+
 let nodeIdCounter = 0
+const mainBstAuxId = 'tree-bst-visualization'
 
 const createNode = (value: number): TreeNode => {
   return { value, left: null, right: null, id: nodeIdCounter++ }
+}
+
+// Helper to create the BST AuxiliaryStructure
+const getBstAuxStructure = (
+  title: string,
+  currentBstElements: ReadonlyArray<BstVizNode>,
+  highlightedNodeId?: number
+): AuxiliaryStructure => {
+  return {
+    id: mainBstAuxId,
+    title,
+    data: currentBstElements.map(n => ({
+      ...n,
+      isHighlighted: n.id === highlightedNodeId, // Chart can use this for styling
+    })),
+    displaySlot: mainBstAuxId,
+  }
 }
 
 // Generator for inserting a node into the BST
@@ -22,67 +46,64 @@ const insertNodeGenerator = function* (
   valueToInsert: number,
   originalIndex: number,
   fullArrayRef: ReadonlyArray<number>,
-  bstElementsForViz: { value: number; id: number }[],
-  liveStats: Partial<SortStats> // Added liveStats
+  bstElementsForViz: BstVizNode[],
+  liveStats: Partial<SortStats>,
+  currentDepth: number // For messages
 ): Generator<SortStep, TreeNode, TreeNode | null> {
+  const currentStructTitle = node
+    ? `BST Lvl ${currentDepth}: Inserting ${valueToInsert}. Comparing with ${node.value} (ID ${node.id})`
+    : `BST Lvl ${currentDepth}: Inserting ${valueToInsert} as new root/leaf.`
+
   if (node !== null) {
     liveStats.comparisons = (liveStats.comparisons || 0) + 1
   }
+
   yield {
     array: [...fullArrayRef],
     mainArrayLabel: 'Input Array',
     highlightedIndices: [originalIndex],
-    auxiliaryStructures: [
-      {
-        id: 'bstNodes',
-        title: 'BST Nodes (Building)',
-        data: [...bstElementsForViz],
-      },
-    ],
-    message: node
-      ? `Inserting ${valueToInsert}. Comparing with node ${node.value} (ID: ${node.id}).`
-      : `Inserting ${valueToInsert} as new root/leaf.`,
+    currentPassAuxiliaryStructure: getBstAuxStructure(
+      currentStructTitle,
+      bstElementsForViz,
+      node?.id
+    ),
+    historicalAuxiliaryStructures: [],
+    message: currentStructTitle,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: node ? [14] : [11],
+    currentPseudoCodeLine: node ? [14] : [11], // Approx. lines from original pseudocode
   }
 
   if (node === null) {
     const newNode = createNode(valueToInsert)
-    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1 // For node creation
+    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
     bstElementsForViz.push({ value: valueToInsert, id: newNode.id })
+    const nodeCreatedTitle = `BST Lvl ${currentDepth}: Inserted ${valueToInsert} as new node (ID ${newNode.id})`
     yield {
       array: [...fullArrayRef],
       mainArrayLabel: 'Input Array',
       highlightedIndices: [originalIndex],
-      auxiliaryStructures: [
-        {
-          id: 'bstNodes',
-          title: 'BST Nodes (Building)',
-          data: [...bstElementsForViz],
-        },
-      ],
-      message: `Inserted ${valueToInsert} as a new node (ID: ${newNode.id}).`,
+      currentPassAuxiliaryStructure: getBstAuxStructure(
+        nodeCreatedTitle,
+        bstElementsForViz,
+        newNode.id
+      ),
+      historicalAuxiliaryStructures: [],
+      message: nodeCreatedTitle,
       currentStats: { ...liveStats },
       currentPseudoCodeLine: [12],
     }
     return newNode
   }
 
-  // valueToInsert < node.value was already counted if node was not null
   if (valueToInsert < node.value) {
+    const goingLeftTitle = `BST Lvl ${currentDepth}: ${valueToInsert} < ${node.value}. Going left.`
     yield {
-      // Before recursive call to left
       array: [...fullArrayRef],
       mainArrayLabel: 'Input Array',
       highlightedIndices: [originalIndex],
-      auxiliaryStructures: [
-        {
-          id: 'bstNodes',
-          title: 'BST Nodes (Building)',
-          data: [...bstElementsForViz],
-        },
-      ],
-      message: `Going left from node ${node.value}. Calling insert for left child.`,
+      currentPassAuxiliaryStructure: getBstAuxStructure(goingLeftTitle, bstElementsForViz, node.id),
+      historicalAuxiliaryStructures: [],
+      message: goingLeftTitle,
       currentStats: { ...liveStats },
       currentPseudoCodeLine: [15],
     }
@@ -92,22 +113,22 @@ const insertNodeGenerator = function* (
       originalIndex,
       fullArrayRef,
       bstElementsForViz,
-      liveStats
+      liveStats,
+      currentDepth + 1
     )
   } else {
+    const goingRightTitle = `BST Lvl ${currentDepth}: ${valueToInsert} >= ${node.value}. Going right.`
     yield {
-      // Before recursive call to right
       array: [...fullArrayRef],
       mainArrayLabel: 'Input Array',
       highlightedIndices: [originalIndex],
-      auxiliaryStructures: [
-        {
-          id: 'bstNodes',
-          title: 'BST Nodes (Building)',
-          data: [...bstElementsForViz],
-        },
-      ],
-      message: `Going right from node ${node.value}. Calling insert for right child.`,
+      currentPassAuxiliaryStructure: getBstAuxStructure(
+        goingRightTitle,
+        bstElementsForViz,
+        node.id
+      ),
+      historicalAuxiliaryStructures: [],
+      message: goingRightTitle,
       currentStats: { ...liveStats },
       currentPseudoCodeLine: [17],
     }
@@ -117,26 +138,22 @@ const insertNodeGenerator = function* (
       originalIndex,
       fullArrayRef,
       bstElementsForViz,
-      liveStats
+      liveStats,
+      currentDepth + 1
     )
   }
+  const returnTitle = `BST Lvl ${currentDepth}: Insert for ${valueToInsert} returning from node ${node.value}.`
   yield {
-    // After recursive calls return, before returning node
     array: [...fullArrayRef],
     mainArrayLabel: 'Input Array',
     highlightedIndices: [originalIndex],
-    auxiliaryStructures: [
-      {
-        id: 'bstNodes',
-        title: 'BST Nodes (Building)',
-        data: [...bstElementsForViz],
-      },
-    ],
-    message: `Insert call for value ${valueToInsert} at current level (node ${node.value}) is returning.`,
+    currentPassAuxiliaryStructure: getBstAuxStructure(returnTitle, bstElementsForViz, node.id),
+    historicalAuxiliaryStructures: [],
+    message: returnTitle,
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [19],
   }
-  return node // Return the (possibly unchanged) node reference
+  return node
 }
 
 // Generator for in-order traversal of the BST
@@ -144,25 +161,28 @@ const inOrderTraversalGenerator = function* (
   node: TreeNode | null,
   outputArray: number[],
   outputIndexRef: { current: number },
-  bstElementsForViz: { value: number; id: number }[],
+  bstElementsForViz: ReadonlyArray<BstVizNode>,
   direction: 'asc' | 'desc',
-  liveStats: Partial<SortStats> // Added liveStats
+  liveStats: Partial<SortStats>,
+  currentDepth: number // For messages
 ): Generator<SortStep, void, void> {
   if (node === null) {
-    yield {
-      array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-      mainArrayLabel: 'Output Array (Traversal Check)',
-      message: `InOrder: Reached null node, returning.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [23],
-    }
+    // Optional: yield step for reaching null if very granular detail is needed
+    // For now, matching original behavior of only yielding if node is not null initially.
     return
   }
 
+  const baseTraversalTitle = `BST Lvl ${currentDepth} In-Order: Node ${node.value} (ID ${node.id})`
   yield {
     array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-    mainArrayLabel: 'Output Array (Traversal Check)',
-    message: `InOrder: Processing node ${node.value}. (Condition 'node is not null' is true)`,
+    mainArrayLabel: 'Output Array (Building)',
+    currentPassAuxiliaryStructure: getBstAuxStructure(
+      baseTraversalTitle,
+      bstElementsForViz,
+      node.id
+    ),
+    historicalAuxiliaryStructures: [],
+    message: `${baseTraversalTitle} - Processing.`,
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [23],
   }
@@ -170,10 +190,17 @@ const inOrderTraversalGenerator = function* (
   const traverseLeftFirst = direction === 'asc'
 
   if (traverseLeftFirst) {
+    const goLeftTitle = `${baseTraversalTitle} - Traversing Left`
     yield {
       array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-      mainArrayLabel: 'Output Array (Recursive Call)',
-      message: `InOrder: Traversing left from ${node.value}.`,
+      mainArrayLabel: 'Output Array (Building)',
+      currentPassAuxiliaryStructure: getBstAuxStructure(
+        goLeftTitle,
+        bstElementsForViz,
+        node.left?.id
+      ),
+      historicalAuxiliaryStructures: [],
+      message: goLeftTitle,
       currentStats: { ...liveStats },
       currentPseudoCodeLine: [25],
     }
@@ -183,15 +210,24 @@ const inOrderTraversalGenerator = function* (
       outputIndexRef,
       bstElementsForViz,
       direction,
-      liveStats
+      liveStats,
+      currentDepth + 1
     )
   } else {
+    // Descending: traverse right first
+    const goRightTitle = `${baseTraversalTitle} - Traversing Right (Desc)`
     yield {
       array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-      mainArrayLabel: 'Output Array (Recursive Call)',
-      message: `InOrder (Desc): Traversing right from ${node.value}.`,
+      mainArrayLabel: 'Output Array (Building)',
+      currentPassAuxiliaryStructure: getBstAuxStructure(
+        goRightTitle,
+        bstElementsForViz,
+        node.right?.id
+      ),
+      historicalAuxiliaryStructures: [],
+      message: goRightTitle,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [29],
+      currentPseudoCodeLine: [29], // Adjusted for descending right traversal
     }
     yield* inOrderTraversalGenerator(
       node.right,
@@ -199,55 +235,44 @@ const inOrderTraversalGenerator = function* (
       outputIndexRef,
       bstElementsForViz,
       direction,
-      liveStats
+      liveStats,
+      currentDepth + 1
     )
   }
 
-  // Visit node
-  yield {
-    array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-    mainArrayLabel: 'Output Array (Traversal)',
-    auxiliaryStructures: [
-      {
-        id: 'bstNodes',
-        title: 'BST Nodes (Traversal)',
-        data: bstElementsForViz.map(n => ({
-          ...n,
-          isVisiting: n.id === node.id,
-        })),
-      },
-    ],
-    highlightedIndices: [outputIndexRef.current],
-    message: `In-order traversal: Visiting node ${node.value} (ID: ${node.id}). Placing at index ${outputIndexRef.current}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [26],
-  }
+  // Visit current node (place into outputArray)
+  const visitNodeTitle = `${baseTraversalTitle} - Visiting & Outputting ${node.value}`
   outputArray[outputIndexRef.current] = node.value
   liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 1
+  const currentOutputIdx = outputIndexRef.current
   outputIndexRef.current++
+
   yield {
     array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-    mainArrayLabel: 'Output Array (Placed)',
-    auxiliaryStructures: [
-      {
-        id: 'bstNodes',
-        title: 'BST Nodes (Traversal)',
-        data: bstElementsForViz,
-      },
-    ],
-    highlightedIndices: [outputIndexRef.current - 1],
-    message: `Placed ${node.value} at index ${outputIndexRef.current - 1}. Output array: [${outputArray.slice(0, outputIndexRef.current).join(', ')}]`,
+    mainArrayLabel: 'Output Array (Building)',
+    highlightedIndices: [currentOutputIdx], // Highlight where value was placed
+    currentPassAuxiliaryStructure: getBstAuxStructure(visitNodeTitle, bstElementsForViz, node.id),
+    historicalAuxiliaryStructures: [],
+    message: `${visitNodeTitle} to Output[${currentOutputIdx}].`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [26],
+    currentPseudoCodeLine: [26], // visit node
   }
 
   if (traverseLeftFirst) {
+    // Ascending: traverse right second
+    const goRightTitle = `${baseTraversalTitle} - Traversing Right`
     yield {
       array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-      mainArrayLabel: 'Output Array (Recursive Call)',
-      message: `InOrder: Traversing right from ${node.value}.`,
+      mainArrayLabel: 'Output Array (Building)',
+      currentPassAuxiliaryStructure: getBstAuxStructure(
+        goRightTitle,
+        bstElementsForViz,
+        node.right?.id
+      ),
+      historicalAuxiliaryStructures: [],
+      message: goRightTitle,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [27],
+      currentPseudoCodeLine: [27], // Adjusted for ascending right traversal
     }
     yield* inOrderTraversalGenerator(
       node.right,
@@ -255,15 +280,24 @@ const inOrderTraversalGenerator = function* (
       outputIndexRef,
       bstElementsForViz,
       direction,
-      liveStats
+      liveStats,
+      currentDepth + 1
     )
   } else {
+    // Descending: traverse left second
+    const goLeftTitle = `${baseTraversalTitle} - Traversing Left (Desc)`
     yield {
       array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-      mainArrayLabel: 'Output Array (Recursive Call)',
-      message: `InOrder (Desc): Traversing left from ${node.value}.`,
+      mainArrayLabel: 'Output Array (Building)',
+      currentPassAuxiliaryStructure: getBstAuxStructure(
+        goLeftTitle,
+        bstElementsForViz,
+        node.left?.id
+      ),
+      historicalAuxiliaryStructures: [],
+      message: goLeftTitle,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [31],
+      currentPseudoCodeLine: [25], // Reusing for descending left traversal
     }
     yield* inOrderTraversalGenerator(
       node.left,
@@ -271,15 +305,23 @@ const inOrderTraversalGenerator = function* (
       outputIndexRef,
       bstElementsForViz,
       direction,
-      liveStats
+      liveStats,
+      currentDepth + 1
     )
   }
+  const returnFromNodeTitle = `${baseTraversalTitle} - Traversal from this node complete.`
   yield {
     array: [...outputArray].map((v, i) => (i < outputIndexRef.current ? v : NaN)),
-    mainArrayLabel: 'Output Array (Traversal Return)',
-    message: `InOrder: Finished processing node ${node.value} and its subtrees.`,
+    mainArrayLabel: 'Output Array (Building)',
+    currentPassAuxiliaryStructure: getBstAuxStructure(
+      returnFromNodeTitle,
+      bstElementsForViz,
+      node.id
+    ),
+    historicalAuxiliaryStructures: [],
+    message: returnFromNodeTitle,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [28],
+    currentPseudoCodeLine: [28], // end if node is not null
   }
 }
 
@@ -288,127 +330,134 @@ export const treeSortGenerator: SortGenerator = function* (
   direction: 'asc' | 'desc' = 'asc'
 ) {
   const n = initialArray.length
+  let root: TreeNode | null = null
+  const bstElementsForViz: BstVizNode[] = [] // Stores {value, id} for visualization
+  nodeIdCounter = 0 // Reset node ID counter for each sort run
+
   const liveStats: Partial<SortStats> = {
     algorithmName: 'Tree Sort',
     numElements: n,
     comparisons: 0,
-    mainArrayWrites: 0,
-    auxiliaryArrayWrites: 0, // For BST node creations
-    swaps: 0, // Tree sort doesn't swap in the array
+    mainArrayWrites: 0, // For writing to the final sorted array during traversal
+    auxiliaryArrayWrites: 0, // For creating tree nodes
+    swaps: 0, // Tree sort doesn't swap in the typical sense
   }
 
   if (n <= 1) {
+    const finalMessage = 'Array already sorted or empty.'
+    if (n === 1) {
+      // If array has one element, create a root node for visualization
+      const singleNode = createNode(initialArray[0])
+      bstElementsForViz.push({ value: singleNode.value, id: singleNode.id })
+    }
     yield {
       array: [...initialArray],
       sortedIndices: [...Array(n).keys()],
-      message: 'Array already sorted or empty.',
+      message: finalMessage,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [0],
+      currentPseudoCodeLine: [0, 1],
+      currentPassAuxiliaryStructure: getBstAuxStructure('BST (Initial/Empty)', bstElementsForViz),
+      historicalAuxiliaryStructures: [],
     }
-    return { finalArray: initialArray, stats: liveStats as SortStats }
+    return {
+      finalArray: [...initialArray],
+      stats: liveStats as SortStats,
+      finalAuxiliaryStructures: getBstAuxStructure('BST (Final State)', bstElementsForViz),
+    }
   }
-
-  nodeIdCounter = 0
-  let root: TreeNode | null = null
-  const bstElementsForViz: { value: number; id: number }[] = []
 
   yield {
     array: [...initialArray],
     mainArrayLabel: 'Input Array',
     message: 'Starting Tree Sort: Building BST.',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [1],
+    currentPseudoCodeLine: [3],
+    currentPassAuxiliaryStructure: getBstAuxStructure(
+      'BST (Initial - Building)',
+      bstElementsForViz
+    ),
+    historicalAuxiliaryStructures: [],
   }
 
-  // Build BST (Pseudo line 3 comment)
-  yield {
-    // Signify start of BST build loop section
-    array: [...initialArray],
-    mainArrayLabel: 'Input Array',
-    message: 'Beginning to insert elements into BST.',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [3],
-  }
   for (let i = 0; i < n; i++) {
+    const valueToInsert = initialArray[i]
+    const insertPhaseTitle = `BST Build: Inserting ${valueToInsert} (from input index ${i})`
     yield {
+      // Yield before diving into insertNodeGenerator for this element
       array: [...initialArray],
       mainArrayLabel: 'Input Array',
       highlightedIndices: [i],
-      message: `Inserting element ${initialArray[i]} (from index ${i}) into BST.`,
+      currentPassAuxiliaryStructure: getBstAuxStructure(insertPhaseTitle, bstElementsForViz),
+      historicalAuxiliaryStructures: [],
+      message: insertPhaseTitle,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [3],
+      currentPseudoCodeLine: [4, 5], // Corresponds to loop and call to insert
     }
     root = yield* insertNodeGenerator(
       root,
-      initialArray[i],
+      valueToInsert,
       i,
       initialArray,
       bstElementsForViz,
-      liveStats
+      liveStats,
+      0
     )
-    yield {
-      array: [...initialArray],
-      mainArrayLabel: 'Input Array',
-      highlightedIndices: [i],
-      auxiliaryStructures: [
-        {
-          id: 'bstNodes',
-          title: 'BST Nodes (Building)',
-          data: [...bstElementsForViz],
-        },
-      ],
-      message: `Element ${initialArray[i]} inserted. Root is now ${root ? root.value : 'null'}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [4],
-    }
   }
-  // Pseudo line 6 is closing brace of insert loop
+
+  const bstBuildCompleteTitle = 'BST Build Complete.'
+  const finalTreeStructureAfterBuild = getBstAuxStructure(bstBuildCompleteTitle, bstElementsForViz)
   yield {
-    array: [...initialArray],
+    array: [...initialArray], // Show original array state after BST build
     mainArrayLabel: 'Input Array (BST Built)',
-    auxiliaryStructures: [
-      {
-        id: 'bstNodes',
-        title: 'BST Nodes (Final Structure)',
-        data: [...bstElementsForViz],
-      },
-    ],
-    message: 'BST construction complete. Starting in-order traversal.',
+    message: bstBuildCompleteTitle,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [5],
+    currentPseudoCodeLine: [6], // End of insertion loop
+    currentPassAuxiliaryStructure: finalTreeStructureAfterBuild,
+    historicalAuxiliaryStructures: [],
   }
 
-  // In-order traversal to get sorted array
-  const sortedArr = new Array(n)
-  liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + n // Initialization of sortedArr
-  yield {
-    // Before starting traversal
-    array: [...sortedArr].map(v => (v === undefined ? NaN : v)),
-    mainArrayLabel: 'Output Array (Initializing)',
-    message: 'Initialized empty array for sorted output.',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [6],
-  }
-
+  const outputArray = new Array<number>(n).fill(NaN) // For visualization, fill with NaN initially
   const outputIndexRef = { current: 0 }
+
+  const traversalStartTitle = `Starting In-Order Traversal (${direction === 'asc' ? 'Ascending' : 'Descending'}).`
+  yield {
+    array: [...outputArray],
+    mainArrayLabel: 'Output Array (Preparing Traversal)',
+    message: traversalStartTitle,
+    currentStats: { ...liveStats },
+    currentPseudoCodeLine: [8], // call inOrderTraversal
+    currentPassAuxiliaryStructure: finalTreeStructureAfterBuild, // Show the tree that will be traversed
+    historicalAuxiliaryStructures: [], // Or could be an earlier snapshot if needed
+  }
+
   yield* inOrderTraversalGenerator(
     root,
-    sortedArr,
+    outputArray,
     outputIndexRef,
     bstElementsForViz,
     direction,
-    liveStats
+    liveStats,
+    0
   )
 
-  // Final state confirmation
+  const traversalCompleteTitle = 'In-Order Traversal Complete. Array is sorted.'
   yield {
-    array: [...sortedArr],
+    array: [...outputArray],
     mainArrayLabel: 'Sorted Array',
     sortedIndices: [...Array(n).keys()],
-    message: 'Tree Sort Complete!',
+    message: traversalCompleteTitle,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [7],
+    currentPseudoCodeLine: [9], // after traversal
+    currentPassAuxiliaryStructure: getBstAuxStructure(
+      'BST (Traversal Complete)',
+      bstElementsForViz
+    ),
+    historicalAuxiliaryStructures: [],
   }
 
-  return { finalArray: sortedArr, stats: liveStats as SortStats }
+  return {
+    finalArray: outputArray,
+    stats: liveStats as SortStats,
+    finalAuxiliaryStructures: getBstAuxStructure('BST (Final State)', bstElementsForViz),
+  }
 }

@@ -23,144 +23,93 @@ export const gnomeSortGenerator: SortGenerator = function* (
     auxiliaryArrayWrites: 0,
   }
 
-  const sortedIndices = new Set<number>()
-
   if (n <= 1) {
     yield {
       array: [...arr],
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      swappingIndices: null,
       currentPseudoCodeLine: [0],
+      swappingIndices: null,
+      comparisonIndices: [],
+      highlightedIndices: [...Array(n).keys()],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
 
   yield {
     array: [...arr],
-    sortedIndices: Array.from(sortedIndices),
-    message: 'Starting Gnome Sort.',
+    sortedIndices: [],
+    message: `Starting Gnome Sort. Initializing gnome (position index) to ${index}.`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: [0, 1],
+    highlightedIndices: [index],
     swappingIndices: null,
-    currentPseudoCodeLine: [0],
-  }
-
-  yield {
-    array: [...arr],
-    message: `Initializing index to ${index}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [1],
+    comparisonIndices: [],
   }
 
   while (index < n) {
-    yield {
-      array: [...arr],
-      message: `Checking while condition: index (${index}) < n (${n}).`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [3],
-      highlightedIndices: [index],
-    }
     if (index === 0) {
-      yield {
-        array: [...arr],
-        highlightedIndices: [index],
-        comparisonIndices: [index],
-        message: `At the start (index ${index}). Moving to next element.`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [4],
-      }
+      const prevIndex = index
       index++
       yield {
         array: [...arr],
-        highlightedIndices: [index - 1],
-        message: `Incremented index to ${index}.`,
+        highlightedIndices: [index],
+        sortedIndices: [],
+        message: `Gnome at start (was index ${prevIndex}). Advanced to index ${index}.`,
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [5],
+        currentPseudoCodeLine: [4, 5],
+        swappingIndices: null,
+        comparisonIndices: [],
       }
     } else {
-      yield {
-        array: [...arr],
-        highlightedIndices: [index, index - 1],
-        comparisonIndices: [index, index - 1],
-        message: `Comparing element at index ${index} (${arr[index]}) with previous at index ${index - 1} (${arr[index - 1]}).`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [6],
-      }
+      const gnomePreviousPosition = index
+      const valAtIndex = arr[index]
+      const valAtPrevIndex = arr[index - 1]
+      let message: string
+      let swappedThisIteration = false
+      let pseudoCodeLineNumbers: number[]
+
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      if (isInOrder(arr[index], arr[index - 1], direction)) {
-        yield {
-          array: [...arr],
-          highlightedIndices: [index],
-          comparisonIndices: [index, index - 1],
-          message: `Elements are in order. Moving forward (index ${index + 1}).`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [6],
-        }
+      if (isInOrder(valAtIndex, valAtPrevIndex, direction)) {
         index++
-        yield {
-          array: [...arr],
-          highlightedIndices: [index - 1],
-          message: `Incremented index to ${index}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [7],
-        }
+        message = `Gnome at ${gnomePreviousPosition}: A[${gnomePreviousPosition}] (${valAtIndex}) and A[${gnomePreviousPosition - 1}] (${valAtPrevIndex}) are in order. Gnome advances to ${index}.`
+        pseudoCodeLineNumbers = [6, 7]
       } else {
-        yield {
-          array: [...arr],
-          highlightedIndices: [],
-          comparisonIndices: [],
-          swappingIndices: [index, index - 1],
-          message: `Elements out of order. Preparing to swap index ${index} (${arr[index]}) and ${index - 1} (${arr[index - 1]}).`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [8],
-        }
         ;[arr[index], arr[index - 1]] = [arr[index - 1], arr[index]]
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-        yield {
-          array: [...arr],
-          highlightedIndices: [index, index - 1],
-          comparisonIndices: [],
-          swappingIndices: [index, index - 1],
-          message: `Swapped. New values: ${arr[index]} (at ${index}), ${arr[index - 1]} (at ${index - 1}). Moving backward.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [9],
-        }
+        swappedThisIteration = true
         index--
-        yield {
-          array: [...arr],
-          highlightedIndices: [index + 1],
-          message: `Decremented index to ${index}.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [10],
-        }
-        yield {
-          array: [...arr],
-          message: `Finished swap block.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [11],
-        }
+        message = `Gnome at ${gnomePreviousPosition}: A[${gnomePreviousPosition}] (${valAtIndex}) and A[${gnomePreviousPosition - 1}] (${valAtPrevIndex}) were out of order. Swapped. Gnome moves back to ${index}.`
+        pseudoCodeLineNumbers = [8, 9, 10]
+      }
+
+      yield {
+        array: [...arr],
+        message: message,
+        highlightedIndices: [index],
+        comparisonIndices: [gnomePreviousPosition, gnomePreviousPosition - 1],
+        swappingIndices: swappedThisIteration
+          ? [gnomePreviousPosition, gnomePreviousPosition - 1]
+          : null,
+        sortedIndices: [],
+        currentStats: { ...liveStats },
+        currentPseudoCodeLine: pseudoCodeLineNumbers,
       }
     }
   }
-  yield {
-    array: [...arr],
-    message: `Loop finished.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [12],
-  }
 
+  const finalSortedIndices = [...Array(n).keys()]
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()],
+    sortedIndices: finalSortedIndices,
     message: 'Gnome Sort Complete!',
     currentStats: { ...liveStats },
-    swappingIndices: null,
     currentPseudoCodeLine: [13],
+    swappingIndices: null,
+    comparisonIndices: [],
+    highlightedIndices: finalSortedIndices,
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

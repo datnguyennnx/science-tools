@@ -22,6 +22,7 @@ export const oddEvenSortGenerator: SortGenerator = function* (
     mainArrayWrites: 0,
     auxiliaryArrayWrites: 0,
   }
+  const liveSortedIndices = new Set<number>() // Tracks confirmed sorted elements from ends
 
   if (n <= 1) {
     yield {
@@ -29,207 +30,187 @@ export const oddEvenSortGenerator: SortGenerator = function* (
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [0, 1, 2],
       swappingIndices: null,
-      currentPseudoCodeLine: [2], // procedure oddEvenSort; if n <= 1 then return list
+      comparisonIndices: [],
+      highlightedIndices: [...Array(n).keys()],
     }
     return { finalArray: arr, stats: liveStats as SortStats }
   }
 
   yield {
     array: [...arr],
-    message: 'Starting Odd-Even Sort.',
+    message: `Starting Odd-Even Sort. isSorted = ${isSorted}.`,
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: [0, 3],
+    sortedIndices: Array.from(liveSortedIndices),
     swappingIndices: null,
-    currentPseudoCodeLine: [0], // procedure oddEvenSort(list, direction)
+    comparisonIndices: [],
+    highlightedIndices: [],
   }
-  yield {
-    array: [...arr],
-    message: 'isSorted initialized to false.',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [3], // isSorted = false
-  }
+
+  let passes = 0
 
   while (!isSorted) {
+    passes++
+    isSorted = true
     yield {
       array: [...arr],
-      message: 'Checking while condition: !isSorted.',
+      sortedIndices: Array.from(liveSortedIndices),
+      message: `Pass ${passes}: Starting new pass. Assuming array is sorted (isSorted = true).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [4], // while not isSorted
-    }
-    isSorted = true // Assume sorted until a swap is made
-    yield {
-      array: [...arr],
-      message: 'Assuming array is sorted for this pass (isSorted = true).',
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [5], // isSorted = true
+      currentPseudoCodeLine: [4, 5],
+      swappingIndices: null,
+      comparisonIndices: [],
+      highlightedIndices: [],
     }
 
-    // Perform Bubble sort on odd indexed element
+    // Odd phase
+    const oddPhaseAllPairs = []
+    for (let i = 1; i <= n - 2; i = i + 2) oddPhaseAllPairs.push(i, i + 1)
     yield {
       array: [...arr],
-      message: 'Odd pass: Comparing and swapping odd-indexed elements with their next element.',
+      sortedIndices: Array.from(liveSortedIndices),
+      message: `Pass ${passes}: Starting Odd Phase (comparing A[i] with A[i+1] for odd i).`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [6],
       swappingIndices: null,
-      currentPseudoCodeLine: [6], // for i = 1 to n - 2 step 2 (Odd phase)
+      comparisonIndices: [],
+      highlightedIndices: oddPhaseAllPairs.length > 0 ? oddPhaseAllPairs : [],
     }
     for (let i = 1; i <= n - 2; i = i + 2) {
-      yield {
-        array: [...arr],
-        highlightedIndices: [i, i + 1],
-        comparisonIndices: [i, i + 1],
-        message: `Comparing elements at index ${i} (${arr[i]}) and ${i + 1} (${arr[i + 1]}).`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [6], // for i = 1 to n - 2 step 2
-      }
+      const val1_before_swap = arr[i]
+      const val2_before_swap = arr[i + 1]
+      let message: string
+      let swappedThisPair = false
+      let pseudoCodeLineNumbers: number[]
+
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      if (shouldSwap(arr[i], arr[i + 1], direction)) {
-        yield {
-          array: [...arr],
-          highlightedIndices: [],
-          comparisonIndices: [],
-          swappingIndices: [i, i + 1],
-          message: `Preparing to swap elements at indices ${i} (${arr[i]}) and ${i + 1} (${arr[i + 1]}).`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [7], // if (direction == ASC and list[i] > list[i + 1]) ... then
-        }
-        ;[arr[i], arr[i + 1]] = [arr[i + 1], arr[i]]
+      if (shouldSwap(val1_before_swap, val2_before_swap, direction)) {
+        ;[arr[i], arr[i + 1]] = [val2_before_swap, val1_before_swap]
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-        yield {
-          array: [...arr],
-          highlightedIndices: [i, i + 1],
-          message: `Swapped. isSorted will be set to false.`,
-          currentStats: { ...liveStats },
-          swappingIndices: [i, i + 1],
-          currentPseudoCodeLine: [8], // swap(list[i], list[i + 1])
-        }
         isSorted = false
-        yield {
-          array: [...arr],
-          highlightedIndices: [i, i + 1],
-          comparisonIndices: [],
-          swappingIndices: [i, i + 1], // Show what was just swapped
-          message: `Swapped. New values: ${arr[i]} (at ${i}) and ${arr[i + 1]} (at ${i + 1}). isSorted set to false.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [9], // isSorted = false
-        }
+        swappedThisPair = true
+        message = `Pass ${passes} (Odd): Compared A[${i}] (${val1_before_swap}) with A[${i + 1}] (${val2_before_swap}). Swapped. New: A[${i}]=${arr[i]}, A[${i + 1}]=${arr[i + 1]}. isSorted is now false.`
+        pseudoCodeLineNumbers = [7, 8, 9]
       } else {
-        // Yield if no swap, still on line 7 (if condition)
-        yield {
-          array: [...arr],
-          highlightedIndices: [i, i + 1],
-          comparisonIndices: [i, i + 1],
-          message: `No swap needed for ${arr[i]} and ${arr[i + 1]}.`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [7], // if condition was false
-        }
+        message = `Pass ${passes} (Odd): Compared A[${i}] (${val1_before_swap}) with A[${i + 1}] (${val2_before_swap}). Elements in order. No swap.`
+        pseudoCodeLineNumbers = [7, 10]
       }
       yield {
         array: [...arr],
-        message: `End of if block for odd phase, i=${i}.`,
+        message: message,
+        highlightedIndices: [i, i + 1],
+        comparisonIndices: [i, i + 1],
+        swappingIndices: swappedThisPair ? [i, i + 1] : null,
+        sortedIndices: Array.from(liveSortedIndices),
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [10], // end if (Odd phase)
+        currentPseudoCodeLine: pseudoCodeLineNumbers,
       }
     }
     yield {
       array: [...arr],
-      message: `End of odd phase loop.`,
+      sortedIndices: Array.from(liveSortedIndices),
+      message: `Pass ${passes}: Odd Phase Complete.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [11], // end for (Odd phase)
+      currentPseudoCodeLine: [11],
+      swappingIndices: null,
+      comparisonIndices: [],
+      highlightedIndices: oddPhaseAllPairs.length > 0 ? oddPhaseAllPairs : [],
     }
 
-    // Perform Bubble sort on even indexed element
+    // Even phase
+    const evenPhaseAllPairs = []
+    for (let i = 0; i <= n - 2; i = i + 2) evenPhaseAllPairs.push(i, i + 1)
     yield {
       array: [...arr],
-      message: 'Even pass: Comparing and swapping even-indexed elements with their next element.',
+      sortedIndices: Array.from(liveSortedIndices),
+      message: `Pass ${passes}: Starting Even Phase (comparing A[i] with A[i+1] for even i).`,
       currentStats: { ...liveStats },
+      currentPseudoCodeLine: [12],
       swappingIndices: null,
-      currentPseudoCodeLine: [12], // for i = 0 to n - 2 step 2 (Even phase)
+      comparisonIndices: [],
+      highlightedIndices: evenPhaseAllPairs.length > 0 ? evenPhaseAllPairs : [],
     }
     for (let i = 0; i <= n - 2; i = i + 2) {
-      yield {
-        array: [...arr],
-        highlightedIndices: [i, i + 1],
-        comparisonIndices: [i, i + 1],
-        message: `Comparing elements at index ${i} (${arr[i]}) and ${i + 1} (${arr[i + 1]}).`,
-        currentStats: { ...liveStats },
-        swappingIndices: null,
-        currentPseudoCodeLine: [12], // for i = 0 to n - 2 step 2
-      }
+      const val1_before_swap = arr[i]
+      const val2_before_swap = arr[i + 1]
+      let message: string
+      let swappedThisPair = false
+      let pseudoCodeLineNumbers: number[]
+
       liveStats.comparisons = (liveStats.comparisons || 0) + 1
-      if (shouldSwap(arr[i], arr[i + 1], direction)) {
-        yield {
-          array: [...arr],
-          highlightedIndices: [],
-          comparisonIndices: [],
-          swappingIndices: [i, i + 1],
-          message: `Preparing to swap elements at indices ${i} (${arr[i]}) and ${i + 1} (${arr[i + 1]}).`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [13], // if (direction == ASC and list[i] > list[i + 1]) ... then
-        }
-        ;[arr[i], arr[i + 1]] = [arr[i + 1], arr[i]]
+      if (shouldSwap(val1_before_swap, val2_before_swap, direction)) {
+        ;[arr[i], arr[i + 1]] = [val2_before_swap, val1_before_swap]
         liveStats.swaps = (liveStats.swaps || 0) + 1
         liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + 2
-        yield {
-          array: [...arr],
-          highlightedIndices: [i, i + 1],
-          message: `Swapped. isSorted will be set to false.`,
-          currentStats: { ...liveStats },
-          swappingIndices: [i, i + 1],
-          currentPseudoCodeLine: [14], // swap(list[i], list[i + 1])
-        }
         isSorted = false
-        yield {
-          array: [...arr],
-          highlightedIndices: [i, i + 1],
-          comparisonIndices: [],
-          swappingIndices: [i, i + 1], // Show what was just swapped
-          message: `Swapped. New values: ${arr[i]} (at ${i}) and ${arr[i + 1]} (at ${i + 1}). isSorted set to false.`,
-          currentStats: { ...liveStats },
-          currentPseudoCodeLine: [15], // isSorted = false
-        }
+        swappedThisPair = true
+        message = `Pass ${passes} (Even): Compared A[${i}] (${val1_before_swap}) with A[${i + 1}] (${val2_before_swap}). Swapped. New: A[${i}]=${arr[i]}, A[${i + 1}]=${arr[i + 1]}. isSorted is now false.`
+        pseudoCodeLineNumbers = [13, 14, 15]
       } else {
-        // Yield if no swap, still on line 13 (if condition)
-        yield {
-          array: [...arr],
-          highlightedIndices: [i, i + 1],
-          comparisonIndices: [i, i + 1],
-          message: `No swap needed for ${arr[i]} and ${arr[i + 1]}.`,
-          currentStats: { ...liveStats },
-          swappingIndices: null,
-          currentPseudoCodeLine: [13], // if condition was false
-        }
+        message = `Pass ${passes} (Even): Compared A[${i}] (${val1_before_swap}) with A[${i + 1}] (${val2_before_swap}). Elements in order. No swap.`
+        pseudoCodeLineNumbers = [13, 16]
       }
       yield {
         array: [...arr],
-        message: `End of if block for even phase, i=${i}.`,
+        message: message,
+        highlightedIndices: [i, i + 1],
+        comparisonIndices: [i, i + 1],
+        swappingIndices: swappedThisPair ? [i, i + 1] : null,
+        sortedIndices: Array.from(liveSortedIndices),
         currentStats: { ...liveStats },
-        currentPseudoCodeLine: [16], // end if (Even phase)
+        currentPseudoCodeLine: pseudoCodeLineNumbers,
       }
     }
     yield {
       array: [...arr],
-      message: `End of even phase loop.`,
+      sortedIndices: Array.from(liveSortedIndices),
+      message: `Pass ${passes}: Even Phase Complete. isSorted is now ${isSorted}.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [17], // end for (Even phase)
+      currentPseudoCodeLine: [17],
+      swappingIndices: null,
+      comparisonIndices: [],
+      highlightedIndices: evenPhaseAllPairs.length > 0 ? evenPhaseAllPairs : [],
+    }
+
+    // Update sortedIndices based on completed passes
+    if (direction === 'asc') {
+      for (let k = 0; k < passes; k++) {
+        if (n - 1 - k >= 0) liveSortedIndices.add(n - 1 - k) // Largest elements settle at the end
+      }
+    } else {
+      // desc
+      for (let k = 0; k < passes; k++) {
+        if (k < n) liveSortedIndices.add(k) // Smallest elements settle at the beginning
+      }
+    }
+    // Yield after updating sortedIndices for the pass
+    yield {
+      array: [...arr],
+      sortedIndices: Array.from(liveSortedIndices),
+      message: `Pass ${passes} complete. Updated sorted regions. isSorted is ${isSorted}.`,
+      currentStats: { ...liveStats },
+      currentPseudoCodeLine: [18], // after even phase, before checking while condition
+      swappingIndices: null,
+      comparisonIndices: [],
+      highlightedIndices: Array.from(liveSortedIndices), // Highlight all currently known sorted indices
     }
   }
-  yield {
-    array: [...arr],
-    message: `While loop finished (isSorted is true).`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [18], // end while
-  }
+
+  // Final sweep to ensure all indices are marked if isSorted became true without full n passes
+  for (let k = 0; k < n; ++k) liveSortedIndices.add(k)
 
   yield {
     array: [...arr],
-    sortedIndices: [...Array(n).keys()], // All elements are now sorted
+    sortedIndices: Array.from(liveSortedIndices),
     message: 'Odd-Even Sort Complete!',
     currentStats: { ...liveStats },
+    currentPseudoCodeLine: [19],
     swappingIndices: null,
-    currentPseudoCodeLine: [20], // end procedure
+    comparisonIndices: [],
+    highlightedIndices: [...Array(n).keys()],
   }
 
   return { finalArray: arr, stats: liveStats as SortStats }

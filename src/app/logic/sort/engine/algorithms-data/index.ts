@@ -1,6 +1,6 @@
 'use client'
 
-import type { SortAlgorithm } from '../algorithmRegistry' // Import the type
+import type { SortAlgorithm } from '../algorithmRegistry'
 
 // Algorithm Data Imports
 import { bubbleSortData } from './bubbleSortData'

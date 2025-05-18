@@ -8,13 +8,13 @@ const getDigit = (num: number, place: number): number => Math.floor(Math.abs(num
 // Helper function to find the maximum absolute value in an array
 const findMaxAbs = (arr: number[], liveStats: Partial<SortStats>): number => {
   let maxAbs = 0
-  if (arr.length > 0) maxAbs = Math.abs(arr[0]) // Initialize with the first element's abs value
-  // Start loop from 0 or 1 depending on initialization. If arr[0] used, start i=1.
-  // For simplicity, iterate all and update if greater.
-  for (const num of arr) {
-    // Iterating n times
-    const absNum = Math.abs(num)
-    liveStats.comparisons = (liveStats.comparisons || 0) + 1 // Comparison with current maxAbs
+  if (arr.length === 0) return 0
+
+  maxAbs = Math.abs(arr[0])
+  liveStats.comparisons = (liveStats.comparisons || 0) + (arr.length > 1 ? arr.length - 1 : 0) // Approximate comparisons
+
+  for (let i = 1; i < arr.length; i++) {
+    const absNum = Math.abs(arr[i])
     if (absNum > maxAbs) {
       maxAbs = absNum
     }
@@ -26,7 +26,7 @@ const findMaxAbs = (arr: number[], liveStats: Partial<SortStats>): number => {
 const countingSortByDigitGenerator = function* (
   arr: number[],
   place: number,
-  _direction: 'asc' | 'desc',
+  _direction: 'asc' | 'desc', // Direction is primarily handled by Radix sort's final reversal if needed for positive numbers
   originalIndices: number[],
   liveStats: Partial<SortStats>,
   priorPassesFinalAux: ReadonlyArray<AuxiliaryStructure>
@@ -36,177 +36,91 @@ const countingSortByDigitGenerator = function* (
   void
 > {
   const n = arr.length
-  const output = new Array(n)
-  const outputOriginalIndices = new Array(n)
-  const count = new Array(10).fill(0)
-  liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 10
-  liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + n + n
+  const output = new Array(n).fill(NaN)
+  const outputOriginalIndices = new Array(n).fill(-1)
+  const count = new Array(10).fill(0) // For digits 0-9
+  liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 10 + n + n // count, output, outputOriginalIndices
 
-  const baseAuxId = `digitCounts-place-${place}`
-  const dynamicDisplaySlot = `digitCounts-pass-${place}`
+  const auxIdPrefix = `radix-pass-place-${place}-counts` // More specific prefix
+  const auxDisplaySlot = `radix-counts-visualization` // Consistent slot for counts visualization
 
-  const currentPassAuxStructureInitial = {
-    id: baseAuxId,
-    title: `Digit Counts (Place ${place}, Initial)`,
-    data: [...count],
-    displaySlot: dynamicDisplaySlot,
-  }
+  const createCountAuxStructure = (
+    stepSuffix: string,
+    currentCounts: ReadonlyArray<number>
+  ): AuxiliaryStructure => ({
+    id: `${auxIdPrefix}-${stepSuffix}`,
+    title: `Counts (Place ${place}, ${stepSuffix})`,
+    data: currentCounts.map((value, index) => ({
+      value,
+      originalIndex: index, // Digit value 0-9
+      name: `Digit ${index}`,
+    })),
+    displaySlot: auxDisplaySlot,
+  })
+
   yield {
     array: [...arr],
-    mainArrayLabel: `Input for Place ${place}`,
-    auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureInitial],
-    message: `Counting Sort (Radix): Initializing counts for digit at place ${place}.`,
+    mainArrayLabel: `Radix Pass (Place ${place}): Input`,
+    historicalAuxiliaryStructures: [...priorPassesFinalAux],
+    currentPassAuxiliaryStructure: createCountAuxStructure('Initial', count),
+    message: `Counting Sort for Place ${place}: Initialized. Counts array for digits 0-9 is all zeros.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [12],
+    currentPseudoCodeLine: [12, 13, 14],
   }
 
-  // Phase 1: Count occurrences
   for (let i = 0; i < n; i++) {
     const digit = getDigit(arr[i], place)
-    const currentPassAuxStructureCounting = {
-      id: baseAuxId,
-      title: `Digit Counts (Place ${place}, Counting)`,
-      data: [...count], // Data before current digit increment
-      displaySlot: dynamicDisplaySlot,
-    }
-    yield {
-      array: [...arr],
-      mainArrayLabel: `Input for Place ${place}`,
-      highlightedIndices: [originalIndices[i]],
-      auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureCounting],
-      message: `Processing ${arr[i]} (Original Index: ${originalIndices[i]}); Digit at place ${place} is ${digit}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [15],
-    }
     count[digit]++
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
   }
-  const currentPassAuxStructureAfterCounting = {
-    id: baseAuxId,
-    title: `Digit Counts (Place ${place}, After Counting All)`,
-    data: [...count],
-    displaySlot: dynamicDisplaySlot,
-  }
+
   yield {
     array: [...arr],
-    mainArrayLabel: `Input for Place ${place}`,
-    auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureAfterCounting],
-    message: `Finished counting all digits for place ${place}. Counts: ${count.join(', ')}.`,
+    mainArrayLabel: `Radix Pass (Place ${place}): Input (After Counting Occurrences)`,
+    historicalAuxiliaryStructures: [...priorPassesFinalAux],
+    currentPassAuxiliaryStructure: createCountAuxStructure('Occurrences Counted', count),
+    message: `Counting Sort for Place ${place}: Counted digit occurrences. Counts: ${count.join(', ')}.`,
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [17],
   }
 
-  // Phase 2: Calculate cumulative counts
-  const currentPassAuxStructureBeforeCumulative = {
-    id: baseAuxId,
-    title: `Digit Counts (Place ${place}, Before Cumulative Sum)`,
-    data: [...count],
-    displaySlot: dynamicDisplaySlot,
-  }
-  yield {
-    array: [...arr],
-    mainArrayLabel: `Input for Place ${place}`,
-    auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureBeforeCumulative],
-    message: `Starting cumulative sum calculation for place ${place}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [19],
-  }
   for (let i = 1; i < 10; i++) {
     count[i] += count[i - 1]
     liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
   }
-  const currentPassAuxStructureAfterCumulative = {
-    id: baseAuxId,
-    title: `Digit Counts (Place ${place}, Cumulative Sum Complete)`,
-    data: [...count],
-    displaySlot: dynamicDisplaySlot,
-  }
+
   yield {
     array: [...arr],
-    mainArrayLabel: `Input for Place ${place}`,
-    auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureAfterCumulative],
-    message: `Finished cumulative sum for place ${place}. Cumulative Counts: ${count.join(', ')}.`,
+    mainArrayLabel: `Radix Pass (Place ${place}): Input (After Cumulative Sum)`,
+    historicalAuxiliaryStructures: [...priorPassesFinalAux],
+    currentPassAuxiliaryStructure: createCountAuxStructure('Cumulative Summed', count),
+    message: `Counting Sort for Place ${place}: Calculated cumulative counts. Counts: ${count.join(', ')}.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [21],
-  }
-
-  // Phase 3: Build the output array
-  const currentPassAuxStructureReadyForBuild = {
-    id: baseAuxId,
-    title: `Digit Counts (Place ${place}, Ready for Output Build)`,
-    data: [...count],
-    displaySlot: dynamicDisplaySlot,
-  }
-  yield {
-    array: new Array(n).fill(NaN),
-    mainArrayLabel: `Output for Place ${place} (Building)`,
-    auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureReadyForBuild],
-    message: `Building output array for place ${place}. Using cumulative counts to place elements.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [23],
+    currentPseudoCodeLine: [20, 21],
   }
 
   for (let i = n - 1; i >= 0; i--) {
-    const value = arr[i]
-    const digit = getDigit(value, place)
-    const currentPassAuxStructureLocating = {
-      id: baseAuxId,
-      title: `Digit Counts (Place ${place}, Locating Position)`,
-      data: [...count], // Data before decrement for this item
-      displaySlot: dynamicDisplaySlot,
-    }
-    yield {
-      array: [...output].map(v => (v === undefined ? NaN : v)),
-      mainArrayLabel: `Output for Place ${place} (Processing Input Item)`,
-      highlightedIndices: [originalIndices[i]],
-      auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureLocating],
-      message: `Processing item ${arr[i]} (Original Index: ${originalIndices[i]}). Digit ${digit}. Target index in output: ${count[digit] - 1}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [24],
-    }
+    const valueToPlace = arr[i]
+    const originalIdxOfValue = originalIndices[i]
+    const digit = getDigit(valueToPlace, place)
 
-    const outputIndex = count[digit] - 1
-    if (outputIndex < 0 || outputIndex >= n) {
-      console.error(
-        `Invalid outputIndex ${outputIndex} for digit ${digit}, value ${value}, count[digit] ${count[digit]}`
-      )
-      continue
-    }
+    const targetOutputIndex = count[digit] - 1
+    output[targetOutputIndex] = valueToPlace
+    outputOriginalIndices[targetOutputIndex] = originalIdxOfValue
+    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 2
 
-    output[outputIndex] = value
-    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
-    outputOriginalIndices[outputIndex] = originalIndices[i]
-    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
     count[digit]--
-
-    const currentPassAuxStructureDecremented = {
-      id: baseAuxId,
-      title: `Digit Counts (Place ${place}, Count Decremented)`,
-      data: [...count], // Data after decrement
-      displaySlot: dynamicDisplaySlot,
-    }
-    yield {
-      array: [...output].map(v => (v === undefined ? NaN : v)),
-      mainArrayLabel: `Output for Place ${place} (Item Placed)`,
-      highlightedIndices: [outputIndex],
-      auxiliaryStructures: [...priorPassesFinalAux, currentPassAuxStructureDecremented],
-      message: `Placed ${value} at output index ${outputIndex}. Decremented count for digit ${digit}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [25],
-    }
+    liveStats.auxiliaryArrayWrites = (liveStats.auxiliaryArrayWrites || 0) + 1
   }
 
-  const finalAuxForThisPass: AuxiliaryStructure = {
-    id: baseAuxId,
-    title: `Digit Counts (Place ${place}, Final State)`, // Clarified title for persisted state
-    data: [...count], // This is the count array at the very end of this pass (should be mostly zeros if logic is correct)
-    displaySlot: dynamicDisplaySlot,
-  }
+  const finalAuxForThisPass = createCountAuxStructure('Pass Complete', count)
+
   yield {
-    array: [...output].map(v => (v === undefined ? NaN : v)),
-    mainArrayLabel: `Output for Place ${place} (Built)`,
-    auxiliaryStructures: [...priorPassesFinalAux, finalAuxForThisPass],
-    message: `Finished building output array for place ${place}.`,
+    array: [...output],
+    mainArrayLabel: `Radix Pass (Place ${place}): Output (Sorted by this digit)`,
+    historicalAuxiliaryStructures: [...priorPassesFinalAux],
+    currentPassAuxiliaryStructure: finalAuxForThisPass,
+    message: `Counting Sort for Place ${place}: Output array built. Array now sorted by digit at place ${place}.`,
     currentStats: { ...liveStats },
     currentPseudoCodeLine: [27],
   }
@@ -226,139 +140,109 @@ export const radixSortGenerator: SortGenerator = function* (
   let arr = [...initialArray]
   const n = arr.length
   let originalIndices = arr.map((_, index) => index)
-  const accumulatedFinalAuxStates: AuxiliaryStructure[] = [] // Initialize accumulator
+  const accumulatedFinalAuxStates: AuxiliaryStructure[] = []
 
   const liveStats: Partial<SortStats> = {
-    algorithmName: 'Radix Sort',
+    algorithmName: 'Radix Sort (LSD)',
     numElements: n,
     comparisons: 0,
     mainArrayWrites: 0,
     auxiliaryArrayWrites: 0,
-    swaps: 0, // Radix sort doesn't swap
+    swaps: 0,
   }
-  // arr.map for originalIndices is n aux reads and n aux writes if we are super strict.
-  // For now, not counting this as it's part of setup for visualization tracking.
 
   if (n <= 1) {
     yield {
       array: [...arr],
-      sortedIndices: n === 1 ? [0] : [],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [0], // radixSort(array)
-      auxiliaryStructures: [...accumulatedFinalAuxStates], // Include even for early exit
+      currentPseudoCodeLine: [30, 31, 32],
+      sortedIndices: arr.map((_, i) => i),
     }
-    return { finalArray: arr, stats: liveStats as SortStats }
+    return { finalArray: arr, stats: liveStats as SortStats, finalAuxiliaryStructures: null }
   }
 
-  const maxAbs = findMaxAbs(arr, liveStats)
-  yield {
-    array: [...arr],
-    mainArrayLabel: 'Initial Array',
-    message: `Found max absolute value: ${maxAbs}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [1], // max = findMaxAbsolute(array)
-    auxiliaryStructures: [...accumulatedFinalAuxStates],
-  }
+  const maxAbsValue = findMaxAbs(arr, liveStats)
+  const numDigits = maxAbsValue === 0 ? 1 : Math.floor(Math.log10(maxAbsValue)) + 1
 
   yield {
     array: [...arr],
-    mainArrayLabel: 'Initial Array',
-    message: `Starting Radix Sort (LSD). Max absolute value: ${maxAbs}.`,
+    message: `Starting Radix Sort (LSD). Max abs value: ${maxAbsValue} (~${numDigits} digits). Each pass sorts by one digit place.`,
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [0], // radixSort(array)
-    auxiliaryStructures: [...accumulatedFinalAuxStates],
+    currentPseudoCodeLine: [35],
   }
 
-  let place = 1
-  yield {
-    array: [...arr],
-    message: `Initializing place to ${place}.`,
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [2], // place = 1
-    auxiliaryStructures: [...accumulatedFinalAuxStates],
-  }
-  while (maxAbs / place >= 1) {
-    liveStats.comparisons = (liveStats.comparisons || 0) + 1
+  let passNumber = 1
+  for (let place = 1; Math.floor(maxAbsValue / place) > 0; place *= 10) {
     yield {
       array: [...arr],
-      mainArrayLabel: `Array Before Place ${place} Sort`,
-      message: `--- Starting pass for digit place ${place} ---`,
+      mainArrayLabel: `Radix Main: Input for Pass ${passNumber} (Place ${place})`,
+      historicalAuxiliaryStructures: [...accumulatedFinalAuxStates],
+      currentPassAuxiliaryStructure: null,
+      message: `Radix Sort: Starting Pass ${passNumber} (sorting by digit at place ${place}).`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [3], // while (max / place >= 1)
-      auxiliaryStructures: [...accumulatedFinalAuxStates], // Structures from *before* this pass starts
+      currentPseudoCodeLine: [36],
     }
 
     const { sortedArr, sortedOriginalIndices, finalAuxiliaryState } =
-      yield* countingSortByDigitGenerator(
-        arr,
-        place,
-        direction,
-        originalIndices,
-        liveStats,
-        accumulatedFinalAuxStates // Pass the current accumulated states
-      )
+      yield* countingSortByDigitGenerator(arr, place, 'asc', originalIndices, liveStats, [
+        ...accumulatedFinalAuxStates,
+      ])
 
-    // Add the final state from the completed pass to our list
-    accumulatedFinalAuxStates.push(finalAuxiliaryState)
-
-    liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + n
     arr = sortedArr
     originalIndices = sortedOriginalIndices
+    liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + n
+
+    const finalAuxForDisplayThisRadixPass: AuxiliaryStructure = {
+      ...finalAuxiliaryState,
+      id: `radix-pass-${passNumber}-place-${place}-counts-final-summary`,
+      title: `Counts (Place ${place}) - End of Radix Pass ${passNumber}`,
+    }
+    accumulatedFinalAuxStates.push(finalAuxForDisplayThisRadixPass)
 
     yield {
       array: [...arr],
-      mainArrayLabel: `Array After Place ${place} Sort`,
-      message: `--- Completed pass for digit place ${place}. Array state after pass ---`,
+      mainArrayLabel: `Radix Main: Array after Pass ${passNumber} (Place ${place} Sorted)`,
+      historicalAuxiliaryStructures: [...accumulatedFinalAuxStates],
+      currentPassAuxiliaryStructure: null,
+      message: `Radix Sort: Pass ${passNumber} (place ${place}) complete. Array sorted by this digit.`,
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [4], // countingSortByDigit completed for this place
-      auxiliaryStructures: [...accumulatedFinalAuxStates], // Now includes the one from the pass just finished
+      currentPseudoCodeLine: [37],
     }
-
-    place *= 10
-    yield {
-      array: [...arr],
-      message: `Updating place to ${place}.`,
-      currentStats: { ...liveStats },
-      currentPseudoCodeLine: [5], // place *= 10
-      auxiliaryStructures: [...accumulatedFinalAuxStates],
-    }
-  }
-  // End of while loop, pseudo line 6
-  yield {
-    array: [...arr],
-    message: 'Finished all passes for Radix Sort.',
-    currentStats: { ...liveStats },
-    currentPseudoCodeLine: [6],
-    auxiliaryStructures: [...accumulatedFinalAuxStates],
+    passNumber++
   }
 
   if (direction === 'desc') {
-    arr.reverse() // In-place reverse
-    liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + n // Approximate n writes for reverse
+    arr.reverse()
+    liveStats.mainArrayWrites = (liveStats.mainArrayWrites || 0) + n
+    liveStats.reversals = (liveStats.reversals || 0) + 1
+
     yield {
       array: [...arr],
-      mainArrayLabel: 'Array (Reversed for Descending)',
-      message: 'Reversing array for descending order.',
+      mainArrayLabel: 'Radix Main: Final Array (Reversed for Descending)',
+      message: 'Final array reversed for descending order (based on absolute value sorting). ',
       currentStats: { ...liveStats },
-      currentPseudoCodeLine: [7], // End of radixSort function
-      auxiliaryStructures: [...accumulatedFinalAuxStates],
+      sortedIndices: arr.map((_, i) => i),
+      historicalAuxiliaryStructures: [...accumulatedFinalAuxStates],
+      currentPassAuxiliaryStructure: null,
+      currentPseudoCodeLine: [39, 40],
     }
   }
 
   yield {
     array: [...arr],
-    mainArrayLabel: 'Sorted Array',
-    sortedIndices: [...Array(n).keys()], // Array is now fully sorted
+    mainArrayLabel: 'Radix Main: Sorted Array',
     message: 'Radix Sort Complete!',
     currentStats: { ...liveStats },
-    currentPseudoCodeLine: [7], // End of radixSort function
-    auxiliaryStructures: [...accumulatedFinalAuxStates],
+    currentPseudoCodeLine: [42],
+    sortedIndices: arr.map((_, i) => i),
+    historicalAuxiliaryStructures: [...accumulatedFinalAuxStates],
   }
 
   return {
     finalArray: arr,
     stats: liveStats as SortStats,
-    finalAuxiliaryStructures: accumulatedFinalAuxStates,
+    finalAuxiliaryStructures:
+      accumulatedFinalAuxStates.length > 0 ? accumulatedFinalAuxStates : null,
   }
 }

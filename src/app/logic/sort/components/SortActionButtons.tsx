@@ -7,7 +7,8 @@ interface SortActionButtonsProps {
   onNewArray: () => void
   onStart: () => void
   onPause: () => void
-  onStepForward: () => void
+  onResume: () => void
+  onStepForward?: () => void
   onReset: () => void
   isSorting: boolean
   isPaused: boolean
@@ -19,6 +20,7 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
   onNewArray,
   onStart,
   onPause,
+  onResume,
   onStepForward,
   onReset,
   isSorting,
@@ -51,7 +53,7 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
           New Array
         </Button>
         <Button
-          onClick={onStart}
+          onClick={isPaused ? onResume : onStart}
           disabled={isSorting && !isPaused}
           title={`${isPaused ? 'Resume' : 'Start'} Sort (Space)`}
         >
@@ -76,9 +78,9 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
         </Button>
         <Button
           onClick={onStepForward}
-          disabled={!isSorting || !isPaused}
+          disabled={!onStepForward || !isSorting || !isPaused}
           variant="outline"
-          title="Step Forward (→)"
+          title={onStepForward ? 'Step Forward (→)' : 'Step Forward (N/A)'}
         >
           <SkipForward className="h-4 w-4 mr-2" /> Step
         </Button>
