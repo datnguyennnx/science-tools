@@ -105,7 +105,7 @@ const MemoizedSortStatisticsDisplay = memo(function SortStatisticsDisplay({
     <section>
       {validCombinedMetrics.length > 0 && (
         <>
-          <h3 className="text-sm font-medium mt-4 mb-2">Algorithm Performance</h3>
+          <h3 className="font-medium">Algorithm Performance</h3>
           <Table>
             <TableHeader>
               <TableRow>

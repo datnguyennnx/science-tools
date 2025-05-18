@@ -27,8 +27,9 @@ export default function SortPage(): React.JSX.Element {
     sortDirection,
     setSortDirection,
     currentSortStep,
-    isSorting,
+    isBusy,
     isPaused,
+    isStopping,
     liveSortStats,
     finalSortStats,
     performanceScenario,
@@ -37,6 +38,7 @@ export default function SortPage(): React.JSX.Element {
     pauseSort,
     resumeSort,
     resetSort,
+    stepForward,
   } = useSortControls({
     selectedAlgorithm: selectedAlgorithm || undefined,
   })
@@ -89,8 +91,10 @@ export default function SortPage(): React.JSX.Element {
           onResume={resumeSort}
           onReset={resetSort}
           onNewArray={resetSort}
-          isSorting={isSorting}
+          onStepForward={stepForward}
+          isSorting={isBusy}
           isPaused={isPaused}
+          isStopping={isStopping}
           arraySize={arraySize}
           setArraySize={setArraySize}
           MIN_ARRAY_SIZE={MIN_ARRAY_SIZE}
@@ -204,7 +208,7 @@ export default function SortPage(): React.JSX.Element {
                 <PseudoCodeDisplay
                   algorithmData={selectedAlgorithm}
                   activeLines={currentSortStep?.currentPseudoCodeLine}
-                  initialLanguage={'cpp'}
+                  initialLanguage={'plaintext'}
                   sortStats={displayedSortStats}
                   performanceScenario={performanceScenario}
                   setPerformanceScenario={setPerformanceScenario}

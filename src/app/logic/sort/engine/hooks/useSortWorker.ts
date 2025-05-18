@@ -12,11 +12,13 @@ export interface UseSortWorkerReturn {
     algorithmId: string,
     array: number[],
     direction: 'asc' | 'desc',
-    speed: number
+    speed: number,
+    initialStepMode?: boolean
   ) => void
   pauseSort: () => void
   resumeSort: () => void
   stopSort: () => void // Added for explicit stopping/resetting from UI
+  requestOneStep: () => void
   cleanupWorker: () => void
   error: string | null
 }
@@ -126,10 +128,15 @@ export function useSortWorker(): UseSortWorkerReturn {
   }, [initializeWorker])
 
   const startSort = useCallback(
-    (algorithmId: string, array: number[], direction: 'asc' | 'desc', speed: number) => {
+    (
+      algorithmId: string,
+      array: number[],
+      direction: 'asc' | 'desc',
+      speed: number,
+      initialStepMode?: boolean
+    ) => {
       if (isRunning || isStopping) {
         const errMessage = `Sort cannot start: ${isRunning ? 'already running' : 'currently stopping'}.`
-        console.warn(errMessage)
         setError(errMessage)
         return
       }
@@ -138,7 +145,6 @@ export function useSortWorker(): UseSortWorkerReturn {
         initializeWorker()
         if (!workerRef.current) {
           setError('Worker not available. Cannot start sort.')
-          console.error('Worker not available when trying to start sort.')
           return
         }
       }
@@ -153,32 +159,35 @@ export function useSortWorker(): UseSortWorkerReturn {
         array,
         direction,
         speed,
+        initialStepMode: initialStepMode || false,
       })
     },
     [isRunning, isStopping, initializeWorker]
   )
 
   const pauseSort = useCallback(() => {
-    if (!workerRef.current || !isRunning || isPaused) return
+    if (!workerRef.current || !isRunning || isPaused || isStopping) return
     workerRef.current.postMessage({ type: 'pause' })
     setIsPaused(true) // Optimistically set paused state
-  }, [isRunning, isPaused])
+  }, [isRunning, isPaused, isStopping])
 
   const resumeSort = useCallback(() => {
-    if (!workerRef.current || !isRunning || !isPaused) return
+    if (!workerRef.current || !isRunning || !isPaused || isStopping) return
     workerRef.current.postMessage({ type: 'resume' })
     setIsPaused(false) // Optimistically set running state
-  }, [isRunning, isPaused])
+  }, [isRunning, isPaused, isStopping])
 
   const stopSort = useCallback(() => {
     if (workerRef.current) {
-      if (!isStopping && (isRunning || isPaused)) {
+      if ((isRunning || isPaused) && !isStopping) {
         setIsStopping(true)
+        workerRef.current.postMessage({ type: 'stop' })
       }
-      workerRef.current.postMessage({ type: 'stop' })
+    } else {
+      setIsRunning(false)
+      setIsPaused(false)
+      setIsStopping(false)
     }
-    setIsRunning(false)
-    setIsPaused(false)
   }, [isRunning, isPaused, isStopping])
 
   const cleanupWorker = useCallback(() => {
@@ -193,6 +202,12 @@ export function useSortWorker(): UseSortWorkerReturn {
     setError(null)
   }, [])
 
+  const requestOneStep = useCallback(() => {
+    if (workerRef.current && isRunning && isPaused && !isStopping) {
+      workerRef.current.postMessage({ type: 'request_one_step' })
+    }
+  }, [isRunning, isPaused, isStopping])
+
   return {
     currentStep,
     isRunning,
@@ -202,6 +217,7 @@ export function useSortWorker(): UseSortWorkerReturn {
     pauseSort,
     resumeSort,
     stopSort,
+    requestOneStep,
     cleanupWorker,
     error,
   }

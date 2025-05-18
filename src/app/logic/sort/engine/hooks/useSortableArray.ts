@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { DEFAULT_ARRAY_SIZE, MIN_VALUE, MAX_VALUE } from '../../constants/sortSettings'
 
 export interface UseSortableArrayReturn {
@@ -21,6 +21,10 @@ export function useSortableArray(initialSize: number = DEFAULT_ARRAY_SIZE): UseS
     setArray(newArray)
     return newArray
   }, [])
+
+  useEffect(() => {
+    regenerateArray(initialSize)
+  }, [initialSize, regenerateArray])
 
   return {
     array,

@@ -8,10 +8,11 @@ const generators: Record<string, SortGenerator> = Object.fromEntries(
 )
 
 let currentSortGenerator: ReturnType<SortGenerator> | null = null
-let isRunning = false
-let shouldPause = false
-let isStopping = false // Flag to indicate a stop request is in progress
-let currentDelay = 250 // Default delay if not set
+let isRunning = false // True if a sort process is active (between start and complete/stop)
+let shouldPause = false // True if user requested pause, or if step mode requires pause
+let isStopping = false // True if a stop request is in progress
+let stepModeActive = false // True if in step-by-step execution mode
+let currentDelay = 250 // Delay for continuous mode
 
 const calculateDelay = (speed: number): number => {
   const MIN_UI_SPEED = 1
@@ -22,27 +23,30 @@ const calculateDelay = (speed: number): number => {
   if (speed <= MIN_UI_SPEED) return MAX_DELAY_MS
   if (speed >= MAX_UI_SPEED) return MIN_DELAY_MS
 
-  // Linear interpolation
   const delay =
     MAX_DELAY_MS -
     ((speed - MIN_UI_SPEED) * (MAX_DELAY_MS - MIN_DELAY_MS)) / (MAX_UI_SPEED - MIN_UI_SPEED)
   return Math.max(MIN_DELAY_MS, Math.min(MAX_DELAY_MS, delay))
 }
 
+// Promise resolver for the main pause loop, allows external trigger for stepping
+let resolvePausePromise: (() => void) | null = null
+
 self.onmessage = async (event: MessageEvent) => {
-  // Explicitly cast event.data, rename array to initialArray for clarity in this scope
   const {
     type,
     algorithmId,
     array: initialArray,
     direction,
     speed,
+    initialStepMode, // For 'start' command
   } = event.data as {
-    type: 'start' | 'pause' | 'resume' | 'stop' | 'setError'
+    type: 'start' | 'pause' | 'resume' | 'stop' | 'setError' | 'request_one_step'
     algorithmId?: string
-    array?: number[] // This is the initialArray for a 'start' command
+    array?: number[]
     direction?: 'asc' | 'desc'
     speed?: number
+    initialStepMode?: boolean
   }
 
   if (type === 'start') {
@@ -66,50 +70,52 @@ self.onmessage = async (event: MessageEvent) => {
 
     currentSortGenerator = generatorFn(initialArray, direction)
     isRunning = true
-    shouldPause = false
-    isStopping = false // Reset for new sort
-    if (speed !== undefined) {
-      currentDelay = calculateDelay(speed)
-    }
-    self.postMessage({ type: 'started' }) // Notify main thread that processing has started
+    shouldPause = false // Initialize to false
+    isStopping = false
+    stepModeActive = initialStepMode || false
 
+    if (speed !== undefined) currentDelay = calculateDelay(speed)
+    self.postMessage({ type: 'started' })
+
+    if (stepModeActive) {
+      shouldPause = true // For step mode, intend to pause after the first step.
+    }
+
+    // Main sort loop
     try {
       let result = await currentSortGenerator.next()
       while (!result.done) {
         if (isStopping) break
 
+        self.postMessage({ type: 'step', step: result.value as SortStep })
+
         if (shouldPause) {
           self.postMessage({ type: 'paused' })
           await new Promise<void>(resolve => {
-            const checkResumeOrStop = () => {
-              if (isStopping || !shouldPause) {
-                resolve()
-              } else {
-                setTimeout(checkResumeOrStop, 50)
-              }
-            }
-            checkResumeOrStop()
+            resolvePausePromise = resolve // Expose resolver
           })
+          resolvePausePromise = null // Clear resolver after use
           if (isStopping) break
-          self.postMessage({ type: 'resumed' })
+          // If execution continues past pause, it's 'resumed' implicitly or for a next step
+          if (!isStopping) self.postMessage({ type: 'resumed' })
         }
 
-        self.postMessage({
-          type: 'step',
-          step: result.value as SortStep, // Assuming result.value is always SortStep when not done
-        })
-        if (currentDelay > 0 && !isStopping) {
+        // After a step in stepMode, ensure we are set to pause for the next cycle, unless already stopping.
+        if (stepModeActive && !isStopping) {
+          shouldPause = true
+        }
+
+        // Delay for continuous mode (not in step mode and not about to pause)
+        if (!stepModeActive && !shouldPause && currentDelay > 0 && !isStopping) {
           await new Promise(resolve => setTimeout(resolve, currentDelay))
         }
+
         if (isStopping) break
-        result = await currentSortGenerator.next() // Process next step
+        result = await currentSortGenerator.next()
       }
 
       if (!isStopping && result.done) {
-        self.postMessage({
-          type: 'complete',
-          result: result.value as SortResult, // Assuming result.value is SortResult when done
-        })
+        self.postMessage({ type: 'complete', result: result.value as SortResult })
       }
     } catch (e: unknown) {
       if (!isStopping) {
@@ -148,27 +154,40 @@ self.onmessage = async (event: MessageEvent) => {
       currentSortGenerator = null
       isRunning = false
       shouldPause = false
-      isStopping = false // Ensure isStopping is reset
-      self.postMessage({ type: 'stopped_ack' }) // Signal that cleanup is complete
+      isStopping = false // Ensure fully stopped here
+      stepModeActive = false // Reset step mode on any exit
+      self.postMessage({ type: 'stopped_ack' })
     }
   } else if (type === 'pause') {
     if (isRunning && !isStopping) {
       shouldPause = true
+      // Pausing does not necessarily turn off stepModeActive.
+      // If user pauses during step mode, then hits step, it should still step.
     }
   } else if (type === 'resume') {
+    // Resume to continuous run
     if (isRunning && shouldPause && !isStopping) {
+      stepModeActive = false // Explicitly turn off step mode for continuous run
       shouldPause = false
+      if (resolvePausePromise) resolvePausePromise() // Unblock the loop
+    }
+  } else if (type === 'request_one_step') {
+    if (isRunning && !isStopping) {
+      stepModeActive = true // Ensure step mode is active
+      shouldPause = false // Allow one step to proceed
+      if (resolvePausePromise) resolvePausePromise() // Unblock the loop for one step
+    } else if (!isRunning && !isStopping) {
+      // self.postMessage({ type: 'error', message: 'Sort not started. Cannot step.' }); // Cleaned, handled by UI logic potentially
     }
   } else if (type === 'stop') {
-    // Check if we are in a state where stopping makes sense
     if (!isRunning && !currentSortGenerator && !isStopping) {
-      self.postMessage({ type: 'stopped' }) // Already stopped or idle
+      self.postMessage({ type: 'stopped' })
       return
     }
-    isStopping = true // Signal the loop to stop and clean up
-    shouldPause = false // If paused, unpause it so it can hit the isStopping check
-    // The main loop's finally block will now handle cleanup.
-    // This handler ensures the 'stopped' message is sent back.
+    isStopping = true
+    shouldPause = false // Allow loop to exit cleanly
+    stepModeActive = false // Turn off step mode
+    if (resolvePausePromise) resolvePausePromise() // Unblock loop if paused
     self.postMessage({ type: 'stopped' })
   } else if (type === 'setError') {
     // Placeholder for potential future use where main thread informs worker of an error.

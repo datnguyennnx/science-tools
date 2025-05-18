@@ -19,6 +19,7 @@ interface SortVisualizerProps {
   onNewArray: () => void
   isSorting: boolean
   isPaused: boolean
+  isStopping?: boolean
   arraySize: number
   setArraySize: (value: number) => void
   MIN_ARRAY_SIZE: number
@@ -46,6 +47,7 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
   onNewArray,
   isSorting,
   isPaused,
+  isStopping,
   arraySize,
   MAX_ARRAY_SIZE,
   MIN_ARRAY_SIZE,
@@ -127,6 +129,7 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
               onReset={internalOnReset}
               isSorting={isSorting}
               isPaused={isPaused}
+              isStopping={isStopping}
               toggleAlgorithmInfoShortcut={toggleAlgorithmInfoShortcut}
               togglePseudoCodeShortcut={togglePseudoCodeShortcut}
             />
