@@ -7,7 +7,6 @@ import { PomodoroUIState, TimerMode } from '../engine/core/types'
 import { Check } from 'lucide-react'
 import { format } from 'date-fns'
 
-// Internal Stage representation for the timeline
 interface TimelineStage {
   type: TimerMode
   label: string

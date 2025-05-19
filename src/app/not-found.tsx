@@ -1,16 +1,5 @@
-import Link from 'next/link'
+import Loading from '@/components/loading'
 
 export default function NotFound() {
-  return (
-    <div className="flex flex-col justify-center items-center h-full w-full">
-      <h2 className="text-2xl font-bold mb-4">Page Not Found</h2>
-      <p className="mb-6">The page you are looking for does not exist.</p>
-      <Link
-        href="/"
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-      >
-        Go back home
-      </Link>
-    </div>
-  )
+  return <Loading status={404} message="Page not found" />
 }

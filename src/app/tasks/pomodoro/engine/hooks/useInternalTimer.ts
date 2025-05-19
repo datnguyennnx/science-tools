@@ -1,24 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 interface UseInternalTimerProps {
-  /** The total time in seconds for this timer instance. */
   targetTimeInSeconds: number
-  /** Callback function triggered when the timer completes. */
   onCompletion: () => void
-  /** Optional callback triggered on every tick of the timer. */
   onTick?: (remainingSeconds: number) => void
 }
 
 interface UseInternalTimerReturn {
-  /** Current time remaining in seconds. */
   timeRemainingInSeconds: number
-  /** Whether the timer is currently running. */
   isRunning: boolean
-  /** Starts or resumes the timer. */
   start: () => void
-  /** Pauses the timer. */
   pause: () => void
-  /** Resets the timer with a new target time or reuses the current if not provided. Stops the timer. */
   reset: (newTargetTimeInSeconds?: number) => void
 }
 
@@ -101,7 +93,7 @@ export const useInternalTimer = ({
     (newTargetTime?: number) => {
       const resetTime = newTargetTime !== undefined ? newTargetTime : targetTimeInSeconds
       setIsRunning(false)
-      setTimeRemaining(Math.max(0, resetTime)) // Ensure resetTime is not negative
+      setTimeRemaining(Math.max(0, resetTime))
     },
     [targetTimeInSeconds]
   )

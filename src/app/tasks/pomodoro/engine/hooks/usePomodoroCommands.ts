@@ -48,7 +48,7 @@ export const usePomodoroCommands = ({
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
   // Example: you might have other UI states controlled by commands
-  const [isTimelineVisible, setIsTimelineVisible] = useState(true)
+  const [isTimelineVisible, setIsTimelineVisible] = useState(false)
   const [isTimerDisplayModeFull, setIsTimerDisplayModeFull] = useState(false)
 
   const engineActionsRef = useRef(engineActions) // Ref to always call the latest actions
@@ -72,18 +72,6 @@ export const usePomodoroCommands = ({
   )
   const resetCycleAction = useCallback(
     () => engineActionsRef.current.resetCycle(),
-    [engineActionsRef]
-  )
-  const switchToFocusAction = useCallback(
-    () => engineActionsRef.current.switchToMode('focus'),
-    [engineActionsRef]
-  )
-  const switchToShortBreakAction = useCallback(
-    () => engineActionsRef.current.switchToMode('shortBreak'),
-    [engineActionsRef]
-  )
-  const switchToLongBreakAction = useCallback(
-    () => engineActionsRef.current.switchToMode('longBreak'),
     [engineActionsRef]
   )
   const openSettingsAction = useCallback(() => setIsSettingsDialogOpen(true), [])
@@ -120,27 +108,6 @@ export const usePomodoroCommands = ({
         action: resetCycleAction,
         category: 'timer',
         icon: 'rotate-ccw',
-      },
-      {
-        id: PomodoroCommandType.SwitchToFocus,
-        label: 'Switch to Focus',
-        action: switchToFocusAction,
-        category: 'mode',
-        disabled: isTimerRunning, // Example: disable if timer running
-      },
-      {
-        id: PomodoroCommandType.SwitchToShortBreak,
-        label: 'Switch to Short Break',
-        action: switchToShortBreakAction,
-        category: 'mode',
-        disabled: isTimerRunning,
-      },
-      {
-        id: PomodoroCommandType.SwitchToLongBreak,
-        label: 'Switch to Long Break',
-        action: switchToLongBreakAction,
-        category: 'mode',
-        disabled: isTimerRunning,
       },
       {
         id: PomodoroCommandType.OpenSettings,
@@ -193,22 +160,17 @@ export const usePomodoroCommands = ({
     currentRegistry = registerKb(currentRegistry, escapeBinding)
 
     setRegistry(currentRegistry)
-    // Dependencies: Re-evaluate if engine actions change identity (should be stable from usePomodoroEngine)
-    // or if isTimerRunning changes (to update labels/disabled states).
   }, [
     isTimerRunning,
     toggleTimerAction,
     skipSessionAction,
     resetCycleAction,
-    switchToFocusAction,
-    switchToShortBreakAction,
-    switchToLongBreakAction,
     openSettingsAction,
     toggleHelpAction,
     toggleTimelineAction,
     toggleTimerDisplayModeAction,
     isCommandPaletteOpen,
-    isSettingsDialogOpen, // For escape key custom action closure
+    isSettingsDialogOpen,
   ])
 
   // Global keydown listener
@@ -255,14 +217,13 @@ export const usePomodoroCommands = ({
   }, [registry])
 
   return {
-    commands: commandsForUI, // For UI to list commands
+    commands: commandsForUI,
     isCommandPaletteOpen,
     setIsCommandPaletteOpen,
     isSettingsDialogOpen,
     setIsSettingsDialogOpen,
-    isTimelineVisible, // Expose UI states controlled by commands
+    isTimelineVisible,
     isTimerDisplayModeFull,
-    // getCommandsByCategory if needed for more structured UI
     getCommandsByCategory: (category: CommandCategory) =>
       getAllCmds(registry, category).map(cmd => ({
         ...cmd,

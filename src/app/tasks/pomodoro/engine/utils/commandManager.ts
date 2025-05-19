@@ -2,7 +2,7 @@ import { Command, KeyBinding, PomodoroCommandType, CommandCategory } from '../co
 
 export interface CommandManagerRegistry {
   readonly commands: ReadonlyMap<PomodoroCommandType, Command>
-  readonly keyBindings: ReadonlyMap<string, KeyBinding> // Key is string like 'Shift+KeyV' or 'Space'
+  readonly keyBindings: ReadonlyMap<string, KeyBinding>
 }
 
 export const createEmptyRegistry = (): CommandManagerRegistry => ({
@@ -84,21 +84,17 @@ export const findKeyBinding = (
   return registry.keyBindings.get(bindingKey)
 }
 
-// Helper to get display shortcut for a command (finds the first one)
 export const getShortcutForCommand = (
   registry: CommandManagerRegistry,
   commandId: PomodoroCommandType
 ): string | undefined => {
   for (const binding of registry.keyBindings.values()) {
     if (binding.commandId === commandId) {
-      // Reconstruct the display string from the binding.
-      // This could be more sophisticated if KEY_DISPLAY_NAMES were reintroduced.
       const parts: string[] = []
       if (binding.shiftKey) parts.push('Shift')
       if (binding.ctrlKey) parts.push('Ctrl')
       if (binding.altKey) parts.push('Alt')
       if (binding.metaKey) parts.push('Meta')
-      // A simple way to make KeyV -> V, etc. for common keys.
       const displayCode = binding.code.startsWith('Key') ? binding.code.substring(3) : binding.code
       parts.push(displayCode)
       return parts.join('+')

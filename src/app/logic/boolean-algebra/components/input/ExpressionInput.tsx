@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Loader2, Shuffle } from 'lucide-react'
 import { simplifyExpression, generateRandomExpression, BooleanExpression } from '../../engine'
 import { InputFormat, ParserOptions } from '../../engine/parser/types'
-import { KatexFormula, booleanToLatex } from '@/components/KatexFormula'
 import { detectFormat, parseBoolean } from '../../engine/parser/parser'
 import {
   formatToBoolean as toBooleanString,
@@ -12,6 +11,17 @@ import {
 } from '../../engine/parser/formatter'
 import type { OutputFormat } from '../../engine/generator/generator'
 import { useDebounce } from '@/hooks/useDebounce'
+import dynamic from 'next/dynamic'
+import { booleanToLatex } from '@/components/KatexFormula'
+
+// Dynamically import KatexFormula component
+const KatexFormulaComponent = dynamic(
+  () => import('@/components/KatexFormula').then(mod => mod.KatexFormula),
+  {
+    loading: () => null,
+    ssr: false, // KaTeX manipulation is client-side heavy
+  }
+)
 
 /**
  * Detect input format (standard or LaTeX) based on content
@@ -216,11 +226,13 @@ export function ExpressionInput({
           <h3 className="text-sm font-medium">Preview</h3>
         </div>
         <div className="overflow-x-auto max-w-full no-scrollbar">
-          <KatexFormula
-            formula={alternativePreview || (expression ? booleanToLatex(expression) : '')}
-            block={true}
-            className="py-1"
-          />
+          <Suspense fallback={null}>
+            <KatexFormulaComponent
+              formula={alternativePreview || (expression ? booleanToLatex(expression) : '')}
+              block={true}
+              className="py-1"
+            />
+          </Suspense>
         </div>
       </div>
 
@@ -272,11 +284,13 @@ export function ExpressionInput({
             <div className="pt-2 border-t">
               <h3 className="text-sm font-medium mb-1">LaTeX Representation:</h3>
               <div className="overflow-x-auto max-w-full">
-                <KatexFormula
-                  formula={booleanToLatex(localSimplifiedResult)}
-                  block={true}
-                  className="py-2 no-scrollbar"
-                />
+                <Suspense fallback={null}>
+                  <KatexFormulaComponent
+                    formula={booleanToLatex(localSimplifiedResult)}
+                    block={true}
+                    className="py-2 no-scrollbar"
+                  />
+                </Suspense>
               </div>
             </div>
           </div>

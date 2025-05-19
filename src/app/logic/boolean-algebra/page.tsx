@@ -9,22 +9,22 @@ import { ExpressionInput } from './components/input'
 
 // Dynamically import visualization and simplification components
 const TruthTable = dynamic(() => import('./components/visualization').then(mod => mod.TruthTable), {
-  loading: () => <p className="text-center p-4">Loading Truth Table...</p>,
+  loading: () => null,
 })
 
 const KarnaughMap = dynamic(
   () => import('./components/visualization').then(mod => mod.KarnaughMap),
-  { loading: () => <p className="text-center p-4">Loading K-Map...</p> }
+  { loading: () => null }
 )
 
 const VennDiagram = dynamic(
   () => import('./components/visualization').then(mod => mod.VennDiagram),
-  { loading: () => <p className="text-center p-4">Loading Venn Diagram...</p> }
+  { loading: () => null }
 )
 
 const StepByStepSimplification = dynamic(
   () => import('./components/simplification').then(mod => mod.StepByStepSimplification),
-  { loading: () => <p className="text-center p-4">Loading Simplification Steps...</p> }
+  { loading: () => null }
 )
 
 export default function BooleanAlgebraPage() {

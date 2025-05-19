@@ -15,15 +15,14 @@ import {
   getTotalTimeForMode,
 } from '../utils/timerLogic'
 
-// --- Reducer Logic ---
 type PomodoroReducerAction =
-  | { type: 'START_REQUEST' } // User wants to start/resume
-  | { type: 'PAUSE_REQUEST' } // User wants to pause
-  | { type: 'SESSION_COMPLETED' } // InternalTimer signals completion
-  | { type: 'SKIP_REQUEST' } // User wants to skip current session
+  | { type: 'START_REQUEST' }
+  | { type: 'PAUSE_REQUEST' }
+  | { type: 'SESSION_COMPLETED' }
+  | { type: 'SKIP_REQUEST' }
   | { type: 'RESET_REQUEST'; newSettings: PomodoroSettings }
   | { type: 'SETTINGS_UPDATED'; newSettings: PomodoroSettings }
-  | { type: 'SWITCH_MODE_REQUEST'; targetMode: TimerMode } // For explicit mode switching
+  | { type: 'SWITCH_MODE_REQUEST'; targetMode: TimerMode }
   | {
       type: '_EFFECT_MODE_TRANSITION_COMPLETE'
       newMode: TimerMode
@@ -37,10 +36,7 @@ interface PomodoroReducerState {
   totalCompletedFocusSessions: number
   currentSetCount: number
   engineOperationalStatus: 'idle' | 'running' | 'paused' | 'transitioning_mode'
-  // Holds the mode the engine wants useInternalTimer to be in
-  // This allows the engine to decide a mode, then an effect makes useInternalTimer adopt it.
   internalTimerTargetMode: TimerMode
-  // Holds the target time for useInternalTimer for the activeTimerMode
   internalTimerTargetTime: number
 }
 
@@ -255,12 +251,12 @@ export const usePomodoroEngine = (
     const { displayMinutes, displaySeconds } = formatTime(internalTimer.timeRemainingInSeconds)
     const progress = calculateProgress(
       internalTimer.timeRemainingInSeconds,
-      engineCycleState.internalTimerTargetTime // Use target time for the current active mode
+      engineCycleState.internalTimerTargetTime
     )
     return {
-      currentMode: engineCycleState.currentLogicalMode, // The logical pomodoro mode
+      currentMode: engineCycleState.currentLogicalMode,
       timeRemainingInSeconds: internalTimer.timeRemainingInSeconds,
-      isRunning: internalTimer.isRunning, // Reflect actual timer running state
+      isRunning: internalTimer.isRunning,
       completedFocusSessionsInSet: engineCycleState.completedFocusSessionsInSet,
       totalCompletedFocusSessions: engineCycleState.totalCompletedFocusSessions,
       currentSetCount: engineCycleState.currentSetCount,
@@ -268,9 +264,8 @@ export const usePomodoroEngine = (
       displayMinutes,
       displaySeconds,
       progressPercent: progress,
-      // engine specific states if needed for debug, but generally not for UIState
-      internalTimerTargetMode: engineCycleState.internalTimerTargetMode, // Exposing for clarity, could be internal
-      internalTimerTargetTime: engineCycleState.internalTimerTargetTime, // Exposing for clarity
+      internalTimerTargetMode: engineCycleState.internalTimerTargetMode,
+      internalTimerTargetTime: engineCycleState.internalTimerTargetTime,
     }
   }, [engineCycleState, internalTimer.timeRemainingInSeconds, internalTimer.isRunning, settings])
 

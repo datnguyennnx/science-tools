@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AlgorithmInfoDisplay, SortVisualizer, PseudoCodeDisplay } from './components'
 import {
   useSortControls,
   useAlgorithmSelection,
@@ -10,6 +9,25 @@ import {
 } from './engine/hooks'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { motion, AnimatePresence } from 'framer-motion'
+import dynamic from 'next/dynamic'
+
+const SortVisualizer = dynamic(() => import('./components').then(mod => mod.SortVisualizer), {
+  loading: () => null,
+  ssr: false,
+})
+
+const AlgorithmInfoDisplay = dynamic(
+  () => import('./components').then(mod => mod.AlgorithmInfoDisplay),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
+
+const PseudoCodeDisplay = dynamic(() => import('./components').then(mod => mod.PseudoCodeDisplay), {
+  loading: () => null,
+  ssr: false,
+})
 
 export default function SortPage(): React.JSX.Element {
   const { selectedAlgorithmId, setSelectedAlgorithmId, selectedAlgorithm, filteredAlgorithms } =

@@ -1,13 +1,35 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { TimerDisplay } from './components/TimerDisplay'
-import { PomodoroDialogs } from './components/KeyboardShortcuts'
-import { CurrentSectionDisplay } from './components/CurrentSectionDisplay'
 import { usePomodoroEngine } from './engine/hooks/usePomodoroEngine'
 import { usePomodoroCommands } from './engine/hooks/usePomodoroCommands'
 import { Keyboard } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import dynamic from 'next/dynamic'
+
+const PomodoroDialogs = dynamic(
+  () => import('./components/KeyboardShortcuts').then(mod => mod.PomodoroDialogs),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
+
+const CurrentSectionDisplay = dynamic(
+  () => import('./components/CurrentSectionDisplay').then(mod => mod.CurrentSectionDisplay),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
+
+const TimerDisplay = dynamic(
+  () => import('./components/TimerDisplay').then(mod => mod.TimerDisplay),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
 
 export default function PomodoroPage() {
   const { uiState, actions: engineActions } = usePomodoroEngine()

@@ -277,7 +277,7 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
 
       {codeStringToDisplay.length > 0 && (
         <CardContent className="text-sm overflow-auto flex-grow no-scrollbar">
-          <Suspense fallback={<div className="p-4 text-center">Loading code highlighter...</div>}>
+          <Suspense fallback={null}>
             <SyntaxHighlighter
               language={actualDisplayLanguageForSyntaxHighlight}
               style={oneDark}
@@ -285,7 +285,7 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
               wrapLines={true}
               lineNumberStyle={
                 {
-                  minWidth: '3.5em',
+                  minWidth: '2em',
                   paddingRight: '1em',
                   textAlign: 'right',
                   color: '#888',

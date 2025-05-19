@@ -16,12 +16,12 @@ export const calculateProgress = (
   if (totalTimeForModeInSeconds <= 0) return 0
   const timeElapsed = totalTimeForModeInSeconds - timeRemainingInSeconds
   const progress = (timeElapsed / totalTimeForModeInSeconds) * 100
-  return Math.max(0, Math.min(100, progress)) // Clamp between 0 and 100
+  return Math.max(0, Math.min(100, progress))
 }
 
 export const determineNextMode = (
   currentMode: TimerMode,
-  completedFocusSessionsInSet: number, // Count before the one just finished
+  completedFocusSessionsInSet: number,
   settings: PomodoroSettings
 ): TimerMode => {
   if (currentMode === 'focus') {
@@ -29,7 +29,6 @@ export const determineNextMode = (
       (completedFocusSessionsInSet + 1) % settings.sessionsUntilLongBreak === 0
     return isLongBreakNext ? 'longBreak' : 'shortBreak'
   }
-  // After any break, or if currentMode is somehow not focus (e.g. explicit switch), default to focus
   return 'focus'
 }
 
@@ -42,6 +41,6 @@ export const getTotalTimeForMode = (mode: TimerMode, settings: PomodoroSettings)
     case 'longBreak':
       return settings.longBreakDuration
     default:
-      return 0 // Should not happen with valid TimerMode
+      return 0
   }
 }

@@ -1,10 +1,19 @@
 'use client'
 
-import { useState } from 'react'
-import { KatexFormula } from '@/components/KatexFormula'
+import { useState, Suspense } from 'react'
+// import { KatexFormula } from '@/components/KatexFormula'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { groupedGuideContent, allCategories } from './guide-content'
+import dynamic from 'next/dynamic'
+
+const KatexFormulaComponent = dynamic(
+  () => import('@/components/KatexFormula').then(mod => mod.KatexFormula),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
 
 export function Guide() {
   // State for managing expanded groups in the sidebar
@@ -110,7 +119,13 @@ export function Guide() {
                       )}
                     </div>
                     <div className="ml-4 flex-shrink-0">
-                      <KatexFormula formula={law.katexFormula} block={false} className="text-sm" />
+                      <Suspense fallback={null}>
+                        <KatexFormulaComponent
+                          formula={law.katexFormula}
+                          block={false}
+                          className="text-sm"
+                        />
+                      </Suspense>
                     </div>
                   </div>
                 </div>

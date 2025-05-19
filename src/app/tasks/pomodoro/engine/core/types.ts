@@ -1,9 +1,9 @@
 export type TimerMode = 'focus' | 'shortBreak' | 'longBreak'
 
 export interface PomodoroSettings {
-  focusDuration: number // seconds
-  shortBreakDuration: number // seconds
-  longBreakDuration: number // seconds
+  focusDuration: number
+  shortBreakDuration: number
+  longBreakDuration: number
   sessionsUntilLongBreak: number
   autoStartBreaks?: boolean
   autoStartFocus?: boolean
@@ -14,9 +14,9 @@ export interface PomodoroEngineState {
   currentMode: TimerMode
   timeRemainingInSeconds: number
   isRunning: boolean
-  completedFocusSessionsInSet: number // Towards current long break
+  completedFocusSessionsInSet: number
   totalCompletedFocusSessions: number
-  currentSetCount: number // Number of full pomodoro sets completed
+  currentSetCount: number
   settings: PomodoroSettings
 }
 
@@ -24,7 +24,7 @@ export interface PomodoroEngineState {
 export interface PomodoroUIState extends PomodoroEngineState {
   displayMinutes: number
   displaySeconds: number
-  progressPercent: number // 0-100
+  progressPercent: number
 }
 
 // Actions the UI can dispatch to the Pomodoro engine
@@ -34,7 +34,6 @@ export interface PomodoroEngineActions {
   skipSession: () => void
   resetCycle: () => void
   updateSettings: (newSettings: Partial<PomodoroSettings>) => void
-  // Action to explicitly change mode - use with caution as it might disrupt the cycle
   switchToMode: (mode: TimerMode) => void
 }
 
@@ -42,6 +41,4 @@ export interface PomodoroEngineActions {
 export interface UsePomodoroReturn {
   uiState: PomodoroUIState
   actions: PomodoroEngineActions
-  // We might re-introduce a simplified command object if needed for the command palette
-  // or keep command generation separate/derived.
 }

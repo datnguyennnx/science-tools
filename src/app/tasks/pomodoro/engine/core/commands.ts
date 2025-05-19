@@ -5,13 +5,10 @@ export enum PomodoroCommandType {
   ToggleTimer = 'TOGGLE_TIMER',
   SkipSession = 'SKIP_SESSION',
   ResetCycle = 'RESET_CYCLE',
-  SwitchToFocus = 'SWITCH_TO_FOCUS',
-  SwitchToShortBreak = 'SWITCH_TO_SHORT_BREAK',
-  SwitchToLongBreak = 'SWITCH_TO_LONG_BREAK',
   OpenSettings = 'OPEN_SETTINGS',
-  ToggleHelp = 'TOGGLE_HELP', // For command palette/shortcuts display
-  ToggleTimeline = 'TOGGLE_TIMELINE', // For CurrentSectionDisplay
-  ToggleTimerDisplayMode = 'TOGGLE_TIMER_DISPLAY_MODE', // e.g., show full date/time
+  ToggleHelp = 'TOGGLE_HELP',
+  ToggleTimeline = 'TOGGLE_TIMELINE',
+  ToggleTimerDisplayMode = 'TOGGLE_TIMER_DISPLAY_MODE',
 }
 
 export type CommandCategory = 'timer' | 'mode' | 'settings' | 'view' | 'help'
@@ -20,12 +17,12 @@ export interface Command {
   id: PomodoroCommandType
   label: string
   description?: string
-  shortcut?: string // User-facing display string, e.g., "Shift+V"
-  icon?: string | ReactNode // Icon identifier or component
-  action: () => void // The function to execute
+  shortcut?: string
+  icon?: string | ReactNode
+  action: () => void
   category: CommandCategory
-  disabled?: boolean // If the command is currently disabled
-  hidden?: boolean // If the command should not be shown in lists
+  disabled?: boolean
+  hidden?: boolean
 }
 
 export interface KeyBinding {
@@ -36,13 +33,11 @@ export interface KeyBinding {
   altKey?: boolean
   metaKey?: boolean
   preventDefault?: boolean
-  commandId: PomodoroCommandType | 'custom' // 'custom' for bindings not directly mapping to a Command ID
-  customAction?: () => void // For 'custom' commandId
-  /** Only allow if timer is not running. */
+  commandId: PomodoroCommandType | 'custom'
+  customAction?: () => void
   requiresNotRunning?: boolean
 }
 
-// ADDED this interface here for wider use
 export interface CommandWithShortcut extends Command {
   displayShortcut?: string
 }
@@ -52,13 +47,13 @@ export const DEFAULT_KEY_BINDINGS: KeyBinding[] = [
   { code: 'KeyN', commandId: PomodoroCommandType.SkipSession, preventDefault: true },
   { code: 'KeyR', commandId: PomodoroCommandType.ResetCycle, preventDefault: true },
 
-  { code: 'KeyS', commandId: PomodoroCommandType.OpenSettings, preventDefault: true }, // Typically dialogs steal focus, but good practice
+  { code: 'KeyS', commandId: PomodoroCommandType.OpenSettings, preventDefault: true },
   {
     code: 'Slash',
     shiftKey: true,
     commandId: PomodoroCommandType.ToggleHelp,
     preventDefault: true,
-  }, // Shift + / = ?
+  },
 
   {
     code: 'KeyV',
