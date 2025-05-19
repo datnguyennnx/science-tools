@@ -1,6 +1,8 @@
 import { Metadata } from 'next'
 import { ReactNode } from 'react'
 
+const pageUrl = 'https://data-science.hallucinationguys.com/tasks/pomodoro'
+
 export const metadata: Metadata = {
   title: 'Pomodoro Timer',
   description:
@@ -35,6 +37,45 @@ export const metadata: Metadata = {
   },
 }
 
+// Define WebPage JSON-LD data
+const webPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: metadata.title as string,
+  description: metadata.description as string,
+  url: pageUrl,
+  isPartOf: {
+    '@type': 'WebSite',
+    url: 'https://data-science.hallucinationguys.com',
+    name: 'Science Tools',
+  },
+}
+
+// Define SoftwareApplication JSON-LD data for the Pomodoro Timer
+const softwareAppJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'Pomodoro Timer',
+  description:
+    'Stay focused and boost productivity with our customizable Pomodoro Timer. Optimize your work sessions with timed intervals.',
+  keywords: metadata.keywords as string[],
+  applicationCategory: 'Productivity',
+  operatingSystem: 'Web',
+  url: pageUrl,
+  featureList: [
+    'Customizable work intervals',
+    'Customizable break intervals',
+    'Session tracking',
+    'Keyboard shortcuts',
+    'Full-screen mode',
+  ],
+  provider: {
+    '@type': 'Organization',
+    name: 'Science Tools',
+    url: 'https://data-science.hallucinationguys.com',
+  },
+}
+
 interface PomodoroLayoutProps {
   children: ReactNode
 }
@@ -42,6 +83,17 @@ interface PomodoroLayoutProps {
 export default function PomodoroLayout({ children }: PomodoroLayoutProps) {
   return (
     <section aria-label="Pomodoro Timer Application" className="w-full">
+      {/* Add JSON-LD to the head of this layout/page segment */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+        key="pomodoro-webpage-jsonld"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppJsonLd) }}
+        key="pomodoro-softwareapp-jsonld"
+      />
       <div className="container mx-auto py-4">{children}</div>
     </section>
   )

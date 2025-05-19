@@ -1,6 +1,8 @@
 import { Metadata } from 'next'
 import { ReactNode } from 'react'
 
+const pageUrl = 'https://data-science.hallucinationguys.com/logic/sort'
+
 export const metadata: Metadata = {
   title: 'Sorting Algorithm Visualization | Interactive Learning Tool',
   description:
@@ -52,6 +54,40 @@ export const metadata: Metadata = {
   },
 }
 
+// Define WebPage JSON-LD data
+const webPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: metadata.title as string,
+  description: metadata.description as string,
+  url: pageUrl,
+  isPartOf: {
+    '@type': 'WebSite',
+    url: 'https://data-science.hallucinationguys.com',
+    name: 'Science Tools',
+  },
+}
+
+// Define LearningResource JSON-LD data for the Sort Visualization tool
+const learningResourceJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LearningResource',
+  name: 'Interactive Sorting Algorithm Visualization',
+  description:
+    'Explore and visualize various sorting algorithms like Merge Sort, Quick Sort, Bubble Sort, etc. Understand their mechanics with interactive animations and step-by-step explanations.',
+  keywords: metadata.keywords as string[],
+  educationalUse: '["learning", "demonstration", "visualization"]',
+  learningResourceType: '["interactive simulation", "educational tool"]',
+  interactivityType: 'active',
+  typicalAgeRange: '14-', // Example: 14 years and older
+  url: pageUrl,
+  provider: {
+    '@type': 'Organization',
+    name: 'Science Tools',
+    url: 'https://data-science.hallucinationguys.com',
+  },
+}
+
 interface SortLayoutProps {
   children: ReactNode
 }
@@ -59,6 +95,17 @@ interface SortLayoutProps {
 export default function SortLayout({ children }: SortLayoutProps) {
   return (
     <section aria-label="Algorithm Visualization" className="p-4">
+      {/* Add JSON-LD to the head of this layout/page segment */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+        key="sort-webpage-jsonld"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(learningResourceJsonLd) }}
+        key="sort-learning-resource-jsonld"
+      />
       {children}
     </section>
   )

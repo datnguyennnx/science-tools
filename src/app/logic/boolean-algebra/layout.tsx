@@ -12,6 +12,8 @@ import {
 } from '@/components/ui/dialog'
 import { Guide } from './components/common' // Assuming Guide is in a common components directory
 
+const pageUrl = 'https://data-science.hallucinationguys.com/logic/boolean-algebra'
+
 export const metadata: Metadata = {
   title: 'Boolean Algebra Simplifier',
   description:
@@ -55,6 +57,39 @@ export const metadata: Metadata = {
   },
 }
 
+// Define WebPage JSON-LD data
+const webPageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: metadata.title as string,
+  description: metadata.description as string,
+  url: pageUrl,
+  isPartOf: {
+    '@type': 'WebSite',
+    url: 'https://data-science.hallucinationguys.com',
+    name: 'Science Tools',
+  },
+}
+
+// Define LearningResource JSON-LD data for the Boolean Algebra tool
+const learningResourceJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LearningResource',
+  name: 'Boolean Algebra Simplifier Tool',
+  description:
+    'An interactive tool to simplify boolean expressions, visualize with K-maps, truth tables, and Venn diagrams, and learn boolean algebra laws.',
+  keywords: metadata.keywords as string[],
+  educationalUse: '["learning", "demonstration", "homework"]',
+  learningResourceType: '["interactive simulation", "problem solver"]',
+  interactivityType: 'active',
+  url: pageUrl,
+  provider: {
+    '@type': 'Organization',
+    name: 'Science Tools',
+    url: 'https://data-science.hallucinationguys.com',
+  },
+}
+
 interface BooleanAlgebraLayoutProps {
   children: ReactNode
 }
@@ -62,6 +97,16 @@ interface BooleanAlgebraLayoutProps {
 export default function BooleanAlgebraLayout({ children }: BooleanAlgebraLayoutProps) {
   return (
     <section aria-label="Boolean Algebra Tool" className="flex flex-col h-full p-2 sm:p-4">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+        key="boolean-algebra-webpage-jsonld"
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(learningResourceJsonLd) }}
+        key="boolean-algebra-learning-resource-jsonld"
+      />
       <header className="w-full flex items-center justify-between mb-1 sm:mb-2 pt-1 sm:pt-2">
         <h1 className="text-lg sm:text-xl font-bold text-[--color-foreground]">
           Boolean Algebra Simplifier

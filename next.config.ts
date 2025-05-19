@@ -2,6 +2,9 @@ import type { NextConfig } from 'next'
 import withBundleAnalyzer from '@next/bundle-analyzer'
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
+  },
   experimental: {
     nextScriptWorkers: true,
   },

@@ -8,7 +8,10 @@ import { AppSidebar } from '@/components/app-sidebar'
 import { CommandProvider } from '@/app/_command-manager/CommandProvider'
 import { GlobalClientEffects } from '@/components/global-client-effects'
 
+const websiteUrl = 'https://data-science.hallucinationguys.com'
+
 export const metadata: Metadata = {
+  metadataBase: new URL(websiteUrl),
   title: {
     template: '%s | Science Tools',
     default: 'Science Tools',
@@ -79,6 +82,34 @@ export const metadata: Metadata = {
   manifest: '/site.webmanifest',
 }
 
+// Define Organization JSON-LD data
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Science Tools',
+  url: websiteUrl,
+}
+
+// Define WebSite JSON-LD data
+const webSiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Science Tools',
+  url: websiteUrl,
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: `${websiteUrl}/search?q={search_term_string}`,
+    'query-input': 'required name=search_term_string',
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Science Tools',
+    logo: {
+      '@type': 'ImageObject',
+    },
+  },
+}
+
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
@@ -97,6 +128,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/site.webmanifest" />
+        {/* Add JSON-LD to the head */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd) }}
+        />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <SpeedInsights />

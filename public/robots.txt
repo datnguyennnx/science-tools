@@ -1,0 +1,6 @@
+# Allow all user agents to crawl the site
+User-agent: *
+Allow: /
+
+# Location of sitemap
+Sitemap: https://data-science.hallucinationguys.com/sitemap.xml 
