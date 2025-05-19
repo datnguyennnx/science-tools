@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { bucketSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure bucketSort(list, direction, numBuckets)',
@@ -56,7 +53,6 @@ export const bucketSortData: SortAlgorithm = {
   name: 'Bucket Sort',
   description:
     'Bucket Sort is a distribution sort algorithm that works by distributing the elements of an array into a number of buckets. Each bucket is then sorted individually, either using a different sorting algorithm, or by recursively applying the bucket sort algorithm. It is most effective when the input data is uniformly distributed over a range. The efficiency of Bucket Sort depends on the number of buckets and the algorithm used to sort the buckets.',
-  generator: bucketSortGenerator,
   complexity: {
     time: { best: 'O(n+k)', average: 'O(n+k)', worst: 'O(n^2)' },
     space: 'O(n+k)',
@@ -353,5 +349,4 @@ export const bucketSortData: SortAlgorithm = {
       31, 32, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true,
 }

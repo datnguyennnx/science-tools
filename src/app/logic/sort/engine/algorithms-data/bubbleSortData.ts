@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { bubbleSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure bubbleSort(list, direction)',
@@ -26,7 +23,6 @@ export const bubbleSortData: SortAlgorithm = {
   name: 'Bubble Sort',
   description:
     'Bubble Sort is a simple sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed, which indicates that the list is sorted. While simple to understand, it is inefficient for large lists.',
-  generator: bubbleSortGenerator,
   complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'Unknown', year: 'Before 1956 (referenced by Iverson)' },
   img: '',
@@ -139,5 +135,4 @@ export const bubbleSortData: SortAlgorithm = {
     worst: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14],
     average: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

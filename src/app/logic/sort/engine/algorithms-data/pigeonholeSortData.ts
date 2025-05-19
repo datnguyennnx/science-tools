@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { pigeonholeSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure pigeonholeSort(list, direction)',
@@ -37,10 +34,12 @@ export const pigeonholeSortData: SortAlgorithm = {
   id: 'pigeonholeSort',
   name: 'Pigeonhole Sort',
   description:
-    "Pigeonhole Sort is a sorting algorithm that is suitable for sorting lists of elements where the number of elements (n) and the number of possible key values (N) are approximately the same. It requires O(n + N) time. It works by creating a number of 'pigeonholes' equal to the range of possible values. Each item is then placed into its corresponding pigeonhole. Finally, the elements are iterated over the pigeonholes in order to retrieve the sorted list.",
-  generator: pigeonholeSortGenerator,
-  complexity: { time: { best: 'O(n+N)', average: 'O(n+N)', worst: 'O(n+N)' }, space: 'O(N)' }, // N is range
-  origin: { name: 'Known in early computing history for specific use cases' },
+    'Pigeonhole Sort is suitable for sorting lists of elements where the number of elements and the number of possible key values are approximately the same. It works by creating a number of "pigeonholes" equal to the range of possible key values. Each element is then placed into its corresponding pigeonhole. Finally, the elements are collected from the pigeonholes in order, resulting in a sorted list. It is efficient for certain datasets but can be impractical if the range of values is much larger than the number of elements.',
+  complexity: {
+    time: { best: 'O(n + Range)', average: 'O(n + Range)', worst: 'O(n + Range)' },
+    space: 'O(n + Range)',
+  },
+  origin: { name: 'Early computing concept, related to counting sort principles' },
   img: '',
   pseudoCode: rawPlaintextPseudoCode,
   languageExamples: {
@@ -236,5 +235,4 @@ export const pigeonholeSortData: SortAlgorithm = {
       26,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true,
 }

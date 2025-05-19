@@ -1,7 +1,14 @@
 'use client'
 
-import type { SortGenerator, AuxiliaryStructure } from './types'
-import { SORT_ALGORITHMS } from './algorithms-data'
+import type { AuxiliaryStructure } from './types'
+import { LIGHTWEIGHT_ALGORITHM_LIST, getAlgorithmDetails } from './algorithms-data'
+import {
+  MAX_ARRAY_SIZE,
+  MAX_SPEED,
+  MIN_ARRAY_SIZE,
+  MIN_SPEED,
+  DEFAULT_ARRAY_SIZE,
+} from '@/app/logic/sort/constants/sortSettings'
 
 export interface AlgorithmComplexity {
   time: {
@@ -13,11 +20,16 @@ export interface AlgorithmComplexity {
 }
 
 export const TimeComplexityCategory = {
-  O_N: 'O(n)',
-  O_N_LOG_N: 'O(n log n)',
-  O_N_PLUS_K_OR_NK: 'O(n+k) / O(nk)',
-  O_N_SQUARED: 'O(n^2)',
-  O_OTHER_TIME: 'Other Time Complexities',
+  CONSTANT: 'O(1)',
+  LOGARITHMIC: 'O(log n)',
+  LINEAR: 'O(n)',
+  N_LOG_N: 'O(n log n)',
+  QUADRATIC: 'O(n^2)',
+  CUBIC: 'O(n^3)',
+  EXPONENTIAL: 'O(2^n)',
+  FACTORIAL: 'O(n!)',
+  N_PLUS_K: 'O(n + k)',
+  OTHER: 'Other',
 } as const
 
 export const SpaceComplexityCategory = {
@@ -36,9 +48,9 @@ export function mapComplexityToCategory(complexity: string): {
 } {
   const s = complexity.trim()
 
-  if (/^O\(n\)$/.test(s)) return { time: TimeComplexityCategory.O_N }
-  if (/^O\(n log n\)$/.test(s)) return { time: TimeComplexityCategory.O_N_LOG_N }
-  if (/^O\(n\^2\)$/.test(s)) return { time: TimeComplexityCategory.O_N_SQUARED }
+  if (/^O\(n\)$/.test(s)) return { time: TimeComplexityCategory.LINEAR }
+  if (/^O\(n log n\)$/.test(s)) return { time: TimeComplexityCategory.N_LOG_N }
+  if (/^O\(n\^2\)$/.test(s)) return { time: TimeComplexityCategory.QUADRATIC }
   if (
     /^O\(\s*n\s*(\+|\*)\s*k\s*\)$/.test(s) ||
     /^O\(n\s*\+\s*(Range|N|b)\)$/.test(s) ||
@@ -47,7 +59,7 @@ export function mapComplexityToCategory(complexity: string): {
     s === 'O(nk)' ||
     s === 'O(n + N)'
   ) {
-    return { time: TimeComplexityCategory.O_N_PLUS_K_OR_NK }
+    return { time: TimeComplexityCategory.N_PLUS_K }
   }
   if (
     s.includes('n log^2 n') ||
@@ -58,7 +70,7 @@ export function mapComplexityToCategory(complexity: string): {
     s.includes('∞') ||
     (s.includes('log^2 n') && !s.includes('n log n'))
   ) {
-    return { time: TimeComplexityCategory.O_OTHER_TIME }
+    return { time: TimeComplexityCategory.OTHER }
   }
 
   if (/^O\(1\)$/.test(s)) return { space: SpaceComplexityCategory.O_1 }
@@ -120,7 +132,6 @@ export interface SortAlgorithm {
   id: string
   name: string
   description: string
-  generator: SortGenerator
   complexity: SortAlgorithmComplexity
   auxiliaryStructures?: AuxiliaryStructure[]
   pseudoCode?: string[]
@@ -133,7 +144,25 @@ export interface SortAlgorithm {
   }
   origin?: AlgorithmOrigin
   img?: string
-  hasAdvancedAuxiliaryVisuals?: boolean
 }
 
-export { SORT_ALGORITHMS }
+export const AVAILABLE_ALGORITHMS_LIST = LIGHTWEIGHT_ALGORITHM_LIST
+
+export { getAlgorithmDetails }
+
+export const defaultAlgorithmId = 'bubbleSort'
+
+export const DEFAULT_SORT_SETTINGS = {
+  arraySize: DEFAULT_ARRAY_SIZE,
+  speed: Math.floor((MIN_SPEED + MAX_SPEED) / 2.5), // Default speed
+  sortDirection: 'asc',
+  minArraySize: MIN_ARRAY_SIZE,
+  maxArraySize: MAX_ARRAY_SIZE,
+  minSpeed: MIN_SPEED,
+  maxSpeed: MAX_SPEED,
+} as const
+
+export const isAlgorithmId = (
+  id: string,
+  algorithms: ReadonlyArray<{ id: string; name: string }> // Use lightweight list for check
+): boolean => algorithms.some(algo => algo.id === id)

@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { countingSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure countingSort(list, minVal, maxVal, direction)',
@@ -43,7 +40,6 @@ export const countingSortData: SortAlgorithm = {
   name: 'Counting Sort',
   description:
     'Invented by Harold H. Seward in 1954, Counting Sort is a non-comparison sorting algorithm that is effective for sorting a collection of objects according to their keys that are small integers. It works by counting the number of occurrences of each unique key value, then using those counts to determine the positions of each key value in the output sequence. It is often used as a subroutine in other sorting algorithms like Radix Sort and can achieve linear time complexity O(n + k) where k is the range of input values. It is a stable sort, meaning that elements with equal keys appear in the output array in the same order as they do in the input array.',
-  generator: countingSortGenerator,
   complexity: {
     time: { best: 'O(n + k)', average: 'O(n + k)', worst: 'O(n + k)' },
     space: 'O(n + k)',
@@ -218,5 +214,4 @@ export const countingSortData: SortAlgorithm = {
       31,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true,
 }

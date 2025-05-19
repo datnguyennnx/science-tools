@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { cycleSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure cycleSort(list, direction)',
@@ -52,7 +49,6 @@ export const cycleSortData: SortAlgorithm = {
   name: 'Cycle Sort',
   description:
     'Cycle Sort is an in-place sorting algorithm that is optimal in terms of the number of writes to the original array. It is based on the idea of permutations and cycles. For each element, it finds its correct position in the sorted array and rotates the elements that are in the way to complete a cycle. This minimizes writes because each element is written at most once to its final sorted position. While it has a worst-case time complexity of O(n^2), its focus on minimizing writes makes it suitable for scenarios where writes are significantly more expensive than reads.',
-  generator: cycleSortGenerator,
   complexity: { time: { best: 'O(n^2)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'J.P. Black & P.J.P. Taylor', year: 1990 },
   img: '',
@@ -299,5 +295,4 @@ export const cycleSortData: SortAlgorithm = {
       32, 33, 35, 36, 37, 38, 39, 40,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

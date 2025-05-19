@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { insertionSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure insertionSort(list, direction)',
@@ -26,7 +23,6 @@ export const insertionSortData: SortAlgorithm = {
   name: 'Insertion Sort',
   description:
     "Much like sorting a hand of playing cards, Insertion Sort builds the final sorted array one item at a time. It takes each element from the input and inserts it into the correct position within the already sorted portion of the array. It\'s simple to implement and efficient for small datasets or nearly sorted data, as it only requires shifting elements to make space for the new insertion.",
-  generator: insertionSortGenerator,
   complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'Fundamental/Early' },
   img: '',
@@ -127,5 +123,4 @@ export const insertionSortData: SortAlgorithm = {
     worst: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
     average: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

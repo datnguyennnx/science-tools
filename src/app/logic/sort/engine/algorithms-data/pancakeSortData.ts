@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { pancakeSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure pancakeSort(list, direction)',
@@ -41,7 +38,6 @@ export const pancakeSortData: SortAlgorithm = {
   name: 'Pancake Sort',
   description:
     "Pancake Sort is a sorting algorithm that works by repeatedly finding the largest unsorted element and flipping it to the top of the unsorted portion of the list, then flipping the entire unsorted portion to move that element to its correct final position. The only allowed operation is flipping a prefix of the list. It's named after the problem of sorting a stack of pancakes of different sizes.",
-  generator: pancakeSortGenerator,
   complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'Jerome K. "Bill" Gates (as Harry Dweighter)', year: 1979 },
   img: '',
@@ -213,5 +209,4 @@ export const pancakeSortData: SortAlgorithm = {
       0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

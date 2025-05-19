@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { gnomeSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure gnomeSort(list, direction)',
@@ -25,7 +22,6 @@ export const gnomeSortData: SortAlgorithm = {
   name: 'Gnome Sort',
   description:
     'Originally called "Stupid Sort," Gnome Sort is a simple sorting algorithm conceived by Hamid Sarbazi-Azad and later described and named "Gnome Sort" by Dick Grune. It is similar to Insertion Sort but instead of using nested loops to find the insertion position, it repeatedly compares adjacent elements and swaps them if they are in the wrong order, moving back only when a swap occurs. It\'s known for its simplicity and is often used as an educational example.',
-  generator: gnomeSortGenerator,
   complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'Hamid Sarbazi-Azad / Dick Grune', year: 2000 },
   img: 'https://sharif.edu/~azad/Works_files/image003.jpg',
@@ -140,5 +136,4 @@ export const gnomeSortData: SortAlgorithm = {
     worst: [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13],
     average: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

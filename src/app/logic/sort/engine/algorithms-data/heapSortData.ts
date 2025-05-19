@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { heapSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure heapSort(list, direction)',
@@ -49,7 +46,6 @@ export const heapSortData: SortAlgorithm = {
   name: 'Heap Sort',
   description:
     'Invented by J. W. J. Williams in 1964, Heap Sort is a comparison-based sorting algorithm that leverages the heap data structure. It first builds a max-heap (for ascending sort; a min-heap for descending sort) from the input array, where the largest (or smallest) element is at the root. Then, it repeatedly extracts the maximum (or minimum) element from the heap and places it at the end (or beginning for some descending variations) of the array, rebuilding the heap with the remaining elements. This process continues until the array is sorted. A key advantage is its O(1) space complexity for typical implementations, performing the sort in-place.',
-  generator: heapSortGenerator,
   complexity: {
     time: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n log n)' },
     space: 'O(1)',
@@ -230,5 +226,4 @@ export const heapSortData: SortAlgorithm = {
       31, 32, 33, 34, 35,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true, // Heap sort often has heap visualization
 }

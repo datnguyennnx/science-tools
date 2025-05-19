@@ -21,9 +21,28 @@ import type {
 } from '../engine/algorithmRegistry'
 import { SortStatisticsDisplay } from './SortStatisticsDisplay'
 
-const SyntaxHighlighter = lazy(() =>
-  import('react-syntax-highlighter').then(module => ({ default: module.Prism }))
-)
+// Import PrismLight and languages for explicit registration
+const SyntaxHighlighter = lazy(async () => {
+  // Import the light version of Prism
+  const prismLightModule = await import('react-syntax-highlighter/dist/esm/prism-light')
+  const SyntaxHighlighterComponent = prismLightModule.default
+
+  // Dynamically import only the languages we need
+  const [cLang, cppLang, pythonLang, clikeLang] = await Promise.all([
+    import('react-syntax-highlighter/dist/esm/languages/prism/c').then(m => m.default),
+    import('react-syntax-highlighter/dist/esm/languages/prism/cpp').then(m => m.default),
+    import('react-syntax-highlighter/dist/esm/languages/prism/python').then(m => m.default),
+    import('react-syntax-highlighter/dist/esm/languages/prism/clike').then(m => m.default), // For 'plaintext' -> 'text'
+  ])
+
+  // Register the languages
+  SyntaxHighlighterComponent.registerLanguage('c', cLang)
+  SyntaxHighlighterComponent.registerLanguage('cpp', cppLang)
+  SyntaxHighlighterComponent.registerLanguage('python', pythonLang)
+  SyntaxHighlighterComponent.registerLanguage('text', clikeLang) // Register 'clike' as 'text' for pseudo-code
+
+  return { default: SyntaxHighlighterComponent }
+})
 
 export type SupportedLanguages = 'plaintext' | 'c' | 'cpp' | 'python'
 
@@ -276,7 +295,7 @@ const MemoizedPseudoCodeDisplay = memo(function PseudoCodeDisplay({
       )}
 
       {codeStringToDisplay.length > 0 && (
-        <CardContent className="text-sm overflow-auto flex-grow no-scrollbar">
+        <CardContent className="text-xs overflow-auto flex-grow no-scrollbar">
           <Suspense fallback={null}>
             <SyntaxHighlighter
               language={actualDisplayLanguageForSyntaxHighlight}

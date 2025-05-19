@@ -1,8 +1,7 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useCallback } from 'react'
 import type { SortStep } from '../engine/types'
-import type { SortAlgorithm } from '../engine/algorithmRegistry'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SortConfigControls } from './SortConfigControls'
 import { SortActionButtons } from './SortActionButtons'
@@ -30,7 +29,7 @@ interface SortVisualizerProps {
   MAX_SPEED: number
   selectedAlgorithmId: string
   setSelectedAlgorithmId: (id: string) => void
-  algorithms: ReadonlyArray<SortAlgorithm>
+  algorithms: ReadonlyArray<{ id: string; name: string }>
   sortDirection: 'asc' | 'desc'
   setSortDirection: (direction: 'asc' | 'desc') => void
   toggleAlgorithmInfoShortcut?: string
@@ -64,32 +63,45 @@ const MemoizedSortVisualizer = memo(function SortVisualizer({
   toggleAlgorithmInfoShortcut,
   togglePseudoCodeShortcut,
 }: SortVisualizerProps): React.JSX.Element {
-  const internalOnStart = () => {
+  const internalOnStart = useCallback(() => {
     onStart()
-  }
-  const internalOnPause = () => {
+  }, [onStart])
+
+  const internalOnPause = useCallback(() => {
     onPause()
-  }
-  const internalOnResume = () => {
+  }, [onPause])
+
+  const internalOnResume = useCallback(() => {
     onResume()
-  }
-  const internalOnReset = () => {
+  }, [onResume])
+
+  const internalOnReset = useCallback(() => {
     onReset()
-  }
-  const internalOnStepForward = () => {
+  }, [onReset])
+
+  const internalOnStepForward = useCallback(() => {
     if (onStepForward) {
       onStepForward()
     }
-  }
-  const internalOnNewArray = () => {
+  }, [onStepForward])
+
+  const internalOnNewArray = useCallback(() => {
     onNewArray()
-  }
-  const internalSetSelectedAlgorithmId = (id: string) => {
-    setSelectedAlgorithmId(id)
-  }
-  const internalSetSortDirection = (direction: 'asc' | 'desc') => {
-    setSortDirection(direction)
-  }
+  }, [onNewArray])
+
+  const internalSetSelectedAlgorithmId = useCallback(
+    (id: string) => {
+      setSelectedAlgorithmId(id)
+    },
+    [setSelectedAlgorithmId]
+  )
+
+  const internalSetSortDirection = useCallback(
+    (direction: 'asc' | 'desc') => {
+      setSortDirection(direction)
+    },
+    [setSortDirection]
+  )
 
   const hasAuxStructures = !!(
     currentSortStep?.currentPassAuxiliaryStructure ||

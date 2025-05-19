@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { combSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure combSort(list, direction)',
@@ -36,7 +33,6 @@ export const combSortData: SortAlgorithm = {
   name: 'Comb Sort',
   description:
     'Comb Sort is an improvement over Bubble Sort. It eliminates "turtles" (small values near the end of the list that significantly slow down Bubble Sort) by using an initial large gap between compared elements. The gap shrinks with each pass using a "shrink factor" (typically 1.3). The process continues until the gap is 1, at which point Comb Sort effectively becomes a Bubble Sort to clean up remaining inversions. The algorithm terminates when a pass with gap 1 completes without any swaps.',
-  generator: combSortGenerator,
   complexity: {
     time: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n^2)' },
     space: 'O(1)',
@@ -193,5 +189,4 @@ export const combSortData: SortAlgorithm = {
     average: [0, 1, 2, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 20, 23, 24],
     worst: [0, 1, 2, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 20, 23, 24],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

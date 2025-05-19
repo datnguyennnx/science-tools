@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { timSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure timSort(list, direction)',
@@ -30,10 +27,9 @@ const rawPlaintextPseudoCode = [
 
 export const timSortData: SortAlgorithm = {
   id: 'timSort',
-  name: 'Tim Sort',
+  name: 'Timsort',
   description:
-    'Created by Tim Peters in 2002 for the Python programming language, Tim Sort is a highly optimized hybrid stable sorting algorithm derived from Merge Sort and Insertion Sort. It is designed to perform well on many kinds of real-world data by taking advantage of naturally occurring runs (already sorted subsequences) within the data. It identifies these runs and merges them efficiently using a modified merge process. Tim Sort is the standard sorting algorithm in Python, Java, and other languages due to its excellent performance on typical datasets.',
-  generator: timSortGenerator,
+    'Timsort is a hybrid stable sorting algorithm, derived from merge sort and insertion sort, designed to perform well on many kinds of real-world data. It was invented by Tim Peters in 2002 for use in the Python programming language. The algorithm finds subsequences of the data that are already ordered (runs) and uses them to sort the remainder more efficiently. This is done by merging runs until only one run remains. If the array is small, or runs are small, insertion sort is used.',
   complexity: {
     time: { best: 'O(n)', average: 'O(n log n)', worst: 'O(n log n)' },
     space: 'O(n)',
@@ -302,5 +298,4 @@ export const timSortData: SortAlgorithm = {
     worst: [0, 1, 2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
     average: [0, 1, 2, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
   },
-  hasAdvancedAuxiliaryVisuals: true,
 }

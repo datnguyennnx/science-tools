@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { mergeSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure mergeSort(list, direction)',
@@ -62,7 +59,6 @@ export const mergeSortData: SortAlgorithm = {
   name: 'Merge Sort',
   description:
     'Invented by John von Neumann in 1945, Merge Sort is a classic example of a divide-and-conquer algorithm. It works by recursively dividing the unsorted list into n sublists, each containing one element (a list of one element is considered sorted). Then, it repeatedly merges sublists to produce new sorted sublists until there is only one sublist remaining, which is the sorted list. Its guaranteed O(n log n) time complexity makes it a stable and efficient choice for sorting large datasets.',
-  generator: mergeSortGenerator,
   complexity: {
     time: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n log n)' },
     space: 'O(n)',
@@ -285,5 +281,4 @@ export const mergeSortData: SortAlgorithm = {
       28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true,
 }

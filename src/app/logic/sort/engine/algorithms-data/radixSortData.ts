@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { radixSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure radixSort(list)',
@@ -45,8 +42,10 @@ export const radixSortData: SortAlgorithm = {
   name: 'Radix Sort',
   description:
     'Dating back to the work of Herman Hollerith in 1887 for tabulating machines, Radix Sort is a non-comparative sorting algorithm that sorts data with integer keys by grouping keys by individual digits which share the same significant position and value. It processes digits from either the least significant digit (LSD) or most significant digit (MSD). This approach avoids direct comparisons and can be very efficient for certain types of data, particularly when the range of key values is limited. The version described here is typically for non-negative integers; handling signed integers requires modifications (e.g., sorting by absolute values then handling signs, or processing negative numbers separately). For descending order, a common approach is to sort in ascending order and then reverse the resulting list.',
-  generator: radixSortGenerator,
-  complexity: { time: { best: 'O(nk)', average: 'O(nk)', worst: 'O(nk)' }, space: 'O(n + k)' },
+  complexity: {
+    time: { best: 'O(d*(n+k))', average: 'O(d*(n+k))', worst: 'O(d*(n+k))' },
+    space: 'O(n+k)',
+  },
   origin: { name: 'Herman Hollerith', year: 1887 },
   img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Hollerith.jpg/250px-Hollerith.jpg',
   pseudoCode: rawPlaintextPseudoCode,
@@ -235,5 +234,4 @@ export const radixSortData: SortAlgorithm = {
       30, 31, 32,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true,
 }

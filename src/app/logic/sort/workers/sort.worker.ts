@@ -1,24 +1,19 @@
 import type { SortStep, SortResult, SortStats } from '../engine/types'
 import type { SortGenerator } from '../engine/types'
-import { SORT_ALGORITHMS } from '../engine/algorithmRegistry'
-
-// Map algorithm IDs to their generator functions dynamically
-const generators: Record<string, SortGenerator> = Object.fromEntries(
-  SORT_ALGORITHMS.map(algo => [algo.id, algo.generator])
-)
+import { getSortGenerator } from '../engine/algorithmGenerators'
 
 let currentSortGenerator: ReturnType<SortGenerator> | null = null
-let isRunning = false // True if a sort process is active (between start and complete/stop)
-let shouldPause = false // True if user requested pause, or if step mode requires pause
-let isStopping = false // True if a stop request is in progress
-let stepModeActive = false // True if in step-by-step execution mode
-let currentDelay = 250 // Delay for continuous mode
+let isRunning = false
+let shouldPause = false
+let isStopping = false
+let stepModeActive = false
+let currentDelay = 250
 
 const calculateDelay = (speed: number): number => {
   const MIN_UI_SPEED = 1
   const MAX_UI_SPEED = 10
-  const MIN_DELAY_MS = 50 // Fastest
-  const MAX_DELAY_MS = 500 // Slowest
+  const MIN_DELAY_MS = 50
+  const MAX_DELAY_MS = 500
 
   if (speed <= MIN_UI_SPEED) return MAX_DELAY_MS
   if (speed >= MAX_UI_SPEED) return MIN_DELAY_MS
@@ -62,9 +57,24 @@ self.onmessage = async (event: MessageEvent) => {
       return
     }
 
-    const generatorFn = generators[algorithmId]
+    let generatorFn: SortGenerator | undefined
+    try {
+      generatorFn = await getSortGenerator(algorithmId)
+    } catch (e) {
+      console.error(`Worker: Failed to load algorithm module for "${algorithmId}":`, e)
+      let errorMessage = `Failed to load algorithm "${algorithmId}".`
+      if (e instanceof Error) {
+        errorMessage = `Failed to load algorithm "${algorithmId}": ${e.message}`
+      }
+      self.postMessage({ type: 'error', message: errorMessage })
+      return
+    }
+
     if (!generatorFn) {
-      self.postMessage({ type: 'error', message: `Algorithm "${algorithmId}" not found.` })
+      self.postMessage({
+        type: 'error',
+        message: `Algorithm "${algorithmId}" not found or failed to load.`,
+      })
       return
     }
 

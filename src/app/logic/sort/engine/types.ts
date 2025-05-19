@@ -1,5 +1,6 @@
 export type SortStep = {
   array: ReadonlyArray<number>
+  mainChartData?: ReadonlyArray<{ name: string; value: number; originalIndex: number }>
   message?: string
   highlightedIndices?: ReadonlyArray<number>
   comparisonIndices?: ReadonlyArray<number>

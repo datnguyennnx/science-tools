@@ -8,7 +8,6 @@ import {
   useSortKeyboardCommands,
 } from './engine/hooks'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 
 const SortVisualizer = dynamic(() => import('./components').then(mod => mod.SortVisualizer), {
@@ -83,15 +82,8 @@ export default function SortPage(): React.JSX.Element {
       ? liveSortStats
       : (finalSortStats ?? undefined)
 
-  const mainPanelColSpan = showAlgorithmInfo || showPseudoCode ? 'xl:col-span-5' : 'xl:col-span-8'
+  const mainPanelColSpan = showAlgorithmInfo || showPseudoCode ? '2xl:col-span-5' : '2xl:col-span-8'
   const rightPanelVisible = showAlgorithmInfo || showPseudoCode
-
-  const motionVariants = {
-    initial: { opacity: 0, height: 0, y: -10 },
-    animate: { opacity: 1, height: 'auto', y: 0 },
-    exit: { opacity: 0, height: 0, y: -10 },
-    transition: { duration: 0.3, ease: 'easeInOut' },
-  }
 
   const visibleMobileTabs = [
     showAlgorithmInfo && { value: 'info', label: 'Algorithm Info' },
@@ -99,7 +91,7 @@ export default function SortPage(): React.JSX.Element {
   ].filter(Boolean) as Array<{ value: 'info' | 'code'; label: string }>
 
   return (
-    <main className="xl:grid xl:grid-cols-8 xl:gap-4">
+    <main className="2xl:grid 2xl:grid-cols-8 xl:gap-4">
       {/* Left Panel: Sort Visualizer */}
       <div className={`w-full ${mainPanelColSpan}`}>
         <SortVisualizer
@@ -133,7 +125,7 @@ export default function SortPage(): React.JSX.Element {
 
       {/* Mobile Tabs (Info and Code/Stats) */}
       {visibleMobileTabs.length > 0 && (
-        <div className="mt-4 flex flex-col xl:hidden">
+        <div className="mt-4 flex flex-col 2xl:hidden">
           <Tabs
             value={activeTab}
             onValueChange={v => setActiveTab(v as 'info' | 'code')}
@@ -153,87 +145,51 @@ export default function SortPage(): React.JSX.Element {
                 </TabsTrigger>
               )}
             </TabsList>
-            <AnimatePresence mode="wait">
-              {showAlgorithmInfo && activeTab === 'info' && (
-                <motion.div
-                  key="algoInfoMobile"
-                  initial={motionVariants.initial}
-                  animate={motionVariants.animate}
-                  exit={motionVariants.exit}
-                  transition={motionVariants.transition}
-                  className="overflow-hidden"
-                >
-                  <TabsContent value="info" forceMount>
-                    <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
-                  </TabsContent>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <AnimatePresence mode="wait">
-              {showPseudoCode && activeTab === 'code' && (
-                <motion.div
-                  key="pseudoCodeMobile"
-                  initial={motionVariants.initial}
-                  animate={motionVariants.animate}
-                  exit={motionVariants.exit}
-                  transition={motionVariants.transition}
-                  className="overflow-hidden"
-                >
-                  <TabsContent value="code" forceMount>
-                    <PseudoCodeDisplay
-                      algorithmData={selectedAlgorithm}
-                      activeLines={currentSortStep?.currentPseudoCodeLine}
-                      initialLanguage={'cpp'}
-                      sortStats={displayedSortStats}
-                      performanceScenario={performanceScenario}
-                      setPerformanceScenario={setPerformanceScenario}
-                    />
-                  </TabsContent>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {showAlgorithmInfo && activeTab === 'info' && (
+              <div key="algoInfoMobile" className="overflow-hidden mt-2">
+                <TabsContent value="info" forceMount>
+                  <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
+                </TabsContent>
+              </div>
+            )}
+            {showPseudoCode && activeTab === 'code' && (
+              <div key="pseudoCodeMobile" className="overflow-hidden mt-2">
+                <TabsContent value="code" forceMount>
+                  <PseudoCodeDisplay
+                    algorithmData={selectedAlgorithm}
+                    activeLines={currentSortStep?.currentPseudoCodeLine}
+                    initialLanguage={'plaintext'}
+                    sortStats={displayedSortStats}
+                    performanceScenario={performanceScenario}
+                    setPerformanceScenario={setPerformanceScenario}
+                  />
+                </TabsContent>
+              </div>
+            )}
           </Tabs>
         </div>
       )}
 
       {/* Desktop Right Panel (AlgorithmInfo top, PseudoCode/Stats bottom) */}
       {rightPanelVisible && (
-        <div className="hidden xl:grid xl:col-span-3 h-fit gap-4">
-          <AnimatePresence>
-            {showAlgorithmInfo && (
-              <motion.div
-                key="algoInfoDesktop"
-                initial={motionVariants.initial}
-                animate={motionVariants.animate}
-                exit={motionVariants.exit}
-                transition={motionVariants.transition}
-                className="overflow-hidden"
-              >
-                <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <AnimatePresence>
-            {showPseudoCode && (
-              <motion.div
-                key="pseudoCodeDesktop"
-                initial={motionVariants.initial}
-                animate={motionVariants.animate}
-                exit={motionVariants.exit}
-                transition={motionVariants.transition}
-                className="overflow-hidden"
-              >
-                <PseudoCodeDisplay
-                  algorithmData={selectedAlgorithm}
-                  activeLines={currentSortStep?.currentPseudoCodeLine}
-                  initialLanguage={'plaintext'}
-                  sortStats={displayedSortStats}
-                  performanceScenario={performanceScenario}
-                  setPerformanceScenario={setPerformanceScenario}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="hidden 2xl:grid 2xl:col-span-3 h-fit gap-4">
+          {showAlgorithmInfo && (
+            <div key="algoInfoDesktop" className="overflow-hidden">
+              <AlgorithmInfoDisplay selectedAlgorithm={selectedAlgorithm} />
+            </div>
+          )}
+          {showPseudoCode && (
+            <div key="pseudoCodeDesktop" className="overflow-hidden">
+              <PseudoCodeDisplay
+                algorithmData={selectedAlgorithm}
+                activeLines={currentSortStep?.currentPseudoCodeLine}
+                initialLanguage={'plaintext'}
+                sortStats={displayedSortStats}
+                performanceScenario={performanceScenario}
+                setPerformanceScenario={setPerformanceScenario}
+              />
+            </div>
+          )}
         </div>
       )}
     </main>

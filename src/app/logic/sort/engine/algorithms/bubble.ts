@@ -1,6 +1,15 @@
 'use client'
 
-import { SortGenerator, SortStats } from '../types'
+import { SortGenerator, SortStats, SortStep } from '../types'
+
+// Helper function to format array for chart display
+const formatMainChartData = (arr: ReadonlyArray<number>): SortStep['mainChartData'] => {
+  return arr.map((value, index) => ({
+    name: index.toString(),
+    value: value,
+    originalIndex: index,
+  }))
+}
 
 // Comparison function based on direction (using const arrow function style)
 const compare = (a: number, b: number, direction: 'asc' | 'desc'): boolean => {
@@ -28,8 +37,10 @@ export const bubbleSortGenerator: SortGenerator = function* (
   }
 
   if (n <= 1) {
+    const currentArrSnapshot = [...arr]
     yield {
-      array: [...arr],
+      array: currentArrSnapshot,
+      mainChartData: formatMainChartData(currentArrSnapshot),
       sortedIndices: [...Array(n).keys()],
       message: 'Array already sorted or empty.',
       currentStats: { ...liveStats },
@@ -39,8 +50,10 @@ export const bubbleSortGenerator: SortGenerator = function* (
     return { finalArray: arr, stats: liveStats as SortStats }
   }
 
+  const initialSnapshot = [...arr]
   yield {
-    array: [...arr],
+    array: initialSnapshot,
+    mainChartData: formatMainChartData(initialSnapshot),
     sortedIndices: Array.from(sortedIndices),
     message: 'Starting Bubble Sort',
     activeRange: { start: 0, end: n - 1 },
@@ -51,8 +64,10 @@ export const bubbleSortGenerator: SortGenerator = function* (
 
   // Outer loop for passes
   for (let i = 0; i < n - 1; i++) {
+    const passStartSnapshot = [...arr]
     yield {
-      array: [...arr],
+      array: passStartSnapshot,
+      mainChartData: formatMainChartData(passStartSnapshot),
       message: `Pass ${i + 1} (comparing elements from index 0 to ${n - 2 - i})`,
       currentStats: { ...liveStats },
       currentPseudoCodeLine: [2], // for i = 0 to n - 2
@@ -80,9 +95,10 @@ export const bubbleSortGenerator: SortGenerator = function* (
       } else {
         message += ` No swap.`
       }
-
+      const innerLoopSnapshot = [...arr]
       yield {
-        array: [...arr], // Reflects state after potential swap
+        array: innerLoopSnapshot, // Reflects state after potential swap
+        mainChartData: formatMainChartData(innerLoopSnapshot),
         message: message,
         highlightedIndices: [j, j + 1],
         comparisonIndices: [j, j + 1],
@@ -95,8 +111,10 @@ export const bubbleSortGenerator: SortGenerator = function* (
     }
 
     sortedIndices.add(currentPassEnd)
+    const passEndSnapshot = [...arr]
     yield {
-      array: [...arr],
+      array: passEndSnapshot,
+      mainChartData: formatMainChartData(passEndSnapshot),
       message: `End of pass ${i + 1}. Element ${arr[currentPassEnd]} at index ${currentPassEnd} is now sorted.`,
       highlightedIndices: [currentPassEnd], // Highlight the newly sorted element
       comparisonIndices: [],
@@ -113,8 +131,10 @@ export const bubbleSortGenerator: SortGenerator = function* (
       for (let k = 0; k < n; k++) {
         sortedIndices.add(k)
       }
+      const earlyExitSnapshot = [...arr]
       yield {
-        array: [...arr],
+        array: earlyExitSnapshot,
+        mainChartData: formatMainChartData(earlyExitSnapshot),
         message: 'No swaps in this pass. Array is now sorted (early exit).',
         currentStats: { ...liveStats },
         currentPseudoCodeLine: [10, 11, 12], // if not swapped then break (and completion)
@@ -137,8 +157,10 @@ export const bubbleSortGenerator: SortGenerator = function* (
   }
 
   // Final sorted state confirmation
+  const finalSnapshot = [...arr]
   yield {
-    array: [...arr],
+    array: finalSnapshot,
+    mainChartData: formatMainChartData(finalSnapshot),
     sortedIndices: [...Array(n).keys()], // All indices are sorted
     message: 'Bubble Sort Complete!',
     swappingIndices: null,

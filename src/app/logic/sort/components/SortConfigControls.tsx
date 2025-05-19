@@ -1,13 +1,10 @@
 import { memo, useOptimistic, startTransition } from 'react'
-import type { SortAlgorithm } from '..//engine/algorithmRegistry'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -23,7 +20,7 @@ interface SortConfigControlsProps {
   MAX_SPEED: number
   selectedAlgorithmId: string
   setSelectedAlgorithmId: (id: string) => void
-  algorithms: ReadonlyArray<SortAlgorithm>
+  algorithms: ReadonlyArray<{ id: string; name: string }>
   sortDirection: 'asc' | 'desc'
   setSortDirection: (direction: 'asc' | 'desc') => void
 }
@@ -82,27 +79,11 @@ const MemoizedSortConfigControls = memo(function SortConfigControls({
             <SelectValue placeholder="Select algorithm" />
           </SelectTrigger>
           <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Distribution & Special Purpose</SelectLabel>
-              {algorithms
-                .filter(algo => algo.hasAdvancedAuxiliaryVisuals)
-                .map(algo => (
-                  <SelectItem key={algo.id} value={algo.id}>
-                    {algo.name}
-                  </SelectItem>
-                ))}
-            </SelectGroup>
-
-            <SelectGroup>
-              <SelectLabel>Comparison-Based & Others</SelectLabel>
-              {algorithms
-                .filter(algo => !algo.hasAdvancedAuxiliaryVisuals)
-                .map(algo => (
-                  <SelectItem key={algo.id} value={algo.id}>
-                    {algo.name}
-                  </SelectItem>
-                ))}
-            </SelectGroup>
+            {algorithms.map(algo => (
+              <SelectItem key={algo.id} value={algo.id}>
+                {algo.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

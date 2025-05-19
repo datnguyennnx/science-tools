@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { cocktailSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure cocktailShakerSort(list, direction)',
@@ -41,7 +38,6 @@ export const cocktailSortData: SortAlgorithm = {
   name: 'Cocktail Shaker Sort',
   description:
     'Also known as bidirectional bubble sort, cocktail shaker sort, or shaker sort, it is a variation of Bubble Sort that sorts in both directions on each pass through the list. It improves on Bubble Sort by moving items to their correct position more quickly, particularly by helping small items at the end of the list move to the beginning faster. However, its worst-case and average-case time complexity remains O(n^2).',
-  generator: cocktailSortGenerator,
   complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'Variation of Bubble Sort' },
   img: '',
@@ -213,5 +209,4 @@ export const cocktailSortData: SortAlgorithm = {
     worst: [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 17, 18, 20, 21, 22, 23, 24, 25, 27, 5],
     average: [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 17, 18, 20, 21, 22, 23, 24, 25, 27, 5],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

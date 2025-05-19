@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { shellSortGenerator, createShellSortGeneratorInternal } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure shellSort(list, direction)',
@@ -27,7 +24,6 @@ export const shellSortData: SortAlgorithm = {
   name: 'Shell Sort',
   description:
     'Shell Sort is an in-place comparison sort. It can be seen as either a generalization of sorting by exchange (bubble sort) or sorting by insertion (insertion sort). The method starts by sorting pairs of elements far apart from each other, then progressively reducing the gap between elements to be compared. Starting with far apart elements can move some out-of-place elements into position faster than a simple nearest neighbor exchange. Donald Shell published the first version of this sort in 1959. The running time of Shell sort is heavily dependent on the gap sequence it uses. For many practical variants, determining their time complexity remains an open problem.',
-  generator: shellSortGenerator,
   complexity: {
     time: {
       best: 'O(n log n)',
@@ -143,7 +139,6 @@ export const shellSortData: SortAlgorithm = {
     worst: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     average: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }
 
 export const shellSortVariations: SortAlgorithm[] = [
@@ -152,8 +147,6 @@ export const shellSortVariations: SortAlgorithm[] = [
     name: 'Shell Sort (Habermann)',
     description:
       "A variation of Shell Sort using N. Habermann's gap sequence: \\(h_k = 2^k - 1\\). This sequence, while simple, can lead to poor performance in some cases, particularly when the number of elements is a power of 2.",
-    generator: (initialArray: number[], direction: 'asc' | 'desc') =>
-      createShellSortGeneratorInternal(initialArray, direction, 'habermann'),
     complexity: {
       time: {
         best: 'O(n log n)',
@@ -171,8 +164,6 @@ export const shellSortVariations: SortAlgorithm[] = [
     name: 'Shell Sort (Sedgewick)',
     description:
       "A variation of Shell Sort using Robert Sedgewick's gap sequence: \\(h_k = 4^k + 3 \\cdot 2^{k-1} + 1\\). This sequence generally provides better performance than Shell's original sequence or Habermann's sequence.",
-    generator: (initialArray: number[], direction: 'asc' | 'desc') =>
-      createShellSortGeneratorInternal(initialArray, direction, 'sedgewick'),
     complexity: {
       time: {
         best: 'O(n log n)',
@@ -190,8 +181,6 @@ export const shellSortVariations: SortAlgorithm[] = [
     name: 'Shell Sort (Pratt)',
     description:
       "A variation of Shell Sort using Vaughan Pratt's gap sequence, which consists of all numbers of the form \\(2^i 3^j\\). This sequence leads to a time complexity of \\(O(n \\log^2 n)\\), which is asymptotically optimal for Shell Sort.",
-    generator: (initialArray: number[], direction: 'asc' | 'desc') =>
-      createShellSortGeneratorInternal(initialArray, direction, 'pratt'),
     complexity: {
       time: {
         best: 'O(n log n)',
@@ -209,8 +198,6 @@ export const shellSortVariations: SortAlgorithm[] = [
     name: 'Shell Sort (Ciura)',
     description:
       "A variation of Shell Sort using Marcin Ciura's empirically derived gap sequence: [1, 4, 10, 23, 57, 132, 301, 701, 1750]. This sequence is considered one of the best performing for arrays up to a few thousand elements.",
-    generator: (initialArray: number[], direction: 'asc' | 'desc') =>
-      createShellSortGeneratorInternal(initialArray, direction, 'ciura'),
     complexity: {
       time: {
         best: 'O(n log n)',

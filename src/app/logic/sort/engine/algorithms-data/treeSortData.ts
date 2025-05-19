@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { treeSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure treeSort(list, direction)',
@@ -45,13 +42,12 @@ export const treeSortData: SortAlgorithm = {
   id: 'treeSort',
   name: 'Tree Sort',
   description:
-    'Tree Sort utilizes a Binary Search Tree (BST) to sort elements. It works by inserting all elements from the input array into a BST. Due to the properties of a BST, an in-order traversal of the tree will visit the elements in sorted order. The motivation is to leverage the efficient insertion and ordering properties of a BST to achieve sorting. While the average time complexity is O(n log n), the worst-case can degrade to O(n^2) if the input data is already sorted or reverse-sorted, leading to a skewed tree.',
-  generator: treeSortGenerator,
+    'Tree Sort is a sorting algorithm that builds a binary search tree (BST) from the elements to be sorted, and then performs an in-order traversal on the tree to get the elements in sorted order. In its simplest form, the performance depends heavily on the structure of the BST, which can be skewed if input data is already sorted or nearly sorted, leading to O(n^2) worst-case time. Using a self-balancing BST (like an AVL tree or Red-Black tree) guarantees O(n log n) performance but increases implementation complexity and space requirements.',
   complexity: {
-    time: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n^2)' },
-    space: 'O(n)',
+    time: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n^2)' }, // O(n log n) with balanced tree
+    space: 'O(n)', // For the tree structure
   },
-  origin: { name: 'Fundamental (Using BST)' },
+  origin: { name: 'Known in various forms since 1960s (BSTs)' },
   img: '',
   pseudoCode: rawPlaintextPseudoCode,
   languageExamples: {
@@ -265,5 +261,4 @@ export const treeSortData: SortAlgorithm = {
       28, 29, 30, 31, 32, 33, 34,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true, // The BST is an auxiliary structure
 }

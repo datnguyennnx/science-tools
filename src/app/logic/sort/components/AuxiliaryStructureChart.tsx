@@ -2,7 +2,6 @@
 
 import React, { memo, useMemo } from 'react'
 import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, Cell } from 'recharts'
-import { motion } from 'framer-motion'
 import type { AuxiliaryStructure } from '../engine/types'
 import { ChartContainer, ChartTooltipContent, ChartConfig } from '@/components/ui/chart'
 
@@ -49,14 +48,7 @@ const MemoizedAuxiliaryStructureChart = memo(function AuxiliaryStructureChart({
   return (
     <div className="w-full flex flex-col space-y-2">
       <h4 className="text-sm font-semibold text-foreground">{structure.title}</h4>
-      <motion.div
-        key={`aux-chart-${structure.id}`}
-        className="w-full p-2 border-2 rounded-md"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-      >
+      <div key={`aux-chart-${structure.id}`} className="w-full p-2 border-2 rounded-md">
         <ChartContainer config={auxChartConfig} className="w-full min-h-[20rem] max-h-[35rem]">
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -79,7 +71,7 @@ const MemoizedAuxiliaryStructureChart = memo(function AuxiliaryStructureChart({
             </Bar>
           </BarChart>
         </ChartContainer>
-      </motion.div>
+      </div>
     </div>
   )
 })

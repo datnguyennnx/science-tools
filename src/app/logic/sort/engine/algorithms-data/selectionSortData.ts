@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { selectionSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure selectionSort(list, direction)',
@@ -25,7 +22,6 @@ export const selectionSortData: SortAlgorithm = {
   name: 'Selection Sort',
   description:
     'Selection Sort divides the input list into two parts: a sorted sublist built from left to right and the remaining unsorted sublist. The algorithm repeatedly finds the minimum element from the unsorted sublist and swaps it with the leftmost element of the unsorted sublist, effectively expanding the sorted portion. While straightforward, its O(n^2) complexity in all cases makes it less suitable for large datasets compared to more advanced algorithms.',
-  generator: selectionSortGenerator,
   complexity: { time: { best: 'O(n^2)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'Fundamental/Early' },
   img: '',
@@ -132,5 +128,4 @@ export const selectionSortData: SortAlgorithm = {
     worst: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
     average: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { quickSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure quickSort(list, direction)',
@@ -35,7 +32,6 @@ export const quickSortData: SortAlgorithm = {
   name: 'Quick Sort',
   description:
     "Developed by Tony Hoare in 1959, Quick Sort is an efficient, comparison-based, divide-and-conquer sorting algorithm. It works by selecting a 'pivot' element from the array and partitioning the other elements into two sub-arrays, according to whether they are less than or greater than the pivot. The sub-arrays are then sorted recursively. While its worst-case performance is O(n^2), its average-case performance is O(n log n), making it one of the fastest sorting algorithms in practice.",
-  generator: quickSortGenerator,
   complexity: {
     time: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n^2)' },
     space: 'O(log n)',
@@ -184,5 +180,4 @@ export const quickSortData: SortAlgorithm = {
     worst: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
     average: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

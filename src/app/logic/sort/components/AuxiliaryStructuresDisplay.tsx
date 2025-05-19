@@ -1,14 +1,12 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { AnimatePresence } from 'framer-motion'
 import type { AuxiliaryStructure } from '../engine/types'
 import { AuxiliaryStructureChart } from './AuxiliaryStructureChart'
 
 interface AuxiliaryStructuresDisplayProps {
   currentPassAuxiliaryStructure?: AuxiliaryStructure | null
   historicalAuxiliaryStructures?: ReadonlyArray<AuxiliaryStructure>
-  /** Indicates if this section should have a top border and padding, useful when it's not the first item. */
   separateSection?: boolean
 }
 
@@ -98,11 +96,9 @@ const MemoizedAuxiliaryStructuresDisplay = memo(function AuxiliaryStructuresDisp
                   .replace(/^./, str => str.toUpperCase())}
               </h4>
             )}
-            <AnimatePresence initial={false}>
-              {structuresInSlot.map(structure => (
-                <AuxiliaryStructureChart key={structure.id} structure={structure} />
-              ))}
-            </AnimatePresence>
+            {structuresInSlot.map(structure => (
+              <AuxiliaryStructureChart key={structure.id} structure={structure} />
+            ))}
           </div>
         ))}
       </div>

@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { oddEvenSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure oddEvenSort(list, direction)',
@@ -32,7 +29,6 @@ export const oddEvenSortData: SortAlgorithm = {
   name: 'Odd-Even Sort',
   description:
     'Odd-Even Sort, also known as brick sort, is a simple sorting algorithm that is a variation of Bubble Sort. It is primarily designed for use on parallel processors. The algorithm repeatedly performs two phases: an odd phase where odd-indexed pairs of adjacent elements are compared and swapped if out of order, and an even phase where even-indexed pairs are compared and swapped. This alternating comparison and swapping process continues until the list is sorted.',
-  generator: oddEvenSortGenerator,
   complexity: { time: { best: 'O(n)', average: 'O(n^2)', worst: 'O(n^2)' }, space: 'O(1)' },
   origin: { name: 'N. Habermann', year: 1972 },
   img: '',
@@ -186,5 +182,4 @@ export const oddEvenSortData: SortAlgorithm = {
     worst: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
     average: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
   },
-  hasAdvancedAuxiliaryVisuals: false,
 }

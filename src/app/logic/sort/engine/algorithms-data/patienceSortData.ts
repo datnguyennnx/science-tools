@@ -1,7 +1,4 @@
-'use client'
-
 import type { SortAlgorithm } from '../algorithmRegistry'
-import { patienceSortGenerator } from '../algorithms'
 
 const rawPlaintextPseudoCode = [
   'procedure patienceSort(list)',
@@ -48,7 +45,6 @@ export const patienceSortData: SortAlgorithm = {
   name: 'Patience Sort',
   description:
     'Patience Sorting, named by C. L. Mallows (attributed to A.S.C. Ross), simulates playing a game of patience. Elements are dealt one by one onto a set of piles: an element is placed on the leftmost pile whose top card is greater than or equal to its value (for ascending sort), or a new pile is started if no such pile exists. This pile creation phase also inherently finds the length of the longest increasing subsequence of the input. The sorted list is then formed by repeatedly picking the smallest top card from all non-empty piles (often using a min-heap for efficiency in the merge phase) until all cards are collected. Its history is tied to computing the LIS (Hammersley), and it was later recognized as a full sorting algorithm (Ross, Floyd). While elegant, its typical implementation uses O(n) auxiliary space for the piles.',
-  generator: patienceSortGenerator,
   complexity: {
     time: { best: 'O(n)', average: 'O(n log n)', worst: 'O(n log n)' },
     space: 'O(n)',
@@ -315,5 +311,4 @@ export const patienceSortData: SortAlgorithm = {
       31, 32, 33, 34, 35, 36,
     ],
   },
-  hasAdvancedAuxiliaryVisuals: true, // Piles are a key visual
 }
