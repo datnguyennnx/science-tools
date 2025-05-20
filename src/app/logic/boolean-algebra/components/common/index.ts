@@ -1,1 +1,1 @@
-export { Guide } from './Guide'
+export { BooleanAlgebraGuideContent } from './BooleanAlgebraGuideContent'
