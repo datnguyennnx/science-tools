@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import './globals.css'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -7,6 +6,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { CommandProvider } from '@/app/_command-manager/CommandProvider'
 import { GlobalClientEffects } from '@/components/global-client-effects'
+import './globals.css'
 
 const websiteUrl = 'https://data-science.hallucinationguys.com'
 

@@ -252,10 +252,9 @@
     margin: 0;
   }
 
-  /* Firefox */
   input[type='number'] {
-    @apply appearance-textfield;
-    /* Ensure the unprefixed appearance is present */
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
     appearance: textfield;
   }
 }
