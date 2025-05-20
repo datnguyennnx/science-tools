@@ -240,7 +240,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
@@ -250,5 +250,12 @@
   input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
+  }
+
+  /* Firefox */
+  input[type='number'] {
+    @apply appearance-textfield;
+    /* Ensure the unprefixed appearance is present */
+    appearance: textfield;
   }
 }
