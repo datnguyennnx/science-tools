@@ -51,16 +51,16 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
         <p>Sort Control</p>
         <div className="flex space-x-2">
           {toggleAlgorithmInfoShortcut && (
-            <span className="flex items-center text-sm leading-none flex-wrap text-muted-foreground whitespace-nowrap">
+            <div className="flex gap-2 items-center text-sm leading-none flex-wrap text-muted-foreground whitespace-nowrap">
               Toggle Info:
               <Kbd>{toggleAlgorithmInfoShortcut}</Kbd>
-            </span>
+            </div>
           )}
           {togglePseudoCodeShortcut && (
-            <span className="flex items-center text-sm leading-none flex-wrap text-muted-foreground whitespace-nowrap">
+            <div className="flex gap-2 items-center text-sm leading-none flex-wrap text-muted-foreground whitespace-nowrap">
               Toggle Code:
               <Kbd>{togglePseudoCodeShortcut}</Kbd>
-            </span>
+            </div>
           )}
         </div>
       </div>
@@ -71,7 +71,7 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
           title="New Array (N)"
           disabled={isStoppingValue}
         >
-          <PlusSquare className="h-4 w-4 mr-2" />
+          <PlusSquare className="h-4 w-4" />
           New Array
         </Button>
         <Button
@@ -81,16 +81,16 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
         >
           {isPaused ? (
             <>
-              <Play className="h-4 w-4 mr-2" /> Resume
+              <Play className="h-4 w-4" /> Resume
             </>
           ) : (
             <>
-              <Play className="h-4 w-4 mr-2" /> Start
+              <Play className="h-4 w-4" /> Start
             </>
           )}
         </Button>
         <Button onClick={onPause} disabled={pauseDisabled} variant="outline" title="Pause (Space)">
-          <Pause className="h-4 w-4 mr-2" />
+          <Pause className="h-4 w-4" />
           Pause
         </Button>
         <Button
@@ -99,10 +99,10 @@ const MemoizedSortActionButtons = memo(function SortActionButtons({
           variant="outline"
           title={onStepForward ? 'Step Forward (→)' : 'Step Forward (N/A)'}
         >
-          <SkipForward className="h-4 w-4 mr-2" /> Step
+          <SkipForward className="h-4 w-4" /> Step
         </Button>
         <Button onClick={onReset} variant="outline" title="Reset (R)" disabled={isStoppingValue}>
-          <RotateCcw className="h-4 w-4 mr-1" />
+          <RotateCcw className="h-4 w-4" />
           Reset
         </Button>
       </div>

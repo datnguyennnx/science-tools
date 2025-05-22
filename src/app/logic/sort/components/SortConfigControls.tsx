@@ -65,7 +65,7 @@ const MemoizedSortConfigControls = memo(function SortConfigControls({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
       <div className="space-y-2">
         <Label htmlFor="algorithm-select-visualizer" className="font-bold">
           Algorithm
@@ -75,7 +75,7 @@ const MemoizedSortConfigControls = memo(function SortConfigControls({
           onValueChange={setSelectedAlgorithmId}
           name="algorithm-select-visualizer"
         >
-          <SelectTrigger className="space-x-2">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select algorithm" />
           </SelectTrigger>
           <SelectContent>
@@ -97,7 +97,7 @@ const MemoizedSortConfigControls = memo(function SortConfigControls({
           onValueChange={setSortDirection}
           name="sort-direction-select-visualizer"
         >
-          <SelectTrigger className="w-full space-x-2 ">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select direction" />
           </SelectTrigger>
           <SelectContent>
