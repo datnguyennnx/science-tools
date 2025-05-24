@@ -87,6 +87,17 @@
   --code-highlight-active: var(--code-active-bg);
   --code-highlight-scenario-path: var(--code-scenario-path-bg);
   --code-highlight-active-scenario-path: var(--code-active-scenario-path-bg);
+
+  /* Keyboard Typing Test Colors (Light Theme) */
+  --keyboard-correct-text: oklch(0.65 0.18 145); /* Green */
+  --keyboard-incorrect-text: oklch(0.58 0.21 25); /* Red */
+  --keyboard-incorrect-bg: oklch(0.95 0.08 25 / 30%); /* Light red background with transparency */
+
+  /* Chart Colors (Light Theme) - Aliasing to existing chart variables for consistency */
+  --color-wpm: var(--chart-1);
+  --color-cpm: var(--chart-2);
+  --color-accuracy: var(--chart-3);
+  --color-errors: var(--destructive); /* Using destructive for errors */
 }
 
 :root {
@@ -223,6 +234,19 @@
   --code-active-scenario-path-bg: oklch(
     0.31 0.03 190 / 55%
   ); /* Dark grayish-teal with subtle tint */
+
+  /* Keyboard Typing Test Colors (Dark Theme) */
+  --keyboard-correct-text: oklch(0.58 0.19 145); /* Green */
+  --keyboard-incorrect-text: oklch(0.82 0.15 25); /* Lighter red for dark mode */
+  --keyboard-incorrect-bg-dark: oklch(
+    0.28 0.12 25 / 30%
+  ); /* Darker red background with transparency for dark incorrect bg */
+
+  /* Chart Colors (Dark Theme) - Aliasing to existing chart variables for consistency */
+  --color-wpm: var(--chart-1); /* Uses dark theme chart-1 */
+  --color-cpm: var(--chart-2); /* Uses dark theme chart-2 */
+  --color-accuracy: var(--chart-3); /* Uses dark theme chart-3 */
+  --color-errors: var(--destructive); /* Uses dark theme destructive */
 }
 
 @layer utilities {

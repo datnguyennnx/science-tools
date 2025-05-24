@@ -1,6 +1,6 @@
 'use client'
 
-import { Binary, Timer, SortAsc } from 'lucide-react'
+import { Binary, Timer, SortAsc, Keyboard } from 'lucide-react'
 
 import {
   Sidebar,
@@ -33,6 +33,11 @@ const tasksItems = [
     title: 'Pomodoro Timer',
     url: '/tasks/pomodoro',
     icon: Timer,
+  },
+  {
+    title: 'Keyboard Typing',
+    url: '/tasks/keyboard',
+    icon: Keyboard,
   },
 ]
 
