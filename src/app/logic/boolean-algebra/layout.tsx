@@ -4,6 +4,8 @@ import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { DialogGuide } from '@/components/guide-dialogs'
 import { BooleanAlgebraGuideContent } from './components/common/BooleanAlgebraGuideContent' // Import the new content component
+// Import schema-dts types
+import type { WebPage, LearningResource, WithContext, Organization } from 'schema-dts'
 
 const pageUrl = 'https://data-science.hallucinationguys.com/logic/boolean-algebra'
 
@@ -51,7 +53,7 @@ export const metadata: Metadata = {
 }
 
 // Define WebPage JSON-LD data
-const webPageJsonLd = {
+const webPageJsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: metadata.title as string,
@@ -65,22 +67,22 @@ const webPageJsonLd = {
 }
 
 // Define LearningResource JSON-LD data for the Boolean Algebra tool
-const learningResourceJsonLd = {
+const learningResourceJsonLd: WithContext<LearningResource> = {
   '@context': 'https://schema.org',
   '@type': 'LearningResource',
   name: 'Boolean Algebra Simplifier Tool',
   description:
     'An interactive tool to simplify boolean expressions, visualize with K-maps, truth tables, and Venn diagrams, and learn boolean algebra laws.',
   keywords: metadata.keywords as string[],
-  educationalUse: '["learning", "demonstration", "homework"]',
-  learningResourceType: '["interactive simulation", "problem solver"]',
+  educationalUse: ['learning', 'demonstration', 'homework'],
+  learningResourceType: ['interactive simulation', 'problem solver'],
   interactivityType: 'active',
   url: pageUrl,
   provider: {
     '@type': 'Organization',
     name: 'Science Tools',
     url: 'https://data-science.hallucinationguys.com',
-  },
+  } as Organization,
 }
 
 interface BooleanAlgebraLayoutProps {

@@ -28,6 +28,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       priority: 0.8,
     },
+    {
+      url: `${BASE_URL}/tasks/keyboard`,
+      lastModified,
+      priority: 0.4,
+    },
   ]
 
   return [...staticRoutes]

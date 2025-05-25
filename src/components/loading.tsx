@@ -111,7 +111,7 @@ export default function Loading({ status, message, subtext }: LoadingProps) {
   const displayMessage = message || statusText
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-[calc(100vh-6rem)] bg-background flex items-center justify-center">
       <div className="flex flex-col items-center">
         {/* Animation Container */}
         <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-64 lg:h-64">

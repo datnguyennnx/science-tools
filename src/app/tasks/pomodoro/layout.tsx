@@ -1,5 +1,7 @@
 import { Metadata } from 'next'
 import { ReactNode } from 'react'
+// Import schema-dts types
+import type { WebPage, SoftwareApplication, WithContext, Organization } from 'schema-dts'
 
 const pageUrl = 'https://data-science.hallucinationguys.com/tasks/pomodoro'
 
@@ -38,7 +40,7 @@ export const metadata: Metadata = {
 }
 
 // Define WebPage JSON-LD data
-const webPageJsonLd = {
+const webPageJsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: metadata.title as string,
@@ -52,7 +54,7 @@ const webPageJsonLd = {
 }
 
 // Define SoftwareApplication JSON-LD data for the Pomodoro Timer
-const softwareAppJsonLd = {
+const softwareAppJsonLd: WithContext<SoftwareApplication> = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
   name: 'Pomodoro Timer',
@@ -73,7 +75,7 @@ const softwareAppJsonLd = {
     '@type': 'Organization',
     name: 'Science Tools',
     url: 'https://data-science.hallucinationguys.com',
-  },
+  } as Organization,
 }
 
 interface PomodoroLayoutProps {

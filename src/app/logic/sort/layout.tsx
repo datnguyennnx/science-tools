@@ -1,5 +1,7 @@
 import { Metadata } from 'next'
 import { ReactNode } from 'react'
+// Import schema-dts types
+import type { WebPage, LearningResource, WithContext, Organization } from 'schema-dts'
 
 const pageUrl = 'https://data-science.hallucinationguys.com/logic/sort'
 
@@ -55,7 +57,7 @@ export const metadata: Metadata = {
 }
 
 // Define WebPage JSON-LD data
-const webPageJsonLd = {
+const webPageJsonLd: WithContext<WebPage> = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: metadata.title as string,
@@ -69,15 +71,15 @@ const webPageJsonLd = {
 }
 
 // Define LearningResource JSON-LD data for the Sort Visualization tool
-const learningResourceJsonLd = {
+const learningResourceJsonLd: WithContext<LearningResource> = {
   '@context': 'https://schema.org',
   '@type': 'LearningResource',
   name: 'Interactive Sorting Algorithm Visualization',
   description:
     'Explore and visualize various sorting algorithms like Merge Sort, Quick Sort, Bubble Sort, etc. Understand their mechanics with interactive animations and step-by-step explanations.',
   keywords: metadata.keywords as string[],
-  educationalUse: '["learning", "demonstration", "visualization"]',
-  learningResourceType: '["interactive simulation", "educational tool"]',
+  educationalUse: ['learning', 'demonstration', 'visualization'],
+  learningResourceType: ['interactive simulation', 'educational tool'],
   interactivityType: 'active',
   typicalAgeRange: '14-', // Example: 14 years and older
   url: pageUrl,
@@ -85,7 +87,7 @@ const learningResourceJsonLd = {
     '@type': 'Organization',
     name: 'Science Tools',
     url: 'https://data-science.hallucinationguys.com',
-  },
+  } as Organization,
 }
 
 interface SortLayoutProps {
