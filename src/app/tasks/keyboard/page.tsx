@@ -2,10 +2,29 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import { useTypingEngine } from './engine/hooks/useTypingEngine'
-import { TextDisplay } from './components/TextDisplay'
-import { MetricsDisplay } from './components/MetricsDisplay'
-import { ResultsSummary } from './components/ResultsSummary'
 import { Kbd } from '@/components/ui/Kbd'
+import dynamic from 'next/dynamic'
+
+const TextDisplay = dynamic(() => import('./components/TextDisplay').then(mod => mod.TextDisplay), {
+  loading: () => null,
+  ssr: false,
+})
+
+const MetricsDisplay = dynamic(
+  () => import('./components/MetricsDisplay').then(mod => mod.MetricsDisplay),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
+
+const ResultsSummary = dynamic(
+  () => import('./components/ResultsSummary').then(mod => mod.ResultsSummary),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+)
 
 // Timer component
 interface TimerProps {
