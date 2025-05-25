@@ -221,13 +221,15 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
             ))}
           </div>
           {/* Add shared legend below the maps */}
-          <div className="mt-4 w-full border-t pt-4">
-            <h4 className="text-sm font-medium text-center mb-2">Group Legend</h4>
-            <KMapLegend className="justify-center" />
-            <p className="text-xs text-muted-foreground text-center mt-2 max-w-md mx-auto">
-              Each group represents a term in the simplified boolean expression. Larger groups (more
-              cells) result in simpler terms.
-            </p>
+          <div className="space-y-4">
+            <div className="w-full flex flex-col justify-center items-center space-y-2">
+              <h2 className="font-bold w-full items-start">Group Legend</h2>
+              <KMapLegend />
+              <p className="text-muted-foreground">
+                Each group represents a term in the simplified boolean expression. Larger groups
+                (more cells) result in simpler terms.
+              </p>
+            </div>
           </div>
         </div>
       )
@@ -237,34 +239,23 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
     const mainMap = maps[0]
 
     return (
-      <>
+      <div>
         <KMapGrid
           config={mainMap.kMapConfig}
           mintermSet={mainMap.mintermSet}
           groups={mainMap.groups}
           showMintermNumbers={true}
         />
-        <CardFooter
-          className={`flex-col items-center w-full ${isFullscreen ? 'pt-4 mt-auto' : 'border-t mt-4'}`}
-        >
+        <CardFooter>
           {/* Container for Legend + Text + Stats */}
-          <div className="w-full">
+          <div className="flex flex-col justify-center items-center w-full space-y-4">
             {/* Top section: Legend and Text */}
-            <div
-              className={`w-full mb-4 ${isFullscreen ? 'flex flex-col items-center gap-4' : 'space-y-3'}`}
-            >
-              {/* Legend Block */}
-              <div className={`${isFullscreen ? 'space-y-2' : 'space-y-2'}`}>
-                {/* Consistent spacing */}
-                <h4 className="text-sm font-medium text-foreground">Group Legend</h4>
-                {/* KMapLegend uses flex-wrap internally */}
-                <KMapLegend className={`${isFullscreen ? 'justify-start' : 'justify-center'}`} />
-
-                <p
-                  className={`text-xs text-muted-foreground ${
-                    isFullscreen ? 'md:text-left md:max-w-xs' : 'text-left'
-                  }`}
-                >
+            {/* Legend Block */}
+            <div className="space-y-4">
+              <div className="w-full flex flex-col justify-center items-center space-y-2">
+                <h2 className="font-bold w-full items-start">Group Legend</h2>
+                <KMapLegend />
+                <p className="text-muted-foreground">
                   Each group represents a term in the simplified boolean expression. Larger groups
                   (more cells) result in simpler terms.
                 </p>
@@ -272,11 +263,7 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
             </div>
 
             {/* Bottom section: Statistics */}
-            <div
-              className={`w-full text-center text-sm text-muted-foreground border-t pt-3 ${
-                isFullscreen ? 'mt-auto' : ''
-              }`}
-            >
+            <div className="w-full text-center text-sm text-muted-foreground">
               {mainMap.variables.length > 0 && (
                 <p className="font-medium">
                   2<sup>{mainMap.variables.length}</sup> = {Math.pow(2, mainMap.variables.length)}
@@ -296,7 +283,7 @@ export function KarnaughMap({ expression, className = '' }: KarnaughMapProps) {
             </div>
           </div>
         </CardFooter>
-      </>
+      </div>
     )
   }
 

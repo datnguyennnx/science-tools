@@ -238,7 +238,7 @@ export const VennDiagram = ({ expression, className = '' }: VennDiagramProps) =>
   const renderVennDiagramContent = () => {
     // Define classes based on fullscreen state
     const rootContentDivClass = isFullscreen
-      ? 'w-full max-w-6xl max-h-[calc(100vh-10rem)] flex flex-col items-center justify-center ' // Fullscreen: constrained, centered, padding inside
+      ? 'w-full max-w-6xl mx-auto max-h-[calc(100vh-10rem)] flex flex-col items-center justify-center ' // Fullscreen: constrained, centered, padding inside
       : 'w-full h-full flex flex-col items-center justify-start ' // Normal: fill container, start alignment, top padding
 
     if (vennDiagramResult.status === 'waiting' || vennDiagramResult.status === 'error') {
@@ -299,36 +299,28 @@ export const VennDiagram = ({ expression, className = '' }: VennDiagramProps) =>
     if (numVars === 5) {
       const fiveVarData = vennData as VennData5Vars
       const diagramContent = (
-        <div className="w-full flex-grow flex flex-col items-center justify-center">
+        <div className="w-full flex flex-col items-center justify-center">
           <div className="w-full pb-2 text-center">
-            <p className="text-sm font-medium">5-Variable Venn Diagram</p>
+            <p className="font-bold">5-Variable Venn Diagram</p>
           </div>
           <div
-            className={`flex ${isFullscreen ? 'flex-row space-x-4' : 'flex-col space-y-4'} w-full max-w-4xl mx-auto flex-grow`}
+            className={`flex ${isFullscreen ? 'flex-row space-x-4' : 'flex-col space-y-4'} w-full`}
           >
             {/* Diagram E=1 */}
-            <div className="flex-1 border rounded-md p-2 flex flex-col items-center min-w-0">
-              <h4 className="text-sm font-medium text-center mb-2">
-                When {fiveVarData.E_name} = 1
-              </h4>
-              <div className="w-full h-full">
-                <VennDiagramSVG
-                  variables={variables.slice(0, 4)}
-                  vennData={fiveVarData.whenEIsTrue}
-                />
-              </div>
+            <div className="flex-1 rounded-md flex flex-col items-center">
+              <h4 className="text-sm font-bold text-center">When {fiveVarData.E_name} = 1</h4>
+              <VennDiagramSVG
+                variables={variables.slice(0, 4)}
+                vennData={fiveVarData.whenEIsTrue}
+              />
             </div>
             {/* Diagram E=0 */}
-            <div className="flex-1 border rounded-md p-2 flex flex-col items-center min-w-0">
-              <h4 className="text-sm font-medium text-center mb-2">
-                When {fiveVarData.E_name} = 0
-              </h4>
-              <div className="w-full h-full">
-                <VennDiagramSVG
-                  variables={variables.slice(0, 4)}
-                  vennData={fiveVarData.whenEIsFalse}
-                />
-              </div>
+            <div className="flex-1 rounded-md flex flex-col items-center">
+              <h4 className="text-sm font-bold text-center">When {fiveVarData.E_name} = 0</h4>
+              <VennDiagramSVG
+                variables={variables.slice(0, 4)}
+                vennData={fiveVarData.whenEIsFalse}
+              />
             </div>
           </div>
         </div>
@@ -349,7 +341,7 @@ export const VennDiagram = ({ expression, className = '' }: VennDiagramProps) =>
     <>
       {isFullscreen && <div className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm"></div>}
       <Card className={isFullscreen ? fullscreenCardClasses : baseCardClasses}>
-        <CardHeader className="pb-2">
+        <CardHeader>
           {renderHeaderContent()}
           <CardAction>
             <Button

@@ -163,8 +163,8 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
   // Fullscreen styles - Increase z-index for testing
   const fullscreenCardClasses = isFullscreen
     ? 'fixed inset-0 z-[9999] w-screen h-screen bg-background p-4 sm:p-6 flex flex-col' // Use bg-background from theme
-    : 'w-full h-fit'
-  const fullscreenContentClasses = isFullscreen ? 'flex-grow overflow-y-auto pt-0' : ''
+    : 'w-full h-fit '
+  const fullscreenContentClasses = isFullscreen ? 'flex-grow overflow-y-auto' : ''
 
   const renderContent = () => {
     if (memoizedTableData.status === 'waiting') {
@@ -184,7 +184,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
     if (memoizedTableData.status === 'error') {
       return (
         <div
-          className={`w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed border-border rounded-md min-h-[10rem]`}
+          className={`w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed border-border rounded-md min-h-[10rem] `}
         >
           <p
             className={`text-sm mt-2 ${isFullscreen ? 'text-foreground' : 'text-muted-foreground'}`}
@@ -208,9 +208,9 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
       const constantStep = subExpressionSteps[0]
       const constantValue = rows[0].stepResults[constantStep.str]
       return (
-        <div className="space-y-2">
+        <div className="space-y-2 ">
           {!isFullscreen && (
-            <div className="mb-2">
+            <div>
               <h3 className="font-medium text-sm">Truth Table for:</h3>
               <div className="bg-muted p-2 rounded my-1 overflow-x-auto no-scrollbar">
                 <KatexFormula formula={booleanToLatex(rawInput)} block={true} />
@@ -267,7 +267,7 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
     }
 
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 ">
         {!isFullscreen && (
           <div className="mb-2">
             <h3 className="font-medium text-sm">Truth Table for:</h3>
@@ -276,8 +276,8 @@ export function TruthTable({ expression, variables: propVariables }: TruthTableP
             </div>
           </div>
         )}
-        <div className="overflow-x-auto w-full">
-          <Table className="w-full min-w-max table-auto">
+        <div className="overflow-x-auto w-full ">
+          <Table className="w-full min-w-max table-auto ">
             <TableHeader>
               <TableRow>
                 {variables.map((variable: string) => (

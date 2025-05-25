@@ -21,10 +21,10 @@ export const KMapGrid = ({
   const { rowHeaders, colHeaders, rowVarLabel, colVarLabel, kMapOrder } = config
 
   return (
-    <div className={`flex justify-center ${className}`}>
-      <div className="relative mt-2">
+    <div className={`flex h-fit justify-center ${className}`}>
+      <div className="relative m-8">
         {/* Column Headers Label (CD) */}
-        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 font-bold text-sm flex items-center">
+        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 font-bold flex items-center">
           <p className="mr-1">
             <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
               {colVarLabel}

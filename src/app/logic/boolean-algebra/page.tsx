@@ -51,9 +51,9 @@ export default function BooleanAlgebraPage() {
   return (
     <div className="w-full max-w-full">
       {/* Main grid: single column by default, 3 columns on large screens */}
-      <div className={`grid grid-cols-1 lg:grid-cols-8 gap-4`}>
+      <div className={`grid grid-cols-1 2xl:grid-cols-8 gap-4`}>
         {/* Column 1 (Large Screens): Input and Truth Table */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
+        <div className="2xl:col-span-2 flex flex-col gap-4">
           {/* Input Section */}
           <Card className="w-full h-fit">
             <CardHeader className="pb-2">
@@ -86,7 +86,7 @@ export default function BooleanAlgebraPage() {
 
         {/* Column 2 (Large Screens): Simplification */}
         {/* Simplification Section is now in the second column */}
-        <Card className="w-full h-fit lg:col-span-4">
+        <Card className="w-full h-fit 2xl:col-span-4">
           <CardHeader className="pb-2 ">
             <CardTitle>Simplification</CardTitle>
             <CardDescription>
@@ -118,7 +118,7 @@ export default function BooleanAlgebraPage() {
         </Card>
 
         {/* Column 3 (Large Screens): K-Map and Venn Diagram */}
-        <div className="lg:col-span-2 flex flex-col  gap-4">
+        <div className="2xl:col-span-2 flex flex-col  gap-4">
           <KarnaughMap expression={submittedExpression} />
           <VennDiagram expression={submittedExpression} />
         </div>
