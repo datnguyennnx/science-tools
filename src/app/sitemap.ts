@@ -33,6 +33,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       priority: 0.4,
     },
+    {
+      url: `${BASE_URL}/tasks/markdown`,
+      lastModified,
+      priority: 0.6,
+    },
   ]
 
   return [...staticRoutes]

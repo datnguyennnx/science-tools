@@ -1,6 +1,6 @@
 'use client'
 
-import { Binary, Timer, SortAsc, Keyboard } from 'lucide-react'
+import { Binary, Timer, SortAsc, Keyboard, FileText } from 'lucide-react'
 
 import {
   Sidebar,
@@ -38,6 +38,11 @@ const tasksItems = [
     title: 'Keyboard Typing',
     url: '/tasks/keyboard',
     icon: Keyboard,
+  },
+  {
+    title: 'Markdown Preview',
+    url: '/tasks/markdown',
+    icon: FileText,
   },
 ]
 
