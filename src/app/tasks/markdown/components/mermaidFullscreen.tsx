@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { Maximize2, ZoomIn, ZoomOut, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'

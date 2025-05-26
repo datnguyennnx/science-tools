@@ -1,0 +1,123 @@
+.mermaid {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 1.5rem auto !important;
+  background-color: var(--color-muted);
+  padding: 1rem;
+  border-radius: var(--radius);
+  overflow: auto;
+  height: 100%;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+}
+
+.mermaid-fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.mermaid-fullscreen svg {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+}
+
+.katex-block {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem auto;
+  overflow-x: auto;
+  max-width: 100%;
+  padding: 0.5rem;
+  background-color: var(--color-muted);
+  border-radius: var(--radius);
+}
+
+.katex-display {
+  margin: 0 !important;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.katex {
+  font-size: 1.1em;
+  max-width: 100%;
+}
+
+.katex-error {
+  display: block;
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  color: var(--error-text);
+  background-color: var(--error-background);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius);
+}
+
+.wmde-markdown {
+  font-family: var(--font-sans);
+}
+
+.wmde-markdown pre {
+  background-color: var(--color-muted);
+  border-radius: var(--radius);
+}
+
+.wmde-markdown code {
+  font-family: var(--font-mono);
+}
+
+.wmde-markdown h1,
+.wmde-markdown h2,
+.wmde-markdown h3,
+.wmde-markdown h4,
+.wmde-markdown h5,
+.wmde-markdown h6 {
+  color: var(--color-primary);
+}
+
+.wmde-markdown blockquote {
+  border-left-color: var(--color-border);
+  background-color: var(--color-muted);
+}
+
+.wmde-markdown table {
+  border-color: var(--color-border);
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+}
+
+.wmde-markdown th {
+  background-color: var(--color-muted);
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  font-weight: 600;
+}
+
+.wmde-markdown td {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+}
+
+.wmde-markdown tr:nth-child(even) {
+  background-color: var(--color-muted-light, rgba(0, 0, 0, 0.03));
+}
+
+.wmde-markdown hr {
+  border-color: var(--color-border);
+}
+
+.wmde-markdown a {
+  color: var(--color-primary);
+}

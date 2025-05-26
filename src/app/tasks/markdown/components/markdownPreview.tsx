@@ -1,15 +1,16 @@
-'use client'
-
-import React, { ErrorInfo, Component, useEffect, useState, memo } from 'react'
-import UiwMarkdownPreview, {
-  MarkdownPreviewProps as UiwMarkdownPreviewProps,
-} from '@uiw/react-markdown-preview'
-import 'katex/dist/katex.css'
+import React, { ErrorInfo, Component, useEffect, useState, memo, lazy } from 'react'
+import { MarkdownPreviewProps } from '@uiw/react-markdown-preview'
+import 'katex/dist/katex.min.css'
+import './markdownPreview.css'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { CodeBlock } from './codeBlock'
-import { MarkdownError } from './markdownError'
 import mermaid from 'mermaid'
+
+const UiwMarkdownPreview = lazy(() => import('@uiw/react-markdown-preview'))
+const MarkdownError = lazy(() =>
+  import('./markdownError').then(module => ({ default: module.MarkdownError }))
+)
 
 interface CustomMarkdownPreviewPageProps {
   markdown: string
@@ -65,125 +66,6 @@ export const MarkdownPreview = memo(function MarkdownPreview({
     setThemeState(currentTheme)
   }, [currentTheme])
 
-  // Add custom styles for Mermaid and KaTeX
-  useEffect(() => {
-    // Add custom CSS for centering mermaid diagrams
-    const style = document.createElement('style')
-    style.textContent = `
-      .mermaid {
-        display: flex !important;
-        justify-content: center !important;
-        margin: 1.5rem auto !important;
-        background-color: var(--color-muted);
-        padding: 1rem;
-        border-radius: var(--radius);
-        overflow: auto;
-        height: 100%;
-
-      }
-      .mermaid svg {
-        max-width: 100%;
-        max-height: 100%;
-        height: auto;
-      }
-      .mermaid-fullscreen {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-      }
-      .mermaid-fullscreen svg {
-        max-width: 100%;
-        max-height: 100%;
-        height: auto;
-      }
-      .katex-block {
-        display: flex;
-        justify-content: center;
-        margin: 1.5rem auto;
-        overflow-x: auto;
-        max-width: 100%;
-        padding: 0.5rem;
-        background-color: var(--color-muted);
-        border-radius: var(--radius);
-      }
-      .katex-display {
-        margin: 0 !important;
-        max-width: 100%;
-        overflow-x: auto;
-        overflow-y: hidden;
-      }
-      .katex {
-        font-size: 1.1em;
-        max-width: 100%;
-      }
-      .katex-error {
-        display: block;
-        padding: 0.5rem;
-        margin: 0.5rem 0;
-        color: var(--error-text);
-        background-color: var(--error-background);
-        border: 1px solid var(--error-border);
-        border-radius: var(--radius);
-      }
-      .wmde-markdown {
-        font-family: var(--font-sans);
-      }
-      .wmde-markdown pre {
-        background-color: var(--color-muted);
-        border-radius: var(--radius);
-      }
-      .wmde-markdown code {
-        font-family: var(--font-mono);
-      }
-      .wmde-markdown h1,
-      .wmde-markdown h2,
-      .wmde-markdown h3,
-      .wmde-markdown h4,
-      .wmde-markdown h5,
-      .wmde-markdown h6 {
-        color: var(--color-primary);
-      }
-      .wmde-markdown blockquote {
-        border-left-color: var(--color-border);
-        background-color: var(--color-muted);
-      }
-      .wmde-markdown table {
-        border-color: var(--color-border);
-        border-collapse: collapse;
-        margin: 1.5rem 0;
-        width: 100%;
-        overflow-x: auto;
-        display: block;
-      }
-      .wmde-markdown th {
-        background-color: var(--color-muted);
-        padding: 0.75rem;
-        border: 1px solid var(--color-border);
-        font-weight: 600;
-      }
-      .wmde-markdown td {
-        padding: 0.75rem;
-        border: 1px solid var(--color-border);
-      }
-      .wmde-markdown tr:nth-child(even) {
-        background-color: var(--color-muted-light, rgba(0,0,0,0.03));
-      }
-      .wmde-markdown hr {
-        border-color: var(--color-border);
-      }
-      .wmde-markdown a {
-        color: var(--color-primary);
-      }
-    `
-    document.head.appendChild(style)
-
-    return () => {
-      document.head.removeChild(style)
-    }
-  }, [])
-
   // Initialize mermaid with theme settings
   useEffect(() => {
     try {
@@ -202,17 +84,12 @@ export const MarkdownPreview = memo(function MarkdownPreview({
   useEffect(() => {
     const renderMermaidDiagrams = async () => {
       try {
-        // Use the mermaid API to find and render all mermaid diagrams
         await mermaid
           .run({
             querySelector: '.mermaid',
           })
-          .catch(() => {
-            // Silent fail
-          })
-      } catch {
-        // Silent fail
-      }
+          .catch(() => {})
+      } catch {}
     }
 
     // Small delay to ensure DOM elements are ready
@@ -221,7 +98,7 @@ export const MarkdownPreview = memo(function MarkdownPreview({
   }, [markdown, themeState])
 
   // Configure components for the markdown preview
-  const componentsOverride = React.useMemo<UiwMarkdownPreviewProps['components']>(
+  const componentsOverride = React.useMemo<MarkdownPreviewProps['components']>(
     () => ({
       code: CodeBlock,
     }),
