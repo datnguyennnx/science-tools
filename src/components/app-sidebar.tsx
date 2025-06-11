@@ -4,6 +4,8 @@ import { Binary, Timer, SortAsc, Keyboard, FileText } from 'lucide-react'
 
 import {
   Sidebar,
+  SidebarHeader,
+  SidebarTrigger,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
@@ -49,6 +51,12 @@ const tasksItems = [
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
+      <SidebarHeader className="flex flex-row items-center justify-between p-3">
+        <h2 className="text-lg font-semibold transition-opacity duration-200 group-data-[collapsible=icon]:hidden">
+          Science Labs
+        </h2>
+        <SidebarTrigger />
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Tasks</SidebarGroupLabel>

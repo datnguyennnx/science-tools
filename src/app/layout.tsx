@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Analytics } from '@vercel/analytics/react'
 import { ThemeProvider } from '@/components/theme-provider'
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { CommandProvider } from '@/app/_command-manager/CommandProvider'
 import { GlobalClientEffects } from '@/components/global-client-effects'
@@ -151,7 +151,6 @@ export default function RootLayout({
             <SidebarProvider>
               <AppSidebar />
               <main className="p-2 w-full min-h-screen">
-                <SidebarTrigger />
                 <div>{children}</div>
               </main>
             </SidebarProvider>
