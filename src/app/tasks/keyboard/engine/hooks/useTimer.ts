@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { formatTime } from '../utils/timeUtils'
 
 interface TimerState {
   isRunning: boolean
@@ -6,9 +7,7 @@ interface TimerState {
   formattedTime: string
 }
 
-/**
- * Custom hook for managing a precise timer for typing tests
- */
+// Manages precise timer state and controls for typing tests
 export function useTimer() {
   const [state, setState] = useState<TimerState>({
     isRunning: false,
@@ -19,15 +18,8 @@ export function useTimer() {
   const startTimeRef = useRef<number>(0)
   const pausedTimeRef = useRef<number>(0)
 
-  // Format seconds to MM:SS
-  const formatTime = useCallback((seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }, [])
-
-  // Start the timer
-  const start = useCallback(() => {
+  // Starts the timer and begins counting elapsed time
+  const start = () => {
     if (state.isRunning) return
 
     startTimeRef.current = Date.now() - pausedTimeRef.current * 1000
@@ -36,16 +28,16 @@ export function useTimer() {
 
     intervalRef.current = setInterval(() => {
       const elapsedSeconds = (Date.now() - startTimeRef.current) / 1000
-      setState({
-        isRunning: true,
+      setState(prev => ({
+        ...prev,
         elapsedTime: elapsedSeconds,
         formattedTime: formatTime(elapsedSeconds),
-      })
-    }, 100) // Update 10 times per second for smoother display
-  }, [state.isRunning, formatTime])
+      }))
+    }, 250) // Update 4 times per second for better performance
+  }
 
-  // Stop the timer
-  const stop = useCallback(() => {
+  // Stops the timer and preserves elapsed time
+  const stop = () => {
     if (!state.isRunning) return
 
     if (intervalRef.current) {
@@ -55,10 +47,10 @@ export function useTimer() {
 
     pausedTimeRef.current = state.elapsedTime
     setState(prev => ({ ...prev, isRunning: false }))
-  }, [state])
+  }
 
-  // Reset the timer
-  const reset = useCallback(() => {
+  // Resets timer to initial state
+  const reset = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
@@ -71,9 +63,9 @@ export function useTimer() {
       elapsedTime: 0,
       formattedTime: '00:00',
     })
-  }, [])
+  }
 
-  // Clean up interval on unmount
+  // Cleanup interval on unmount
   useEffect(() => {
     return () => {
       if (intervalRef.current) {

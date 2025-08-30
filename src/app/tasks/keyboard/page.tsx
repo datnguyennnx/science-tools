@@ -1,28 +1,29 @@
 'use client'
 
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTypingEngine } from './engine/hooks/useTypingEngine'
 import { Kbd } from '@/components/ui/Kbd'
 import dynamic from 'next/dynamic'
+import { formatTime } from './engine/utils/timeUtils'
 
 const TextDisplay = dynamic(() => import('./components/TextDisplay').then(mod => mod.TextDisplay), {
-  loading: () => null,
   ssr: false,
+  loading: () => null,
 })
 
 const MetricsDisplay = dynamic(
   () => import('./components/MetricsDisplay').then(mod => mod.MetricsDisplay),
   {
-    loading: () => null,
     ssr: false,
+    loading: () => null,
   }
 )
 
 const ResultsSummary = dynamic(
   () => import('./components/ResultsSummary').then(mod => mod.ResultsSummary),
   {
-    loading: () => null,
     ssr: false,
+    loading: () => null,
   }
 )
 
@@ -44,6 +45,7 @@ function Timer({ formattedTime, testStatus, className = '' }: TimerProps) {
   )
 }
 
+// Main keyboard typing test page component
 export default function KeyboardPage() {
   const {
     charStates,
@@ -59,12 +61,9 @@ export default function KeyboardPage() {
 
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const formattedDisplayTime = useCallback(() => {
-    if (!elapsedTime) return '00:00'
-    const minutes = Math.floor(elapsedTime / 60)
-    const seconds = Math.floor(elapsedTime % 60)
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  }, [elapsedTime])
+  const formattedDisplayTime = () => {
+    return elapsedTime ? formatTime(elapsedTime) : '00:00'
+  }
 
   useEffect(() => {
     if (containerRef.current) {

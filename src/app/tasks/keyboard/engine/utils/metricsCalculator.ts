@@ -1,66 +1,25 @@
-/**
- * Pure utility functions for calculating typing metrics
- */
+// Calculates typing performance metrics
 
-/**
- * Calculate Characters Per Minute (CPM)
- * @param correctChars Number of correctly typed characters
- * @param timeInSeconds Time elapsed in seconds
- * @returns The CPM value or 0 if time is 0
- */
+// Calculates characters per minute
 export const calculateCPM = (correctChars: number, timeInSeconds: number): number => {
   if (timeInSeconds <= 0) return 0
   return Math.round(correctChars / (timeInSeconds / 60))
 }
 
-/**
- * Calculate Words Per Minute (WPM) using the standard 5 characters per word
- * @param correctChars Number of correctly typed characters
- * @param timeInSeconds Time elapsed in seconds
- * @returns The WPM value or 0 if time is 0
- */
+// Calculates words per minute (5 chars per word standard)
 export const calculateWPM = (correctChars: number, timeInSeconds: number): number => {
   if (timeInSeconds <= 0) return 0
   return Math.round(correctChars / 5 / (timeInSeconds / 60))
 }
 
-/**
- * Calculate typing accuracy as a percentage
- * @param correctChars Number of correctly typed characters
- * @param errorCount Number of errors made
- * @returns Accuracy as a percentage (0-100)
- */
+// Calculates typing accuracy as percentage
 export const calculateAccuracy = (correctChars: number, errorCount: number): number => {
   const total = correctChars + errorCount
   if (total <= 0) return 100
   return Math.round((correctChars / total) * 100)
 }
 
-/**
- * Format time in seconds to MM:SS format
- * @param seconds Time in seconds
- * @returns Formatted time string
- */
-export const formatTime = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60)
-  const secs = Math.floor(seconds % 60)
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-}
-
-/**
- * Format time in seconds to S.s format (for short times)
- * @param seconds Time in seconds
- * @returns Formatted time string with one decimal place
- */
-export const formatShortTime = (seconds: number): string => {
-  return seconds.toFixed(1)
-}
-
-/**
- * Calculate interval metrics for charting (WPM in each interval)
- * @param intervals Array of typing intervals with timing data
- * @returns Array of calculated metrics for each interval
- */
+// Calculates metrics for each typing interval (for charting)
 export const calculateIntervalMetrics = (
   intervals: Array<{
     intervalEndTime: number

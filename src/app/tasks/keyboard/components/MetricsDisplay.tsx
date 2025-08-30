@@ -6,9 +6,7 @@ interface MetricsDisplayProps {
   testStatus: 'pending' | 'typing' | 'finished'
 }
 
-/**
- * Component to display typing performance metrics in a minimalist, horizontal layout.
- */
+// Displays typing performance metrics in finished state
 export function MetricsDisplay({ metrics, formattedTime, testStatus }: MetricsDisplayProps) {
   // Only show full metrics in finished state
   if (testStatus !== 'finished') return null
@@ -40,6 +38,7 @@ interface MetricCardProps {
   isHighlighted?: boolean
 }
 
+// Individual metric display card component
 function MetricCard({ label, value, description, isHighlighted }: MetricCardProps) {
   return (
     <div

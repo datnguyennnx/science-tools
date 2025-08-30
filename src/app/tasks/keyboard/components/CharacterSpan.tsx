@@ -5,9 +5,7 @@ interface CharacterSpanProps {
   charState: CharState
 }
 
-/**
- * Component to render a single character with styling based on its status
- */
+// Renders individual character with status-based styling and GPU acceleration
 export function CharacterSpan({ charState }: CharacterSpanProps) {
   const statusClasses = {
     untyped: 'text-muted-foreground/80',
@@ -19,8 +17,18 @@ export function CharacterSpan({ charState }: CharacterSpanProps) {
 
   return (
     <span
-      className={cn('relative font-mono transition-colors px-px', statusClasses[charState.status])}
+      className={cn(
+        // GPU acceleration for smooth color transitions
+        'relative font-mono transition-colors px-px transform-gpu will-change-auto',
+        // Performance containment to isolate rendering
+        'contain-style contain-layout contain-paint',
+        statusClasses[charState.status]
+      )}
       aria-current={charState.status === 'current' ? 'true' : undefined}
+      style={{
+        // Enable GPU acceleration for color changes
+        willChange: charState.status === 'current' ? 'color, background-color' : 'auto',
+      }}
     >
       {charState.char === ' ' ? '\u00A0' : charState.char}
     </span>

@@ -1,13 +1,11 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 
-/**
- * Custom hook for generating and managing text for typing tests
- */
+// Generates and manages typing test text content
 export function useWordGenerator() {
   const [currentText, setCurrentText] = useState<string>('')
 
-  // Generate Gen Z and American culture-focused text
-  const generateRandomText = useCallback((): string => {
+  // Generates random text with Gen Z and American culture themes
+  const generateRandomText = (): string => {
     // Gen Z subjects and characters
     const subjects = [
       'my bestie',
@@ -159,20 +157,20 @@ export function useWordGenerator() {
       .trim() // Remove leading/trailing spaces
 
     return normalizedText
-  }, [])
+  }
 
-  // Load a new random text
-  const loadNewText = useCallback((): void => {
+  // Loads a new random text for testing
+  const loadNewText = (): void => {
     const newText = generateRandomText()
     setCurrentText(newText)
-  }, [generateRandomText])
+  }
 
-  // Initialize with a random text if not already set
-  const initialize = useCallback((): void => {
+  // Initializes with random text if none exists
+  const initialize = (): void => {
     if (!currentText) {
       loadNewText()
     }
-  }, [currentText, loadNewText])
+  }
 
   return {
     currentText,
