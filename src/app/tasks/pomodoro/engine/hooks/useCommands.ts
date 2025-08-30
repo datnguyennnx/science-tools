@@ -1,11 +1,5 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
-import {
-  Command,
-  PomodoroCommandType,
-  DEFAULT_KEY_BINDINGS,
-  KeyBinding,
-  CommandCategory,
-} from '../core/commands'
+import { useEffect, useState, useRef } from 'react'
+import { Command, PomodoroCommandType, DEFAULT_KEY_BINDINGS, KeyBinding } from '../core/commands'
 import {
   CommandManagerRegistry,
   createEmptyRegistry,
@@ -15,24 +9,20 @@ import {
   getCommand as getCmd,
   getAllCommands as getAllCmds,
   getShortcutForCommand as getShortcutCmd,
-} from '../utils/commandManager'
+} from '../utils/command-registry'
 import { PomodoroEngineActions } from '../core/types'
 
-// Debounce utility - Simplified for functions with no args returning void
-const debounceSimpleVoid = (func: () => void, waitFor: number): (() => void) => {
+// Debounce utility for command actions
+function debounceSimpleVoid(func: () => void, waitFor: number): () => void {
   let timeout: ReturnType<typeof setTimeout> | null = null
-
   return () => {
-    if (timeout !== null) {
-      clearTimeout(timeout)
-    }
+    if (timeout !== null) clearTimeout(timeout)
     timeout = setTimeout(() => func(), waitFor)
   }
 }
 
-interface UsePomodoroCommandsProps {
+interface UseCommandsProps {
   engineActions: PomodoroEngineActions
-  // Add any other state needed for command conditions, e.g., isTimerRunning
   isTimerRunning: boolean
 }
 
@@ -40,60 +30,44 @@ export interface CommandWithShortcut extends Command {
   displayShortcut?: string
 }
 
-export const usePomodoroCommands = ({
-  engineActions,
-  isTimerRunning,
-}: UsePomodoroCommandsProps) => {
+// Hook for managing pomodoro commands and keyboard shortcuts
+export const useCommands = ({ engineActions, isTimerRunning }: UseCommandsProps) => {
   const [registry, setRegistry] = useState<CommandManagerRegistry>(createEmptyRegistry())
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false)
-  // Example: you might have other UI states controlled by commands
   const [isTimelineVisible, setIsTimelineVisible] = useState(false)
   const [isTimerDisplayModeFull, setIsTimerDisplayModeFull] = useState(false)
 
-  const engineActionsRef = useRef(engineActions) // Ref to always call the latest actions
+  const engineActionsRef = useRef(engineActions)
   useEffect(() => {
     engineActionsRef.current = engineActions
   }, [engineActions])
 
-  // Define Command Actions
-  // These are stable callbacks that will be assigned to command objects.
-  // Debounce critical actions like skip if necessary.
-  const toggleTimerAction = useCallback(() => {
-    if (isTimerRunning) {
-      engineActionsRef.current.pauseTimer()
-    } else {
-      engineActionsRef.current.startTimer()
-    }
-  }, [isTimerRunning, engineActionsRef])
-  const skipSessionAction = useMemo(
-    () => debounceSimpleVoid(() => engineActionsRef.current.skipSession(), 300),
-    [engineActionsRef] // engineActionsRef itself is stable
-  )
-  const resetCycleAction = useCallback(
-    () => engineActionsRef.current.resetCycle(),
-    [engineActionsRef]
-  )
-  const openSettingsAction = useCallback(() => setIsSettingsDialogOpen(true), [])
-  const toggleHelpAction = useCallback(() => setIsCommandPaletteOpen(prev => !prev), [])
-  const toggleTimelineAction = useCallback(() => setIsTimelineVisible(prev => !prev), [])
-  const toggleTimerDisplayModeAction = useCallback(
-    () => setIsTimerDisplayModeFull(prev => !prev),
-    []
-  )
-
   // Initialize commands and keybindings
   useEffect(() => {
+    const toggleTimerAction = () => {
+      if (isTimerRunning) {
+        engineActionsRef.current.pauseTimer()
+      } else {
+        engineActionsRef.current.startTimer()
+      }
+    }
+    const skipSessionAction = debounceSimpleVoid(() => engineActionsRef.current.skipSession(), 300)
+    const resetCycleAction = () => engineActionsRef.current.resetCycle()
+    const openSettingsAction = () => setIsSettingsDialogOpen(true)
+    const toggleHelpAction = () => setIsCommandPaletteOpen(prev => !prev)
+    const toggleTimelineAction = () => setIsTimelineVisible(prev => !prev)
+    const toggleTimerDisplayModeAction = () => setIsTimerDisplayModeFull(prev => !prev)
+
     let currentRegistry = createEmptyRegistry()
 
-    // Define all commands
     const commandsToRegister: Command[] = [
       {
         id: PomodoroCommandType.ToggleTimer,
-        label: isTimerRunning ? 'Pause Timer' : 'Start Timer', // Label can be dynamic
+        label: isTimerRunning ? 'Pause Timer' : 'Start Timer',
         action: toggleTimerAction,
         category: 'timer',
-        icon: 'timer', // Example icon identifier
+        icon: 'timer',
       },
       {
         id: PomodoroCommandType.SkipSession,
@@ -128,14 +102,14 @@ export const usePomodoroCommands = ({
         label: 'Toggle Timeline Display',
         action: toggleTimelineAction,
         category: 'view',
-        icon: 'view', // Placeholder, replace with actual Eye icon if that was the name
+        icon: 'view',
       },
       {
         id: PomodoroCommandType.ToggleTimerDisplayMode,
         label: 'Toggle Full Time Display',
         action: toggleTimerDisplayModeAction,
         category: 'view',
-        icon: 'view', // Placeholder
+        icon: 'view',
       },
     ]
 
@@ -147,7 +121,6 @@ export const usePomodoroCommands = ({
       currentRegistry = registerKb(currentRegistry, kb)
     })
 
-    // Add Escape key for dialogs
     const escapeBinding: KeyBinding = {
       code: 'Escape',
       commandId: 'custom',
@@ -160,24 +133,13 @@ export const usePomodoroCommands = ({
     currentRegistry = registerKb(currentRegistry, escapeBinding)
 
     setRegistry(currentRegistry)
-  }, [
-    isTimerRunning,
-    toggleTimerAction,
-    skipSessionAction,
-    resetCycleAction,
-    openSettingsAction,
-    toggleHelpAction,
-    toggleTimelineAction,
-    toggleTimerDisplayModeAction,
-    isCommandPaletteOpen,
-    isSettingsDialogOpen,
-  ])
+  }, [isTimerRunning, isCommandPaletteOpen, isSettingsDialogOpen])
 
   // Global keydown listener
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
-        return // Ignore inputs
+        return
       }
 
       const binding = findKb(registry, event)
@@ -192,13 +154,9 @@ export const usePomodoroCommands = ({
           const command = getCmd(registry, binding.commandId)
           if (command && !command.disabled) {
             if (binding.requiresNotRunning && isTimerRunning) {
-              return // Command requires timer to be stopped
+              return
             }
             command.action()
-            // If command should close palette (most do)
-            if (command.id !== PomodoroCommandType.ToggleHelp && command.category !== 'settings') {
-              // setIsCommandPaletteOpen(false); // This might be too aggressive here, handle in action itself or dialog component
-            }
           }
         }
       }
@@ -206,15 +164,13 @@ export const usePomodoroCommands = ({
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [registry, isTimerRunning]) // Re-attach if registry or isTimerRunning changes
+  }, [registry, isTimerRunning])
 
-  // Memoized list of commands for UI display, with shortcuts
-  const commandsForUI: CommandWithShortcut[] = useMemo(() => {
-    return getAllCmds(registry).map(cmd => ({
-      ...cmd,
-      displayShortcut: getShortcutCmd(registry, cmd.id),
-    }))
-  }, [registry])
+  // Commands for UI display with shortcuts
+  const commandsForUI: CommandWithShortcut[] = getAllCmds(registry).map(cmd => ({
+    ...cmd,
+    displayShortcut: getShortcutCmd(registry, cmd.id),
+  }))
 
   return {
     commands: commandsForUI,
@@ -224,10 +180,5 @@ export const usePomodoroCommands = ({
     setIsSettingsDialogOpen,
     isTimelineVisible,
     isTimerDisplayModeFull,
-    getCommandsByCategory: (category: CommandCategory) =>
-      getAllCmds(registry, category).map(cmd => ({
-        ...cmd,
-        displayShortcut: getShortcutCmd(registry, cmd.id),
-      })),
   }
 }

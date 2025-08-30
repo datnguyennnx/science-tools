@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { TimerMode } from '../engine/core/types'
+import { TimerMode } from '../../engine/core/types'
 
 interface TimerDisplayProps {
   minutes: number

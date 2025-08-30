@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState, useMemo } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import {
   PomodoroSettings,
   TimerMode,
@@ -6,14 +6,14 @@ import {
   PomodoroUIState,
   UsePomodoroReturn,
 } from '../core/types'
-import { DEFAULT_POMODORO_SETTINGS } from '../core/defaults'
-import { useInternalTimer } from './useInternalTimer'
+import { DEFAULT_POMODORO_SETTINGS } from '../core/settings'
+import { useTimer } from './useTimer'
 import {
   determineNextMode,
   formatTime,
   calculateProgress,
   getTotalTimeForMode,
-} from '../utils/timerLogic'
+} from '../utils/timer-utils'
 
 type PomodoroReducerAction =
   | { type: 'START_REQUEST' }
@@ -40,6 +40,7 @@ interface PomodoroReducerState {
   internalTimerTargetTime: number
 }
 
+// Create initial reducer state
 const createInitialReducerState = (settings: PomodoroSettings): PomodoroReducerState => ({
   currentLogicalMode: 'focus',
   completedFocusSessionsInSet: 0,
@@ -50,6 +51,7 @@ const createInitialReducerState = (settings: PomodoroSettings): PomodoroReducerS
   internalTimerTargetTime: getTotalTimeForMode('focus', settings),
 })
 
+// Pomodoro state reducer
 function pomodoroEngineReducer(
   state: PomodoroReducerState,
   action: PomodoroReducerAction,
@@ -58,20 +60,20 @@ function pomodoroEngineReducer(
   switch (action.type) {
     case 'START_REQUEST':
       if (state.engineOperationalStatus === 'idle' || state.engineOperationalStatus === 'paused') {
-        return { ...state, engineOperationalStatus: 'running' } // Effect will call internalTimer.start()
+        return { ...state, engineOperationalStatus: 'running' }
       }
       return state
     case 'PAUSE_REQUEST':
       if (state.engineOperationalStatus === 'running') {
-        return { ...state, engineOperationalStatus: 'paused' } // Effect will call internalTimer.pause()
+        return { ...state, engineOperationalStatus: 'paused' }
       }
       return state
     case 'SESSION_COMPLETED':
     case 'SKIP_REQUEST': {
-      if (state.engineOperationalStatus === 'transitioning_mode') return state // Avoid processing during another transition
+      if (state.engineOperationalStatus === 'transitioning_mode') return state
 
       let { completedFocusSessionsInSet, totalCompletedFocusSessions, currentSetCount } = state
-      const modeJustFinished = state.currentLogicalMode // In SKIP_REQUEST, this is the mode being skipped.
+      const modeJustFinished = state.currentLogicalMode
 
       if (modeJustFinished === 'focus') {
         completedFocusSessionsInSet++
@@ -87,18 +89,15 @@ function pomodoroEngineReducer(
       )
 
       if (modeJustFinished === 'longBreak') {
-        // A full set completed
         currentSetCount++
-        completedFocusSessionsInSet = 0 // Reset for the new set
+        completedFocusSessionsInSet = 0
       }
-      // If short break completed, or focus completed and it wasn't a long break next
-      // completedFocusSessionsInSet remains as is or was incremented.
 
       return {
         ...state,
         engineOperationalStatus: 'transitioning_mode',
-        currentLogicalMode: nextLogicalMode, // The new logical mode of the pomodoro cycle
-        internalTimerTargetMode: nextLogicalMode, // Request useInternalTimer to adopt this mode
+        currentLogicalMode: nextLogicalMode,
+        internalTimerTargetMode: nextLogicalMode,
         internalTimerTargetTime: getTotalTimeForMode(nextLogicalMode, currentSettings),
         completedFocusSessionsInSet,
         totalCompletedFocusSessions,
@@ -106,38 +105,31 @@ function pomodoroEngineReducer(
       }
     }
     case 'RESET_REQUEST':
-      return { ...createInitialReducerState(action.newSettings), engineOperationalStatus: 'idle' } // Reset timer too
+      return { ...createInitialReducerState(action.newSettings), engineOperationalStatus: 'idle' }
 
     case 'SETTINGS_UPDATED': {
-      // If mode or durations change, reset the current segment timer but try to preserve cycle progress
-      // More complex logic could be added here to be smarter about preserving state.
-      // For now, if settings change, we reset the current segment to its new duration.
       const newTargetTimeForCurrentMode = getTotalTimeForMode(
         state.currentLogicalMode,
         action.newSettings
       )
       return {
         ...state,
-        internalTimerTargetMode: state.currentLogicalMode, // Keep current mode but update its time
+        internalTimerTargetMode: state.currentLogicalMode,
         internalTimerTargetTime: newTargetTimeForCurrentMode,
-        // If status was running, it might need to be paused or reset explicitly by an effect.
-        // For simplicity, let user restart if settings change mid-run.
         engineOperationalStatus:
           state.engineOperationalStatus === 'running' ? 'paused' : state.engineOperationalStatus,
       }
     }
 
-    case 'SWITCH_MODE_REQUEST': // User explicitly changes mode
+    case 'SWITCH_MODE_REQUEST':
       if (state.engineOperationalStatus === 'transitioning_mode') return state
-      // This is a hard switch, resets current pomodoro progress for the set usually.
-      // Could be made smarter if needed.
       return {
         ...state,
-        engineOperationalStatus: 'transitioning_mode', // Treat as a transition
+        engineOperationalStatus: 'transitioning_mode',
         currentLogicalMode: action.targetMode,
         internalTimerTargetMode: action.targetMode,
         internalTimerTargetTime: getTotalTimeForMode(action.targetMode, currentSettings),
-        completedFocusSessionsInSet: 0, // Typically resets focus count in set
+        completedFocusSessionsInSet: 0,
       }
 
     case '_EFFECT_MODE_TRANSITION_COMPLETE':
@@ -148,33 +140,28 @@ function pomodoroEngineReducer(
         engineOperationalStatus: action.shouldAutoStart ? 'running' : 'idle',
       }
     default:
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const exhaustiveCheck: never = action
       return state
   }
 }
 
-// --- Hook Implementation ---
-export const usePomodoroEngine = (
-  initialSettings?: Partial<PomodoroSettings>
-): UsePomodoroReturn => {
+// Hook for managing pomodoro timer state
+export const usePomodoro = (initialSettings?: Partial<PomodoroSettings>): UsePomodoroReturn => {
   const [settings, setSettings] = useState<PomodoroSettings>({
     ...DEFAULT_POMODORO_SETTINGS,
     ...initialSettings,
   })
 
-  // Bind settings to the reducer so it always has the latest
   const boundReducer = (state: PomodoroReducerState, action: PomodoroReducerAction) =>
     pomodoroEngineReducer(state, action, settings)
 
   const [engineCycleState, dispatch] = useReducer(boundReducer, createInitialReducerState(settings))
 
-  const internalTimer = useInternalTimer({
+  const internalTimer = useTimer({
     targetTimeInSeconds: engineCycleState.internalTimerTargetTime,
     onCompletion: () => dispatch({ type: 'SESSION_COMPLETED' }),
   })
 
-  // Effect to manage internalTimer based on engineStatus
+  // Manage timer based on engine status
   useEffect(() => {
     if (engineCycleState.engineOperationalStatus === 'running' && !internalTimer.isRunning) {
       internalTimer.start()
@@ -182,8 +169,6 @@ export const usePomodoroEngine = (
       internalTimer.pause()
     } else if (engineCycleState.engineOperationalStatus === 'transitioning_mode') {
       internalTimer.reset(engineCycleState.internalTimerTargetTime)
-      // After reset, the internal timer's mode and time are effectively changed.
-      // Now, check if we should auto-start the new segment.
       const autoStartFocus = settings.autoStartFocus ?? false
       const autoStartBreaks = settings.autoStartBreaks ?? false
       const shouldAutoStart =
@@ -199,7 +184,7 @@ export const usePomodoroEngine = (
         internalTimer.start()
       }
     } else if (engineCycleState.engineOperationalStatus === 'idle' && internalTimer.isRunning) {
-      internalTimer.pause() // Ensure timer is not running when idle
+      internalTimer.pause()
     }
   }, [
     engineCycleState.engineOperationalStatus,
@@ -210,64 +195,57 @@ export const usePomodoroEngine = (
     engineCycleState.internalTimerTargetMode,
   ])
 
-  // Update Reducer if settings change from outside, potentially resetting current segment
+  // Update state when settings change
   useEffect(() => {
     dispatch({ type: 'SETTINGS_UPDATED', newSettings: settings })
   }, [settings])
 
-  // Actions exposed to the UI
-  const startTimer = useCallback(() => dispatch({ type: 'START_REQUEST' }), [])
-  const pauseTimer = useCallback(() => dispatch({ type: 'PAUSE_REQUEST' }), [])
-  const skipSession = useCallback(() => dispatch({ type: 'SKIP_REQUEST' }), [])
-  const resetCycle = useCallback(() => {
-    // Also reset the internal timer to the new initial state's target time
+  // UI actions
+  const startTimer = () => dispatch({ type: 'START_REQUEST' })
+  const pauseTimer = () => dispatch({ type: 'PAUSE_REQUEST' })
+  const skipSession = () => dispatch({ type: 'SKIP_REQUEST' })
+  const resetCycle = () => {
     const newInitialState = createInitialReducerState(settings)
     internalTimer.reset(newInitialState.internalTimerTargetTime)
     dispatch({ type: 'RESET_REQUEST', newSettings: settings })
-  }, [settings, internalTimer])
+  }
 
-  const updateSettings = useCallback((newSettings: Partial<PomodoroSettings>) => {
+  const updateSettings = (newSettings: Partial<PomodoroSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }))
-  }, [])
+  }
 
-  const switchToMode = useCallback((mode: TimerMode) => {
+  const switchToMode = (mode: TimerMode) => {
     dispatch({ type: 'SWITCH_MODE_REQUEST', targetMode: mode })
-  }, [])
+  }
 
-  const actions: PomodoroEngineActions = useMemo(
-    () => ({
-      startTimer,
-      pauseTimer,
-      skipSession,
-      resetCycle,
-      updateSettings,
-      switchToMode,
-    }),
-    [startTimer, pauseTimer, skipSession, resetCycle, updateSettings, switchToMode]
+  const actions: PomodoroEngineActions = {
+    startTimer,
+    pauseTimer,
+    skipSession,
+    resetCycle,
+    updateSettings,
+    switchToMode,
+  }
+
+  // Derive UI state
+  const { displayMinutes, displaySeconds } = formatTime(internalTimer.timeRemainingInSeconds)
+  const progress = calculateProgress(
+    internalTimer.timeRemainingInSeconds,
+    engineCycleState.internalTimerTargetTime
   )
 
-  // Derive PomodoroUIState from engineState and internalTimer state
-  const uiState: PomodoroUIState = useMemo(() => {
-    const { displayMinutes, displaySeconds } = formatTime(internalTimer.timeRemainingInSeconds)
-    const progress = calculateProgress(
-      internalTimer.timeRemainingInSeconds,
-      engineCycleState.internalTimerTargetTime
-    )
-    return {
-      currentMode: engineCycleState.currentLogicalMode,
-      timeRemainingInSeconds: internalTimer.timeRemainingInSeconds,
-      isRunning: internalTimer.isRunning,
-      completedFocusSessionsInSet: engineCycleState.completedFocusSessionsInSet,
-      totalCompletedFocusSessions: engineCycleState.totalCompletedFocusSessions,
-      currentSetCount: engineCycleState.currentSetCount,
-      settings,
-      displayMinutes,
-      displaySeconds,
-      progressPercent: progress,
-      internalTimerTargetMode: engineCycleState.internalTimerTargetMode,
-      internalTimerTargetTime: engineCycleState.internalTimerTargetTime,
-    }
-  }, [engineCycleState, internalTimer.timeRemainingInSeconds, internalTimer.isRunning, settings])
+  const uiState: PomodoroUIState = {
+    currentMode: engineCycleState.currentLogicalMode,
+    timeRemainingInSeconds: internalTimer.timeRemainingInSeconds,
+    isRunning: internalTimer.isRunning,
+    completedFocusSessionsInSet: engineCycleState.completedFocusSessionsInSet,
+    totalCompletedFocusSessions: engineCycleState.totalCompletedFocusSessions,
+    currentSetCount: engineCycleState.currentSetCount,
+    settings,
+    displayMinutes,
+    displaySeconds,
+    progressPercent: progress,
+  }
 
   return { uiState, actions }
 }

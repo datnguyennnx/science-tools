@@ -1,9 +1,9 @@
 'use client'
 
-import { useMemo, memo, useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence, Variants } from 'framer-motion'
-import { PomodoroUIState, TimerMode } from '../engine/core/types'
+import { PomodoroUIState, TimerMode } from '../../engine/core/types'
 import { Check } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -51,26 +51,26 @@ const itemVariants: Variants = {
 type StageStatus = 'current' | 'completed' | 'upcoming'
 
 // Current time display component
-const DateTimeDisplay = memo(({ currentTime }: { currentTime: Date }) => (
-  <motion.div
-    initial={{ opacity: 0, y: -10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    transition={{ duration: 0.3 }}
-    className="fixed top-12 left-1/2 transform -translate-x-1/2 z-50 text-center"
-  >
-    <div className="flex flex-col items-center">
-      <p className="text-base font-medium text-muted-foreground mb-1">
-        {format(currentTime, 'EEEE, MMMM d, yyyy')}
-      </p>
-      <p className="text-6xl font-mono font-bold tracking-tight">
-        {format(currentTime, 'HH:mm:ss')}
-      </p>
-    </div>
-  </motion.div>
-))
-
-DateTimeDisplay.displayName = 'DateTimeDisplay'
+function DateTimeDisplay({ currentTime }: { currentTime: Date }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3 }}
+      className="fixed top-12 left-1/2 transform -translate-x-1/2 z-50 text-center"
+    >
+      <div className="flex flex-col items-center">
+        <p className="text-base font-medium text-muted-foreground mb-1">
+          {format(currentTime, 'EEEE, MMMM d, yyyy')}
+        </p>
+        <p className="text-6xl font-mono font-bold tracking-tight">
+          {format(currentTime, 'HH:mm:ss')}
+        </p>
+      </div>
+    </motion.div>
+  )
+}
 
 const getStageDisplay = (stage: TimelineStage, status: StageStatus) => {
   if (status === 'completed') {
@@ -87,67 +87,63 @@ const getStageDisplay = (stage: TimelineStage, status: StageStatus) => {
   return `${stage.label}`
 }
 
-// Create a memoized stage component to prevent unnecessary re-renders
-const StageItem = memo(
-  ({
-    stage,
-    status,
-    isLastStageInTimeline,
-  }: {
-    stage: TimelineStage
-    status: StageStatus
-    isLastStageInTimeline: boolean
-  }) => {
-    return (
-      <motion.div variants={itemVariants} className="flex items-start relative p-2 space-x-4">
-        <div className="relative flex flex-col items-center">
-          <div
-            className={cn('w-0.5 h-6 -mt-3', 'bg-border', status === 'upcoming' && 'opacity-50')}
-          />
+// Stage component
+function StageItem({
+  stage,
+  status,
+  isLastStageInTimeline,
+}: {
+  stage: TimelineStage
+  status: StageStatus
+  isLastStageInTimeline: boolean
+}) {
+  return (
+    <motion.div variants={itemVariants} className="flex items-start relative p-2 space-x-4">
+      <div className="relative flex flex-col items-center">
+        <div
+          className={cn('w-0.5 h-6 -mt-3', 'bg-border', status === 'upcoming' && 'opacity-50')}
+        />
+        <div
+          className={cn(
+            'w-4 h-4 rounded-full flex items-center justify-center z-10',
+            status === 'completed'
+              ? 'bg-border text-muted-foreground'
+              : status === 'current'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-background border-2 border-border text-muted-foreground'
+          )}
+        >
+          {status === 'completed' && <Check className="h-2.5 w-2.5" />}
+        </div>
+        {!isLastStageInTimeline && (
           <div
             className={cn(
-              'w-4 h-4 rounded-full flex items-center justify-center z-10',
+              'w-0.5 flex-grow min-h-[40px]',
+              'bg-border',
+              status === 'upcoming' && 'opacity-50'
+            )}
+          />
+        )}
+      </div>
+      <div className="border-2 bg-muted/20 rounded-md p-2">
+        <div className="flex justify-between items-center">
+          <h3
+            className={cn(
+              'font-semibold text-sm',
               status === 'completed'
-                ? 'bg-border text-muted-foreground'
+                ? 'text-muted-foreground'
                 : status === 'current'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-background border-2 border-border text-muted-foreground'
+                  ? 'text-primary'
+                  : 'text-muted-foreground opacity-80'
             )}
           >
-            {status === 'completed' && <Check className="h-2.5 w-2.5" />}
-          </div>
-          {!isLastStageInTimeline && (
-            <div
-              className={cn(
-                'w-0.5 flex-grow min-h-[40px]',
-                'bg-border',
-                status === 'upcoming' && 'opacity-50'
-              )}
-            />
-          )}
+            {getStageDisplay(stage, status)}
+          </h3>
         </div>
-        <div className="border-2 bg-muted/20 rounded-md p-2">
-          <div className="flex justify-between items-center">
-            <h3
-              className={cn(
-                'font-semibold text-sm',
-                status === 'completed'
-                  ? 'text-muted-foreground'
-                  : status === 'current'
-                    ? 'text-primary'
-                    : 'text-muted-foreground opacity-80'
-              )}
-            >
-              {getStageDisplay(stage, status)}
-            </h3>
-          </div>
-        </div>
-      </motion.div>
-    )
-  }
-)
-
-StageItem.displayName = 'StageItem'
+      </div>
+    </motion.div>
+  )
+}
 
 // Main component function
 export function CurrentSectionDisplay({
@@ -155,11 +151,12 @@ export function CurrentSectionDisplay({
   uiState,
   showTimeDisplay = false,
 }: CurrentSectionDisplayProps) {
-  const [currentTime, setCurrentTime] = useState(new Date())
-
+  const currentTimeRef = useRef(new Date())
+  const [currentTime, setCurrentTime] = useState(currentTimeRef.current)
   const { settings, currentMode, completedFocusSessionsInSet } = uiState
 
-  const timelineStages = useMemo(() => {
+  // Generate timeline stages
+  const timelineStages = (() => {
     const stages: TimelineStage[] = []
     for (let i = 0; i < settings.sessionsUntilLongBreak; i++) {
       stages.push({
@@ -181,14 +178,9 @@ export function CurrentSectionDisplay({
       durationInSeconds: settings.longBreakDuration,
     })
     return stages
-  }, [
-    settings.sessionsUntilLongBreak,
-    settings.focusDuration,
-    settings.shortBreakDuration,
-    settings.longBreakDuration,
-  ])
+  })()
 
-  const currentGlobalStageIndex = useMemo(() => {
+  const currentGlobalStageIndex = (() => {
     if (currentMode === 'focus') {
       return completedFocusSessionsInSet * 2
     }
@@ -196,14 +188,17 @@ export function CurrentSectionDisplay({
       return (completedFocusSessionsInSet - 1) * 2 + 1
     }
     return timelineStages.length - 1
-  }, [currentMode, completedFocusSessionsInSet, timelineStages.length])
+  })()
 
   // Auto-scroll logic
   const timelineContainerRef = useRef<HTMLDivElement>(null)
   const currentStageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const updateTime = () => setCurrentTime(new Date())
+    const updateTime = () => {
+      currentTimeRef.current = new Date()
+      setCurrentTime(currentTimeRef.current)
+    }
     updateTime()
     const intervalId = setInterval(updateTime, showTimeDisplay ? 1000 : 60000)
     return () => clearInterval(intervalId)

@@ -9,7 +9,7 @@ export interface PomodoroSettings {
   autoStartFocus?: boolean
 }
 
-// This will be the state managed by the main Pomodoro logic hook (e.g., usePomodoroEngine)
+// This will be the state managed by the main Pomodoro logic hook (e.g., usePomodoro)
 export interface PomodoroEngineState {
   currentMode: TimerMode
   timeRemainingInSeconds: number

@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-interface UseInternalTimerProps {
+interface UseTimerProps {
   targetTimeInSeconds: number
   onCompletion: () => void
   onTick?: (remainingSeconds: number) => void
 }
 
-interface UseInternalTimerReturn {
+interface UseTimerReturn {
   timeRemainingInSeconds: number
   isRunning: boolean
   start: () => void
@@ -14,15 +14,15 @@ interface UseInternalTimerReturn {
   reset: (newTargetTimeInSeconds?: number) => void
 }
 
-export const useInternalTimer = ({
+// Hook for managing countdown timer
+export const useTimer = ({
   targetTimeInSeconds,
   onCompletion,
   onTick,
-}: UseInternalTimerProps): UseInternalTimerReturn => {
+}: UseTimerProps): UseTimerReturn => {
   const [timeRemaining, setTimeRemaining] = useState(targetTimeInSeconds)
   const [isRunning, setIsRunning] = useState(false)
 
-  // Refs for callbacks to ensure stability in useEffect
   const onCompletionRef = useRef(onCompletion)
   const onTickRef = useRef(onTick)
 
@@ -37,13 +37,8 @@ export const useInternalTimer = ({
   }, [targetTimeInSeconds])
 
   useEffect(() => {
-    if (!isRunning) {
-      // If timer was running and time hit zero, onCompletion was already called by setInterval's logic
-      return
-    }
+    if (!isRunning) return
 
-    // This case handles if isRunning somehow becomes true while timeRemaining is already <= 0
-    // Or if timeRemaining was forcefully set to 0 while running (though reset should handle this)
     if (timeRemaining <= 0) {
       onCompletionRef.current()
       setIsRunning(false)
@@ -59,9 +54,8 @@ export const useInternalTimer = ({
 
         if (newTime <= 0) {
           clearInterval(intervalId)
-          // Order: Call completion, then update state that might trigger effects
           onCompletionRef.current()
-          setIsRunning(false) // This will trigger re-evaluation of the outer useEffect
+          setIsRunning(false)
           return 0
         }
         return newTime
@@ -69,34 +63,28 @@ export const useInternalTimer = ({
     }, 1000)
 
     return () => clearInterval(intervalId)
-  }, [isRunning, timeRemaining]) // Effect re-runs if isRunning changes or timeRemaining changes
+  }, [isRunning, timeRemaining])
 
-  const start = useCallback(() => {
+  const start = () => {
     if (timeRemaining <= 0) {
-      // If starting at 0, but target allows for a run, reset to target first
       if (targetTimeInSeconds > 0) {
         setTimeRemaining(targetTimeInSeconds)
         setIsRunning(true)
       }
-      // else, if targetTimeInSeconds is also 0 or less, do nothing
     } else {
-      // If timeRemaining > 0, just start
       setIsRunning(true)
     }
-  }, [timeRemaining, targetTimeInSeconds])
+  }
 
-  const pause = useCallback(() => {
+  const pause = () => {
     setIsRunning(false)
-  }, [])
+  }
 
-  const reset = useCallback(
-    (newTargetTime?: number) => {
-      const resetTime = newTargetTime !== undefined ? newTargetTime : targetTimeInSeconds
-      setIsRunning(false)
-      setTimeRemaining(Math.max(0, resetTime))
-    },
-    [targetTimeInSeconds]
-  )
+  const reset = (newTargetTime?: number) => {
+    const resetTime = newTargetTime !== undefined ? newTargetTime : targetTimeInSeconds
+    setIsRunning(false)
+    setTimeRemaining(Math.max(0, resetTime))
+  }
 
   return {
     timeRemainingInSeconds: timeRemaining,
