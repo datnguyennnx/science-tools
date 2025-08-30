@@ -98,7 +98,7 @@ interface MarkdownLayoutProps {
 
 export default function MarkdownLayout({ children }: MarkdownLayoutProps) {
   return (
-    <section aria-label="Markdown Editor and Preview" className="p-4">
+    <>
       {/* Add JSON-LD to the head of this layout/page segment */}
       <script
         type="application/ld+json"
@@ -111,6 +111,6 @@ export default function MarkdownLayout({ children }: MarkdownLayoutProps) {
         key="markdown-softwareapp-jsonld"
       />
       {children}
-    </section>
+    </>
   )
 }
