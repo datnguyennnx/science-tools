@@ -17,7 +17,7 @@ const eslintConfig = [
     extends: ['prettier'],
   }),
   {
-    ignores: ['/src/components/ui/*.ts', '.next', 'node_modules', 'public'],
+    ignores: ['/src/components/ui/*.tsx', '.next', 'node_modules', 'public'],
   },
   // Add custom rules for React 19 optimizations
   {
