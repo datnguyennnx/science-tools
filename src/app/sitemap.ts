@@ -34,6 +34,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.4,
     },
     {
+      url: `${BASE_URL}/tasks/json-formatter`,
+      lastModified,
+      priority: 0.7,
+    },
+    {
       url: `${BASE_URL}/tasks/markdown`,
       lastModified,
       priority: 0.6,

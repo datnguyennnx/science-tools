@@ -1,6 +1,6 @@
 'use client'
 
-import { Binary, Timer, SortAsc, Keyboard, FileText } from 'lucide-react'
+import { Binary, Timer, SortAsc, Keyboard, FileText, FileJson } from 'lucide-react'
 
 import {
   Sidebar,
@@ -45,6 +45,11 @@ const tasksItems = [
     title: 'Markdown Preview',
     url: '/tasks/markdown',
     icon: FileText,
+  },
+  {
+    title: 'JSON Formatter',
+    url: '/tasks/json-formatter',
+    icon: FileJson,
   },
 ]
 
