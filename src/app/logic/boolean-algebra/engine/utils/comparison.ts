@@ -7,67 +7,50 @@ import { BooleanExpression } from '../ast/types'
  * @param expr2 The second boolean expression.
  * @returns True if the expressions are structurally equal, false otherwise.
  */
+/**
+ * Optimized expression comparison with early exits and reduced recursion
+ */
 export function expressionsEqual(
   expr1: BooleanExpression | undefined,
   expr2: BooleanExpression | undefined
 ): boolean {
-  if (expr1 === expr2) return true // Identity check
+  // Identity check - most common case
+  if (expr1 === expr2) return true
 
+  // Handle undefined cases
   if (expr1 === undefined && expr2 === undefined) return true
   if (expr1 === undefined || expr2 === undefined) return false
 
+  // Quick type check
   if (expr1.type !== expr2.type) return false
 
-  // Check for value equality for types that have it (CONSTANT, VARIABLE)
+  // Handle leaf nodes (CONSTANT, VARIABLE) efficiently
   if ('value' in expr1 && 'value' in expr2) {
-    if (expr1.value !== expr2.value) return false
-    if (expr1.type === 'CONSTANT' || expr1.type === 'VARIABLE') return true
+    return expr1.value === expr2.value
   }
 
-  // For unary operators like NOT, compare their single operand.
+  // Handle NOT (unary operator)
   if (expr1.type === 'NOT') {
-    const expr2_not = expr2 as BooleanExpression
-    return expressionsEqual(expr1.left, expr2_not.left)
+    return expressionsEqual(expr1.left, (expr2 as BooleanExpression).left)
   }
 
-  // For binary operators (AND, OR, XOR, NAND, NOR etc.):
-  // They must have the same structure regarding presence of left/right children.
+  // Handle binary operators
   const e1_left = expr1.left
   const e1_right = expr1.right
-  // Cast expr2 once for convenience, assuming type equality is already checked
-  const e2_node = expr2 as BooleanExpression
-  const e2_left = e2_node.left
-  const e2_right = e2_node.right
+  const e2_left = (expr2 as BooleanExpression).left
+  const e2_right = (expr2 as BooleanExpression).right
 
-  // Check structural equality of children
-  const leftChildrenEqual = expressionsEqual(e1_left, e2_left)
-  const rightChildrenEqual = expressionsEqual(e1_right, e2_right)
-
-  if (leftChildrenEqual && rightChildrenEqual) {
-    // Structure A op B vs A op B is equal
+  // Check direct equality first (most common case)
+  if (expressionsEqual(e1_left, e2_left) && expressionsEqual(e1_right, e2_right)) {
     return true
   }
 
-  // For commutative operators (AND, OR, XOR), check swapped children
+  // For commutative operators, check swapped order
   if (expr1.type === 'AND' || expr1.type === 'OR' || expr1.type === 'XOR') {
-    const leftSwappedWithRightEqual = expressionsEqual(e1_left, e2_right)
-    const rightSwappedWithLeftEqual = expressionsEqual(e1_right, e2_left)
-    if (leftSwappedWithRightEqual && rightSwappedWithLeftEqual) {
-      // Structure A op B vs B op A is equal
+    if (expressionsEqual(e1_left, e2_right) && expressionsEqual(e1_right, e2_left)) {
       return true
     }
   }
 
-  // If we've reached here, it means the children are not equal in a way that satisfies
-  // direct or commutative equality for binary operators.
-  // This also correctly handles cases where one expression has a child and the other doesn't
-  // because expressionsEqual(someNode, undefined) would be false, causing one of the
-  // variables (leftChildrenEqual, rightChildrenEqual, etc.) to be false.
-
-  // Leaf nodes without children (e.g. hypothetical future leaf types not IDENTIFIER/CONSTANT)
-  // would have their e1_left, e1_right, e2_left, e2_right all undefined.
-  // In this case, leftChildrenEqual and rightChildrenEqual would both be true, leading to return true above.
-  // This correctly covers them.
-
-  return false // Default to not equal
+  return false
 }

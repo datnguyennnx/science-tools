@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
 import { VennData3Vars } from '../VennDiagramEngine'
-import { VENN_SET_COLORS, LABEL_COLOR } from '../../utils'
+import { VENN_SET_COLORS, LABEL_COLOR } from '../../utils/colors'
 
 // Exported 3-Variable Renderer Function
 export function renderD3ThreeVarDiagram(

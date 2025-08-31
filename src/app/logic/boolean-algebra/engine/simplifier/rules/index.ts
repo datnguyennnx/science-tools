@@ -4,14 +4,14 @@
  * into the main simplifier logic.
  */
 
-import { getConstantRules } from './constant-rules'
-import { getContradictionRules } from './contradiction-rules'
-import { getDeMorganRules } from './de-morgan-rules'
-import { getDerivedRules } from './derived-rules'
-import { getDistributiveRules } from './distributive-rules'
-import { getIdempotentRules } from './idempotent-rules'
-import { getNegationRules } from './negation-rules'
-import { getConsensusRules } from './consensus-rules'
+import { getConstantRules } from './constants'
+import { getContradictionRules } from './contradiction'
+import { getDeMorganRules } from './de-morgan'
+import { getDerivedRules } from './derived'
+import { getDistributiveRules } from './distributive'
+import { getIdempotentRules } from './idempotent'
+import { getNegationRules } from './negation'
+import { getConsensusRules } from './consensus'
 
 export {
   getConstantRules,

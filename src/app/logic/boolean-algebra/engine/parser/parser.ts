@@ -1,9 +1,28 @@
-import { BooleanExpression } from '../ast'
+import { BooleanExpression } from '../ast/types'
 import { DEFAULT_PARSER_OPTIONS, InputFormat, ParserOptions, ParseResult } from './types'
 import { formatToBoolean, formatToLatex, formatExpression } from './formatter'
-import { preprocessInput } from './input-processor'
+import { preprocessInput } from './processor'
 import { getValidExamples } from './utils/patterns'
-import { parseExpression as parseExpr } from './utils/parser-logic'
+import { parseExpression as parseExpr } from './utils/implementation'
+
+// Parser cache for performance optimization
+const PARSER_CACHE_SIZE = 500
+const parserCache = new Map<string, BooleanExpression>()
+const parserCacheKeys: string[] = []
+
+/**
+ * Add to parser cache with LRU eviction
+ */
+function addToParserCache(key: string, value: BooleanExpression): void {
+  if (parserCache.size >= PARSER_CACHE_SIZE) {
+    const oldestKey = parserCacheKeys.shift()
+    if (oldestKey) {
+      parserCache.delete(oldestKey)
+    }
+  }
+  parserCache.set(key, value)
+  parserCacheKeys.push(key)
+}
 
 // ---- Core Parsing Functions ----
 
@@ -29,7 +48,9 @@ export function detectFormat(input: string): InputFormat {
     input.includes('∧') ||
     input.includes('¬') ||
     // LaTeX overline notation
-    input.includes('\\overline')
+    input.includes('\\overline') ||
+    // General LaTeX pattern: backslash followed by letters
+    /\\[a-zA-Z]+/.test(input)
   ) {
     return 'latex'
   }
@@ -39,101 +60,94 @@ export function detectFormat(input: string): InputFormat {
 }
 
 /**
- * Special preprocessing for textual NOT operators to handle the correct precedence
- * Makes "NOT X AND Y" become "NOT(X AND Y)" instead of "!X AND Y"
+ * Preprocess textual NOT operators to ensure correct precedence
  */
-function preprocessTextualNot(input: string): string {
-  if (!input || !input.includes('NOT')) {
-    return input
-  }
-
-  // Handle the complex case "A OR B AND NOT C OR D" by inserting parentheses
-  // to ensure correct operator precedence
-  if (/\bOR\b.*\bAND\b.*\bNOT\b.*\bOR\b/i.test(input)) {
-    // Match pattern similar to "A OR B AND NOT C OR D"
-    const complexPattern = /(\w+)\s+OR\s+(\w+)\s+AND\s+NOT\s+(\w+)\s+OR\s+(\w+)/i
-    if (complexPattern.test(input)) {
-      // Explicitly add parentheses to match expected structure: "A OR ((B AND (NOT C)) OR D)"
-      return input.replace(complexPattern, '$1 OR (($2 AND (NOT $3)) OR $4)')
-    }
-  }
-
-  // For simpler NOT cases, ensure NOT has proper scope
-  // First, find all NOT operations
-  const matches = input.match(/\bNOT\s+\w+(?:\s+(?:AND|OR)\s+[^()]+)?/gi)
-
-  if (matches) {
-    let processed = input
-
-    // Process each match
-    for (const match of matches) {
-      // Check if the match contains AND or OR
-      if (/\b(AND|OR)\b/i.test(match)) {
-        // Replace "NOT X AND Y" with "NOT(X AND Y)"
-        // This ensures NOT has higher precedence than other operators
-        const replacement = match.replace(/\bNOT\s+([^()]+)/i, 'NOT($1)')
-        processed = processed.replace(match, replacement)
-      }
-    }
-
-    return processed
-  }
-
-  return input
-}
+const preprocessTextualNot = (input: string): string =>
+  !input || !input.includes('NOT')
+    ? input
+    : input.replace(/\bNOT\s+([^()]+(?=\s+(?:AND|OR)))/gi, 'NOT($1)')
 
 /**
- * Parse a Boolean expression string into an expression tree
+ * Validates input and throws appropriate errors
  */
-export function parse(input: string, options?: Partial<ParserOptions>): BooleanExpression {
-  // Auto-detect format if not specified
-  if (!options?.inputFormat) {
-    const detectedFormat = detectFormat(input)
-    options = { ...options, inputFormat: detectedFormat }
-  }
-
-  // Explicitly check if the input string itself is "undefined"
+const validateInput = (input: string): void => {
   if (typeof input === 'string' && input.trim().toLowerCase() === 'undefined') {
     throw new Error(
       "The input expression was the literal string 'undefined'. Please ensure a valid boolean expression is provided."
     )
   }
+}
 
-  // Determine if this is the initial parse pass
-  // Defaults to true if not specified in options
-  const isInitialParse = options?.isInitialParse === undefined ? true : options.isInitialParse
+/**
+ * Enhances error messages with examples and context
+ */
+const enhanceErrorMessage = (error: unknown): string => {
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+  return errorMessage.includes('Examples')
+    ? errorMessage
+    : `${errorMessage}. Examples of valid expressions: ${getValidExamples().slice(0, 3).join(', ')}`
+}
+
+/**
+ * Preprocesses input through all necessary transformations
+ */
+const preprocessAndParse = (
+  input: string,
+  options: ParserOptions,
+  isInitialParse: boolean
+): BooleanExpression => {
+  // Special preprocessing for textual NOT operators
+  const syntacticallyAdjustedInput = preprocessTextualNot(input)
+
+  // Preprocess the input based on format
+  const processedInput = preprocessInput(
+    syntacticallyAdjustedInput,
+    options.inputFormat,
+    isInitialParse
+  )
+
+  // Parse the processed input into an expression tree
+  return parseExpr(processedInput)
+}
+
+/**
+ * Parse a Boolean expression string into an expression tree with caching
+ */
+export function parse(input: string, options?: Partial<ParserOptions>): BooleanExpression {
+  // Create cache key based on input and options
+  const resolvedOptions = resolveParserOptions(input, options)
+  const cacheKey = `${input}|${resolvedOptions.inputFormat}|${resolvedOptions.isInitialParse}`
+
+  // Check cache first
+  const cached = parserCache.get(cacheKey)
+  if (cached) {
+    return cached
+  }
+
+  // Validate input
+  validateInput(input)
+
+  const isInitialParse = options?.isInitialParse ?? true
 
   try {
-    // Special preprocessing for textual NOT operators to handle the correct precedence
-    // This operates on the input before full normalization and symbol conversion.
-    const syntacticallyAdjustedInput = preprocessTextualNot(input)
-
-    // Preprocess the input based on format. This step normalizes operators,
-    // fixes some patterns (like '()' to '0'), and crucially calls fixProblematicPatterns,
-    // which will throw for empty/invalid fundamental issues.
-    const processedInput = preprocessInput(
-      syntacticallyAdjustedInput,
-      options.inputFormat,
-      isInitialParse
-    )
-
-    // Parse the processed input into an expression tree
-    // parseExpr (from utils/core) expects a string that has undergone basic cleaning and operator normalization.
-    return parseExpr(processedInput)
+    const result = preprocessAndParse(input, resolvedOptions, isInitialParse)
+    addToParserCache(cacheKey, result)
+    return result
   } catch (error) {
-    // Create a more specific error message for better debugging
-    const format = options?.inputFormat || 'auto-detected'
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-
-    // Add examples if not already included
-    let enhancedError = errorMessage
-    if (!errorMessage.includes('Examples')) {
-      const examples = getValidExamples().slice(0, 3).join(', ')
-      enhancedError += `. Examples of valid expressions: ${examples}`
-    }
-
+    const format = resolvedOptions.inputFormat || 'unknown'
+    const enhancedError = enhanceErrorMessage(error)
     throw new Error(`Failed to parse ${format} expression: ${enhancedError}`)
   }
+}
+
+/**
+ * Resolves parser options with auto-detection
+ */
+const resolveParserOptions = (input: string, options?: Partial<ParserOptions>): ParserOptions => {
+  if (!options?.inputFormat) {
+    return { ...DEFAULT_PARSER_OPTIONS, ...options, inputFormat: detectFormat(input) }
+  }
+  return { ...DEFAULT_PARSER_OPTIONS, ...options }
 }
 
 /**
@@ -156,7 +170,11 @@ export function toLatexString(expr: BooleanExpression): string {
  * Extended parse function that returns a ParseResult
  */
 export function parseBoolean(input: string, options: Partial<ParserOptions> = {}): ParseResult {
-  const opts: ParserOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
+  // Don't include inputFormat from defaults if not explicitly provided - let auto-detection work
+  const defaultOpts = options.inputFormat
+    ? DEFAULT_PARSER_OPTIONS
+    : { ...DEFAULT_PARSER_OPTIONS, inputFormat: undefined }
+  const opts: ParserOptions = { ...defaultOpts, ...options }
 
   try {
     // Pass the fully resolved options (including isInitialParse) to the core parse function

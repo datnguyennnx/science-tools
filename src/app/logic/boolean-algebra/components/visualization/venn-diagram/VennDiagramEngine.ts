@@ -1,13 +1,26 @@
-import { BooleanExpression } from '../../../engine'
-import {
-  evaluateExpression,
-  extractVariablesFromTree,
-  generateReducedExpressionSet,
-  getOptimalVariableOrder,
-} from '../utils/ExpressionUtils'
+import { BooleanExpression, evaluateExpression } from '../../../engine'
+import { generateReducedExpressionSet, getOptimalVariableOrder } from '../utils/ExpressionUtils'
 
-// Re-export the extractVariablesFromTree function for backward compatibility
-export { extractVariablesFromTree }
+// Cache for Venn diagram data to avoid recalculation
+const VENN_DATA_CACHE = new Map<string, VennData>()
+const VENN_DATA_CACHE_SIZE = 100
+const vennDataCacheKeys: string[] = []
+
+/**
+ * Add to Venn data cache with LRU eviction
+ */
+function addToVennDataCache(key: string, data: VennData): void {
+  if (VENN_DATA_CACHE.size >= VENN_DATA_CACHE_SIZE) {
+    const oldestKey = vennDataCacheKeys.shift()
+    if (oldestKey) {
+      VENN_DATA_CACHE.delete(oldestKey)
+    }
+  }
+  VENN_DATA_CACHE.set(key, data)
+  vennDataCacheKeys.push(key)
+}
+
+// Utility functions are available from the main engine
 
 /**
  * Venn diagram data for a constant expression (0 variables)
@@ -136,12 +149,23 @@ export function evaluate1VarVenn(expr: BooleanExpression, variables: string[]): 
 
 /**
  * Evaluates a boolean expression for visualization in a 2-variable Venn diagram
+ * Includes caching for performance optimization
  *
  * @param expr The boolean expression tree
  * @param variables The variables to use in the visualization (must be 2)
  * @returns Data structure for a 2-variable Venn diagram
  */
 export function evaluate2VarVenn(expr: BooleanExpression, variables: string[]): VennData2Vars {
+  // Create cache key
+  const exprStr = JSON.stringify(expr)
+  const varsStr = variables.join(',')
+  const cacheKey = `2var_${exprStr}_${varsStr}`
+
+  // Check cache first
+  const cached = VENN_DATA_CACHE.get(cacheKey)
+  if (cached) {
+    return cached as VennData2Vars
+  }
   if (variables.length !== 2) {
     throw new Error('2-variable Venn diagram requires exactly 2 variables')
   }
@@ -153,12 +177,15 @@ export function evaluate2VarVenn(expr: BooleanExpression, variables: string[]): 
   const bOnlyValue = evaluateExpression(expr, { [A]: false, [B]: true })
   const bothValue = evaluateExpression(expr, { [A]: true, [B]: true })
 
-  return {
+  const result = {
     A_only: aOnlyValue,
     B_only: bOnlyValue,
     A_and_B: bothValue,
     Neither: neitherValue,
   }
+
+  addToVennDataCache(cacheKey, result)
+  return result
 }
 
 /**

@@ -24,7 +24,18 @@ const KatexFormulaComponent = dynamic(
   }
 )
 
-export function BooleanAlgebraGuideContent() {
+interface BooleanAlgebraGuideContentProps {
+  isMobileSidebarOpen?: boolean
+  onMobileSidebarClose?: () => void
+  currentPath?: string[]
+  setCurrentPath?: React.Dispatch<React.SetStateAction<string[]>>
+}
+
+export function BooleanAlgebraGuideContent({
+  isMobileSidebarOpen = false,
+  onMobileSidebarClose,
+  setCurrentPath,
+}: BooleanAlgebraGuideContentProps = {}) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
     const initialState: Record<string, boolean> = {}
     if (groupedGuideContent.length > 0) {
@@ -61,18 +72,35 @@ export function BooleanAlgebraGuideContent() {
 
   return (
     <GuideWrapper>
-      <GuideSidebar>
+      <GuideSidebar isOpen={isMobileSidebarOpen} onClose={onMobileSidebarClose}>
         {groupedGuideContent.map(group => (
           <GuideGroup
             key={group.name}
             name={group.name}
             expanded={!!expandedGroups[group.name]}
-            onToggle={() => toggleGroup(group.name)}
+            onToggle={() => {
+              toggleGroup(group.name)
+              // Update breadcrumbs when group is toggled
+              if (setCurrentPath && expandedGroups[group.name]) {
+                // If collapsing, go back to group level
+                setCurrentPath([group.name])
+              }
+            }}
           >
             {group.categories.map(category => (
               <GuideItem
                 key={category.id}
-                onClick={() => handleTabChange(category.id)}
+                onClick={() => {
+                  handleTabChange(category.id)
+                  // Update breadcrumbs
+                  if (setCurrentPath) {
+                    setCurrentPath([group.name, category.title])
+                  }
+                  // Close mobile sidebar when item is selected
+                  if (isMobileSidebarOpen && onMobileSidebarClose) {
+                    onMobileSidebarClose()
+                  }
+                }}
                 active={activeTab === category.id}
               >
                 {category.title}
@@ -97,8 +125,7 @@ export function BooleanAlgebraGuideContent() {
                   {law.description && (
                     <GuideContentItemDescription>{law.description}</GuideContentItemDescription>
                   )}
-                  <div className="ml-auto pl-4 flex-shrink-0">
-                    {' '}
+                  <div className="ml-auto flex-shrink-0 my-2">
                     {/* Ensure KatexFormula is on the right */}
                     <Suspense
                       fallback={

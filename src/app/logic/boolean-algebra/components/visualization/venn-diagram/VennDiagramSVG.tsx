@@ -150,7 +150,7 @@ export const VennDiagramSVG = ({
 
   // Fallback UI: Render a styled div if conditions are not met for D3 rendering
   const fallbackBaseClass =
-    'w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed rounded-md min-h-[12rem] text-muted-foreground'
+    'w-full h-full flex flex-col items-center justify-center text-center p-4 border border-dashed rounded-md min-h-[12rem] ba-text-muted'
 
   if (!vennData && variables.length === 0) {
     return (

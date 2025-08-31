@@ -30,17 +30,17 @@ export const KMapCell = ({
 
   return (
     <td
-      className="relative border border-border w-14 h-14 text-center transition-colors"
+      className="relative border border-border w-16 h-16 sm:w-20 sm:h-20 text-center transition-colors"
       style={borderStyles}
     >
       {showMintermNumbers && (
-        <div className="absolute top-1 left-1 text-[0.6rem] text-muted-foreground">{minterm}</div>
+        <div className="absolute top-1 left-1 text-[0.6rem] ba-text-muted">{minterm}</div>
       )}
       <div className="h-full w-full flex items-center justify-center">
         <p
           className={`
-            text-lg font-semibold 
-            ${hasMinterm ? 'text-primary' : 'text-muted-foreground'}
+            text-xl sm:text-2xl font-bold
+            ${hasMinterm ? 'ba-text-primary' : 'ba-text-muted'}
           `}
         >
           {cellValue}

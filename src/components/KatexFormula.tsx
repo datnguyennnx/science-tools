@@ -9,30 +9,75 @@ interface KatexFormulaProps {
 }
 
 export function KatexFormula({ formula, block = false, className = '' }: KatexFormulaProps) {
+  // Handle empty or invalid formulas
+  if (!formula || formula.trim() === '') {
+    return <div className={`${className} p-2 rounded font-mono text-sm italic`}>Empty formula</div>
+  }
+
   // Sanitize the formula to ensure it can be properly processed by KaTeX
-  let sanitizedFormula = formula
+  let sanitizedFormula = formula.trim()
 
   try {
-    // Try to fix common issues in LaTeX expressions
-    if (formula.includes('\\not') || formula.includes('\\text')) {
-      // Fix raw LaTeX expressions that use \not and \text
-      sanitizedFormula = formula
-        .replace(/\\not\s+(\w)/g, '\\lnot $1') // Replace \not X with \lnot X
-        .replace(/\\not\s*{([^}]*)}/g, '\\lnot{$1}') // Replace \not{X} with \lnot{X}
-        .replace(/\$\\text/g, '\\text') // Fix any $\text that might appear
-        .replace(/\\text{([^}]*)}/g, '\\text{$1}') // Ensure \text is properly formatted
+    // Comprehensive LaTeX sanitization and fixes
+    sanitizedFormula = sanitizedFormula
+      // Fix common LaTeX command issues
+      .replace(/\\not\s+(\w)/g, '\\lnot $1') // Replace \not X with \lnot X
+      .replace(/\\not\s*{([^}]*)}/g, '\\lnot{$1}') // Replace \not{X} with \lnot{X}
+      .replace(/\$\\text/g, '\\text') // Fix any $\text that might appear
+      .replace(/\\text{([^}]*)}/g, '\\text{$1}') // Ensure \text is properly formatted
+      // Fix spacing issues around operators
+      .replace(/\\land\s+/g, '\\land ') // Normalize AND spacing
+      .replace(/\\lor\s+/g, '\\lor ') // Normalize OR spacing
+      .replace(/\\lnot\s+/g, '\\lnot ') // Normalize NOT spacing
+      // Fix potential double backslashes
+      .replace(/\\\\/g, '\\')
+      // Ensure proper parentheses spacing
+      .replace(/\s*\(\s*/g, '(')
+      .replace(/\s*\)\s*/g, ')')
+      // Clean up extra whitespace
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    // Additional validation for common issues
+    if (sanitizedFormula.includes('undefined') || sanitizedFormula.includes('null')) {
+      throw new Error('Formula contains undefined or null values')
+    }
+
+    // Check for incomplete LaTeX commands
+    if (/\\[a-zA-Z]{1,10}$/.test(sanitizedFormula)) {
+      throw new Error('Formula contains incomplete LaTeX command')
     }
 
     // Render using BlockMath or InlineMath
-    return (
-      <div className={className}>
-        {block ? <BlockMath math={sanitizedFormula} /> : <InlineMath math={sanitizedFormula} />}
-      </div>
+    const mathComponent = block ? (
+      <BlockMath math={sanitizedFormula} />
+    ) : (
+      <InlineMath math={sanitizedFormula} />
     )
+
+    return className ? <div className={className}>{mathComponent}</div> : mathComponent
   } catch (error) {
+    const errorMessage = (error as Error).message || 'Invalid LaTeX syntax'
+
+    // Provide more helpful error messages
+    let displayMessage = 'LaTeX Error'
+    if (errorMessage.includes('undefined')) {
+      displayMessage = 'Formula contains undefined values'
+    } else if (errorMessage.includes('incomplete')) {
+      displayMessage = 'Incomplete LaTeX command'
+    } else if (errorMessage.includes('Invalid')) {
+      displayMessage = 'Invalid mathematical expression'
+    }
+
     return (
-      <div className={`${className} p-2 bg-red-50 text-red-500 rounded font-mono text-sm `}>
-        Error: {(error as Error).message || 'Invalid LaTeX syntax'}
+      <div
+        className={`${className} p-2 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 rounded font-mono text-sm border border-red-200 dark:border-red-800`}
+      >
+        <div className="font-semibold mb-1">{displayMessage}</div>
+        <div className="text-xs opacity-75 break-all">Raw: {formula}</div>
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-xs opacity-50 mt-1 break-all">Sanitized: {sanitizedFormula}</div>
+        )}
       </div>
     )
   }

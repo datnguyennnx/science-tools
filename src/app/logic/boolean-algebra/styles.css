@@ -1,0 +1,380 @@
+/* Boolean Algebra Component Styles */
+/* Centralized color configuration for all boolean-algebra components */
+
+@import url('https://fonts.googleapis.com/css2?family=Doto&family=Pixelify+Sans&family=Space+Mono:wght@400;700&display=swap');
+
+/* ==========================================================================
+   CSS Custom Properties for Boolean Algebra Components
+   ========================================================================== */
+
+:root {
+  /* ===== BASE COLORS (inherit from globals.css) ===== */
+  --ba-background: var(--color-background);
+  --ba-foreground: var(--color-foreground);
+  --ba-muted: var(--color-muted);
+  --ba-muted-foreground: var(--color-muted-foreground);
+  --ba-border: var(--color-border);
+  --ba-primary: var(--color-primary);
+  --ba-primary-foreground: var(--color-primary-foreground);
+  --ba-secondary: var(--color-secondary);
+  --ba-secondary-foreground: var(--color-secondary-foreground);
+  --ba-accent: var(--color-accent);
+  --ba-accent-foreground: var(--color-accent-foreground);
+
+  /* ===== COMPONENT-SPECIFIC COLORS ===== */
+
+  /* Expression Input & Display */
+  --ba-expression-bg: var(--ba-muted, 0.5);
+  --ba-expression-preview-bg: var(--ba-muted, 0.5);
+  --ba-expression-result-bg: var(--ba-muted);
+  --ba-expression-text: var(--ba-foreground);
+  --ba-expression-placeholder: var(--ba-muted-foreground);
+
+  /* Simplification Components */
+  --ba-step-bg: transparent; /* Clean, no background for steps */
+  --ba-step-border: var(--ba-border);
+  --ba-step-text: var(--ba-foreground);
+  --ba-rule-description-bg: oklch(
+    0.98 0.01 240 / 0.3
+  ); /* Very subtle background for rule descriptions */
+  --ba-rule-description-border: transparent; /* No border for cleaner look */
+  --ba-rule-description-text: var(--ba-foreground); /* Use standard text color */
+  --ba-formula-bg: oklch(
+    0.97 0.005 240 / 0.2
+  ); /* Extremely subtle background for mathematical formulas */
+  --ba-formula-border: transparent; /* No border for formulas */
+  --ba-formula-text: var(--ba-foreground); /* Standard text for formulas */
+
+  /* Success/Result States */
+  --ba-success-bg: oklch(0.96 0.02 145 / 0.2); /* light green */
+  --ba-success-border: oklch(0.9 0.08 145 / 0.7); /* green border */
+  --ba-success-text: oklch(0.4 0.15 145); /* green text */
+
+  /* Karnaugh Map Colors */
+  --ba-kmap-bg: var(--ba-background);
+  --ba-kmap-cell-bg: var(--ba-muted);
+  --ba-kmap-cell-text-1: var(--ba-primary); /* X/1 values */
+  --ba-kmap-cell-text-0: var(--ba-muted-foreground); /* 0 values */
+  --ba-kmap-header-bg: var(--ba-secondary);
+  --ba-kmap-header-text: var(--ba-secondary-foreground);
+  --ba-kmap-axis-line: var(--ba-primary);
+  --ba-kmap-corner-diagonal: var(--ba-muted-foreground);
+  --ba-kmap-group-border: var(--ba-border);
+
+  /* Venn Diagram Colors */
+  --ba-venn-bg: var(--ba-muted);
+  --ba-venn-stroke: var(--ba-border);
+  --ba-venn-region-a: var(--color-chart-1);
+  --ba-venn-region-b: var(--color-chart-2);
+  --ba-venn-region-c: var(--color-chart-3);
+  --ba-venn-region-intersection: var(--color-chart-4);
+
+  /* Truth Table Colors */
+  --ba-truth-table-bg: var(--ba-background);
+  --ba-truth-table-border: var(--ba-border);
+  --ba-truth-table-header-bg: var(--ba-muted);
+  --ba-truth-table-header-text: var(--ba-foreground);
+  --ba-truth-table-cell-text: var(--ba-foreground);
+
+  /* Loading/Processing States */
+  --ba-loading-bg: var(--ba-background);
+  --ba-loading-text: var(--ba-muted-foreground);
+
+  /* Error States */
+  --ba-error-bg: var(--error-bg);
+  --ba-error-border: var(--error-border);
+  --ba-error-text: var(--error-text);
+  --ba-error-text-strong: var(--error-text-strong);
+  --ba-error-icon: var(--error-icon);
+
+  /* Card Components */
+  --ba-card-bg: var(--color-card);
+  --ba-card-foreground: var(--color-card-foreground);
+  --ba-card-border: var(--ba-border);
+
+  /* Tab Navigation */
+  --ba-tab-bg: var(--ba-muted, 0.5);
+  --ba-tab-active-bg: var(--ba-background);
+  --ba-tab-active-text: var(--ba-foreground);
+  --ba-tab-inactive-text: var(--ba-muted-foreground);
+
+  /* Debug/Development */
+  --ba-debug-bg: oklch(0.96 0.02 240 / 0.5); /* light gray */
+  --ba-debug-border: oklch(0.9 0.05 240 / 0.7);
+  --ba-debug-text: oklch(0.5 0.05 240);
+
+  /* ===== COMPONENT SPECIFIC OVERRIDES ===== */
+
+  /* Fullscreen mode adjustments */
+  --ba-fullscreen-bg: var(--ba-background);
+  --ba-fullscreen-text: var(--ba-foreground);
+  --ba-fullscreen-muted: var(--ba-muted-foreground);
+  --ba-fullscreen-accent: var(--ba-accent-foreground);
+}
+
+/* ==========================================================================
+   DARK THEME OVERRIDES
+   ========================================================================== */
+
+.dark {
+  /* ===== DARK THEME BASE COLORS ===== */
+  --ba-background: var(--color-background);
+  --ba-foreground: var(--color-foreground);
+  --ba-muted: var(--color-muted);
+  --ba-muted-foreground: var(--color-muted-foreground);
+  --ba-border: var(--color-border);
+  --ba-primary: var(--color-primary);
+  --ba-primary-foreground: var(--color-primary-foreground);
+  --ba-secondary: var(--color-secondary);
+  --ba-secondary-foreground: var(--color-secondary-foreground);
+  --ba-accent: var(--color-accent);
+  --ba-accent-foreground: var(--color-accent-foreground);
+
+  /* ===== DARK THEME COMPONENT COLORS ===== */
+
+  /* Expression Components */
+  --ba-expression-bg: var(--ba-muted, 0.5);
+  --ba-expression-preview-bg: var(--ba-muted, 0.5);
+  --ba-expression-result-bg: var(--ba-muted);
+
+  /* Simplification Components */
+  --ba-step-bg: transparent; /* Clean, no background for steps */
+  --ba-rule-description-bg: oklch(
+    0.12 0.01 240 / 0.4
+  ); /* Very subtle dark background for rule descriptions */
+  --ba-rule-description-border: transparent; /* No border for cleaner look */
+  --ba-rule-description-text: var(--ba-foreground); /* Use standard text color */
+  --ba-formula-bg: oklch(
+    0.15 0.005 240 / 0.3
+  ); /* Extremely subtle dark background for mathematical formulas */
+  --ba-formula-border: transparent; /* No border for formulas */
+  --ba-formula-text: var(--ba-foreground); /* Standard text for formulas */
+
+  /* Success States */
+  --ba-success-bg: oklch(0.15 0.02 145 / 0.3); /* dark green */
+  --ba-success-border: oklch(0.25 0.08 145 / 0.5); /* dark green border */
+  --ba-success-text: oklch(0.7 0.15 145); /* light green text */
+
+  /* Debug/Development */
+  --ba-debug-bg: oklch(0.2 0.02 240 / 0.4); /* dark gray */
+  --ba-debug-border: oklch(0.3 0.05 240 / 0.6);
+  --ba-debug-text: oklch(0.7 0.08 240);
+}
+
+/* ==========================================================================
+   COMPONENT-SPECIFIC UTILITY CLASSES
+   ========================================================================== */
+
+/* Tab Navigation */
+.ba-tab-bg {
+  background-color: var(--ba-tab-bg);
+}
+
+.ba-tab-active {
+  background-color: var(--ba-tab-active-bg);
+  color: var(--ba-tab-active-text);
+}
+
+.ba-tab-inactive {
+  color: var(--ba-tab-inactive-text);
+}
+
+/* Fullscreen Overlay */
+.ba-fullscreen {
+  background-color: var(--ba-fullscreen-bg, rgba(0, 0, 0, 0.7));
+}
+
+/* Expression Components */
+.ba-expression-preview {
+  background-color: var(--ba-expression-preview-bg);
+  border-color: var(--ba-border);
+}
+
+.ba-expression-result {
+  background-color: var(--ba-expression-result-bg);
+  border-color: var(--ba-border);
+}
+
+/* Simplification Steps */
+.ba-step-card {
+  background-color: var(--ba-step-bg);
+  border: 1px solid var(--ba-step-border);
+  color: var(--ba-step-text);
+}
+
+.ba-rule-description {
+  background-color: var(--ba-rule-description-bg);
+  color: var(--ba-rule-description-text);
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.ba-formula-section {
+  background-color: var(--ba-formula-bg);
+  color: var(--ba-formula-text);
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+}
+
+.ba-success-result {
+  background-color: var(--ba-success-bg);
+  border-color: var(--ba-success-border);
+  color: var(--ba-success-text);
+}
+
+/* Karnaugh Map */
+.ba-kmap-cell {
+  background-color: var(--ba-kmap-cell-bg);
+  border-color: var(--ba-kmap-group-border);
+  color: var(--ba-kmap-cell-text-0);
+}
+
+.ba-kmap-cell--active {
+  color: var(--ba-kmap-cell-text-1);
+}
+
+.ba-kmap-header {
+  background-color: var(--ba-kmap-header-bg);
+  color: var(--ba-kmap-header-text);
+}
+
+.ba-kmap-axis {
+  border-color: var(--ba-kmap-axis-line);
+}
+
+.ba-kmap-corner-diagonal {
+  background-color: var(--ba-kmap-corner-diagonal);
+}
+
+/* Venn Diagram */
+.ba-venn-region-a {
+  fill: var(--ba-venn-region-a);
+}
+
+.ba-venn-region-b {
+  fill: var(--ba-venn-region-b);
+}
+
+.ba-venn-region-c {
+  fill: var(--ba-venn-region-c);
+}
+
+.ba-venn-intersection {
+  fill: var(--ba-venn-region-intersection);
+}
+
+/* Truth Table */
+.ba-truth-table {
+  background-color: var(--ba-truth-table-bg);
+  border-color: var(--ba-truth-table-border);
+}
+
+.ba-truth-table-header {
+  background-color: var(--ba-truth-table-header-bg);
+  color: var(--ba-truth-table-header-text);
+}
+
+.ba-truth-table-cell {
+  color: var(--ba-truth-table-cell-text);
+}
+
+/* Error States */
+.ba-error {
+  background-color: var(--ba-error-bg);
+  border-color: var(--ba-error-border);
+  color: var(--ba-error-text);
+}
+
+.ba-error--strong {
+  color: var(--ba-error-text-strong);
+}
+
+.ba-error-icon {
+  color: var(--ba-error-icon);
+}
+
+/* Loading States */
+.ba-loading {
+  background-color: var(--ba-loading-bg);
+  color: var(--ba-loading-text);
+}
+
+/* Debug/Development */
+.ba-debug {
+  background-color: var(--ba-debug-bg);
+  border-color: var(--ba-debug-border);
+  color: var(--ba-debug-text);
+}
+
+/* Fullscreen Mode */
+.ba-fullscreen {
+  background-color: var(--ba-fullscreen-bg);
+  color: var(--ba-fullscreen-text);
+}
+
+.ba-fullscreen-muted {
+  color: var(--ba-fullscreen-muted);
+}
+
+.ba-fullscreen-accent {
+  color: var(--ba-fullscreen-accent);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN & ACCESSIBILITY
+   ========================================================================== */
+
+/* Focus states for better accessibility */
+.ba-focus:focus-visible {
+  outline: 2px solid var(--ba-primary);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --ba-border: oklch(0.5 0 0);
+    --ba-primary: oklch(0.2 0 0);
+    --ba-muted-foreground: oklch(0.3 0 0);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ba-transition-colors {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   LEGACY SUPPORT & MIGRATION HELPERS
+   ========================================================================== */
+
+/* Helper classes for gradual migration from hardcoded colors */
+.ba-text-primary {
+  color: var(--ba-primary);
+}
+.ba-text-muted {
+  color: var(--ba-muted-foreground);
+}
+.ba-text-foreground {
+  color: var(--ba-foreground);
+}
+.ba-bg-muted {
+  background-color: var(--ba-muted);
+}
+.ba-bg-background {
+  background-color: var(--ba-background);
+}
+.ba-border-standard {
+  border-color: var(--ba-border);
+}
+
+/* Additional missing utility classes */
+.ba-kmap-corner-diagonal {
+  background-color: var(--ba-kmap-cell-bg);
+}
+
+.ba-kmap-corner-diagonal > div > div > div {
+  background-color: var(--ba-kmap-corner-diagonal);
+}

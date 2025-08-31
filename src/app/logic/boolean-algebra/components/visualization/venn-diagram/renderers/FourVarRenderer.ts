@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
 import { VennData4Vars } from '../VennDiagramEngine'
-import { VENN_SET_COLORS, LABEL_COLOR, FOUR_VAR_VENN_REGION_STYLES } from '../../utils'
+import { VENN_SET_COLORS, LABEL_COLOR, FOUR_VAR_VENN_REGION_STYLES } from '../../utils/colors'
 
 // Exported 4-Variable Renderer Function
 export function renderD3FourVarDiagram(

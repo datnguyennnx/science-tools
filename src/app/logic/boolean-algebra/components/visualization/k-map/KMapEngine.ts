@@ -1,21 +1,45 @@
 import { CellPosition, KMapConfig, KMapGroup } from './types'
 import {
-  extractVariablesFromTree,
-  evaluateExpression,
   createMintermSet,
   generateReducedExpressionSet,
   getOptimalVariableOrder,
 } from '../utils/ExpressionUtils'
 import { BooleanExpression } from '../../../engine'
 
-// Re-export these utility functions to maintain backward compatibility
-export { extractVariablesFromTree, evaluateExpression, createMintermSet }
+// Utility functions are now available from the main engine
+
+// Cache for K-Map configurations to avoid recalculation
+const KMAP_CONFIG_CACHE = new Map<string, KMapConfig>()
+const KMAP_CONFIG_CACHE_SIZE = 50
+const kmapConfigCacheKeys: string[] = []
+
+/**
+ * Add to K-Map config cache with LRU eviction
+ */
+function addToKMapConfigCache(key: string, config: KMapConfig): void {
+  if (KMAP_CONFIG_CACHE.size >= KMAP_CONFIG_CACHE_SIZE) {
+    const oldestKey = kmapConfigCacheKeys.shift()
+    if (oldestKey) {
+      KMAP_CONFIG_CACHE.delete(oldestKey)
+    }
+  }
+  KMAP_CONFIG_CACHE.set(key, config)
+  kmapConfigCacheKeys.push(key)
+}
 
 /**
  * Creates the K-Map configuration based on the number of variables
- * Supports configurations for 2-6 variables
+ * Supports configurations for 2-6 variables with caching
  */
 export function createKMapConfig(variables: string[]): KMapConfig {
+  // Create cache key based on variables
+  const cacheKey = variables.sort().join(',')
+
+  // Check cache first
+  const cached = KMAP_CONFIG_CACHE.get(cacheKey)
+  if (cached) {
+    return cached
+  }
   const numVars = variables.length
   let rowHeaders: string[] = []
   let colHeaders: string[] = []
@@ -234,7 +258,9 @@ export function createKMapConfig(variables: string[]): KMapConfig {
     return createKMapConfig(limitedVars)
   }
 
-  return { rowHeaders, colHeaders, rowVarLabel, colVarLabel, kMapOrder }
+  const config = { rowHeaders, colHeaders, rowVarLabel, colVarLabel, kMapOrder }
+  addToKMapConfigCache(cacheKey, config)
+  return config
 }
 
 /**

@@ -6,8 +6,7 @@
  * operations like variable extraction and expression evaluation.
  */
 
-import { BooleanExpression } from '../../../engine'
-import { evaluateExpression as engineEvaluate } from '../../../engine/evaluator'
+import { BooleanExpression, evaluateExpression as engineEvaluate } from '../../../engine'
 
 // Define a type for the reduced expression result
 type ReducedExpressionResult = Array<{

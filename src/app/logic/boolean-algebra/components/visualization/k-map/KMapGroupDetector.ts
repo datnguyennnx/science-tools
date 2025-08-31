@@ -11,8 +11,28 @@ const octetPatternCache: Record<string, Array<Array<[number, number]>>> = {}
 const quadPatternCache: Record<string, Array<Array<[number, number]>>> = {}
 const pairPatternCache: Record<string, Array<Array<[number, number]>>> = {}
 
+// Cache for group detection results
+const GROUP_DETECTION_CACHE = new Map<string, KMapGroup[]>()
+const GROUP_DETECTION_CACHE_SIZE = 200
+const groupDetectionCacheKeys: string[] = []
+
+/**
+ * Add to group detection cache with LRU eviction
+ */
+function addToGroupDetectionCache(key: string, groups: KMapGroup[]): void {
+  if (GROUP_DETECTION_CACHE.size >= GROUP_DETECTION_CACHE_SIZE) {
+    const oldestKey = groupDetectionCacheKeys.shift()
+    if (oldestKey) {
+      GROUP_DETECTION_CACHE.delete(oldestKey)
+    }
+  }
+  GROUP_DETECTION_CACHE.set(key, groups)
+  groupDetectionCacheKeys.push(key)
+}
+
 /**
  * Detects groups in a Karnaugh Map with improved performance for large k-maps
+ * Includes caching for expensive group detection operations
  */
 export function detectGroups(
   mintermSet: Set<number>,
@@ -20,6 +40,17 @@ export function detectGroups(
   numVars: number
 ): KMapGroup[] {
   if (mintermSet.size === 0 || !kMapOrder.length) return []
+
+  // Create cache key based on minterm set and map dimensions
+  const mintermKey = Array.from(mintermSet).sort().join(',')
+  const dimensionsKey = `${kMapOrder.length}x${kMapOrder[0]?.length || 0}`
+  const cacheKey = `${mintermKey}_${dimensionsKey}_${numVars}`
+
+  // Check cache first
+  const cached = GROUP_DETECTION_CACHE.get(cacheKey)
+  if (cached) {
+    return cached
+  }
 
   const result: KMapGroup[] = []
   const rows = kMapOrder.length
@@ -124,6 +155,7 @@ export function detectGroups(
     }
   }
 
+  addToGroupDetectionCache(cacheKey, result)
   return result
 }
 

@@ -27,7 +27,7 @@ export const KMapLegend = ({ className = '' }: KMapLegendProps) => {
               backgroundColor: `${color}25`, // 25% opacity
             }}
           ></div>
-          <p className="text-sm text-foreground">
+          <p className="text-sm ba-text-foreground">
             {name} ({size === 1 ? '1 cell' : `${size} cells`})
           </p>
         </div>

@@ -5,7 +5,7 @@
  * into different string representations.
  */
 
-import { BooleanExpression } from '../ast'
+import { BooleanExpression } from '../ast/types'
 import { InputFormat } from './types'
 
 /**

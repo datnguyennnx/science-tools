@@ -1,9 +1,7 @@
 import { Metadata } from 'next'
-import { HelpCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
-import { DialogGuide } from '@/components/guide-dialogs'
-import { BooleanAlgebraGuideContent } from './components/common/BooleanAlgebraGuideContent' // Import the new content component
+// Import centralized styles
+import './styles.css'
 // Import schema-dts types
 import type { WebPage, LearningResource, WithContext, Organization } from 'schema-dts'
 
@@ -106,22 +104,10 @@ export default function BooleanAlgebraLayout({ children }: BooleanAlgebraLayoutP
         <h1 className="text-lg sm:text-xl font-bold text-[--color-foreground]">
           Boolean Algebra Simplifier
         </h1>
-        <DialogGuide
-          trigger={
-            <Button variant="ghost" size="icon" aria-label="Open Boolean Algebra Guide">
-              <HelpCircle className="h-5 w-5" />
-              <p className="sr-only">Open Guide</p>
-            </Button>
-          }
-          title="Boolean Algebra Guide"
-          description="Learn about boolean algebra operators and laws"
-        >
-          <BooleanAlgebraGuideContent />
-        </DialogGuide>
       </header>
       <main className="w-full overflow-auto flex-1">{children}</main>
-      <footer className="py-1 sm:py-2 mt-auto bg-[--color-background]">
-        <p className="text-balance text-xs sm:text-sm text-center text-[--color-muted-foreground]">
+      <footer className="ba-bg-background py-1 sm:py-2 mt-auto">
+        <p className="ba-text-muted text-balance text-xs sm:text-sm text-center">
           This is a basic Boolean algebra simplifier. For complex expressions, consider using
           advanced simplification algorithms.
         </p>

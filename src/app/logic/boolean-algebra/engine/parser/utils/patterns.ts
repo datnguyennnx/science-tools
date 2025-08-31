@@ -19,7 +19,8 @@ export const PATTERNS = {
   INVALID_VARIABLE: /(?<!\\)[a-z_][a-zA-Z0-9_]*/g,
   UNDEFINED_TOKEN: /undefined/,
   NULL_TOKEN: /null/,
-  LATEX_OPERATORS: /\\(lor|land|lnot|vee|wedge|neg)(\s|$|\{|\(|\))/,
+  LATEX_OPERATORS:
+    /\\(lor|land|lnot|vee|wedge|neg|oplus|uparrow|downarrow|leftrightarrow|parr|parrow|iff|equiv|cong|approx|cdot|times|div|pm|mp|overline|bar|not|sim|to|rightarrow|leftarrow|Leftarrow|Rightarrow)(\s|$|\{|\(|\))/,
   UNKNOWN_OPERATOR: /\b(?:XOR|XNOR|NAND|NOR|IMPL|EQUIV)\b/i,
   OPERAND_ISSUES: /\*\s*[\)\+]|^[\+\*]|\(\s*[\+\*]|\+\s*[\)]|\!\s*[\)\+\*]/,
 }
@@ -58,8 +59,9 @@ export function fixProblematicPatterns(input: string): string {
   }
 
   // Check for invalid variable names explicitly
-  // Need to handle variables with numbers or underscores
-  if (/[a-z]/.test(input)) {
+  // Skip lowercase validation for LaTeX format as it will be converted to uppercase later
+  const format = detectFormat(input)
+  if (format !== 'latex' && /[a-z]/.test(input)) {
     throw new Error(
       'Invalid variable name: Lowercase letters are not allowed. Please use only uppercase letters A-Z for variable names.'
     )

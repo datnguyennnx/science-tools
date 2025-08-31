@@ -24,5 +24,5 @@ export type {
 } from './types'
 
 // Export all rule-related types with renamed RuleInfo to avoid conflict
-export type { SimplificationRule } from './rule-types'
-export type { RuleInfo as RuleDefinition } from './rule-types'
+export type { SimplificationRule } from './rules'
+export type { RuleInfo as RuleDefinition } from './rules'

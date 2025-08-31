@@ -1,42 +1,17 @@
-import { useState, useEffect, useCallback, Suspense } from 'react'
-import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Shuffle } from 'lucide-react'
-import { simplifyExpression, generateRandomExpression, BooleanExpression } from '../../engine'
-import { InputFormat, ParserOptions } from '../../engine/parser/types'
-import { detectFormat, parseBoolean } from '../../engine/parser/parser'
-import {
-  formatToBoolean as toBooleanString,
-  formatToLatex as toLatexString,
-} from '../../engine/parser/formatter'
-import type { OutputFormat } from '../../engine/generator/generator'
-import { useDebounce } from '@/hooks/useDebounce'
-import dynamic from 'next/dynamic'
+import { ExpressionPreview } from './ExpressionPreview'
+import { ExpressionControls } from './ExpressionControls'
+import { ExpressionResult } from './ExpressionResult'
+import { useExpressionInput } from '../hooks/useExpressionInput'
+import { useExpressionProcessing } from '../hooks/useExpressionProcessing'
+import { useExpressionPreview } from '../hooks/useExpressionPreview'
 import { booleanToLatex } from '@/components/KatexFormula'
-
-// Dynamically import KatexFormula component
-const KatexFormulaComponent = dynamic(
-  () => import('@/components/KatexFormula').then(mod => mod.KatexFormula),
-  {
-    loading: () => null,
-    ssr: false, // KaTeX manipulation is client-side heavy
-  }
-)
-
-/**
- * Detect input format (standard or LaTeX) based on content
- */
-function detectInputFormat(input: string): InputFormat {
-  // Use the parser's built-in detectFormat function
-  return detectFormat(input)
-}
 
 interface ExpressionInputProps {
   defaultExpression?: string
   onExpressionChange?: (expression: string) => void
   onSimplificationStart?: () => void
   onResultChange?: (success: boolean) => void
-  isProcessing?: boolean
   hideResult?: boolean
 }
 
@@ -45,257 +20,103 @@ export function ExpressionInput({
   onExpressionChange,
   onSimplificationStart,
   onResultChange,
-  isProcessing = false,
   hideResult = false,
 }: ExpressionInputProps) {
-  // State for the expression
-  const [expression, setExpression] = useState(defaultExpression)
-  const [alternativePreview, setAlternativePreview] = useState('')
-  const [localSimplifiedResult, setLocalSimplifiedResult] = useState('')
-  const [error, setError] = useState('')
-  const [complexity, setComplexity] = useState(3) // Default complexity level
+  // Custom hooks for state management
+  const { state: inputState, actions: inputActions } = useExpressionInput(defaultExpression)
+  const { state: processingState, actions: processingActions } = useExpressionProcessing()
+  const { state: previewState } = useExpressionPreview(inputState.expression)
 
-  // Debounce the expression for preview updates
-  const debouncedExpression = useDebounce(expression, 300) // 300ms delay
-
-  // Create wrapper functions for the parser, memoized with useCallback
-  const parse = useCallback((input: string, options: Partial<ParserOptions> = {}) => {
-    try {
-      // First auto-detect the format if not specified
-      const inputFormat = options.inputFormat || detectInputFormat(input)
-
-      // Parse the expression using the imported parseBoolean
-      const result = parseBoolean(input, { ...options, inputFormat }) // Pass relevant options
-
-      if (result.success && result.expression) {
-        return { success: true, expression: result.expression, format: inputFormat }
-      } else {
-        // Error is already in result.error, component can decide to toast if needed
-        return { success: false, expression: null, error: result.error || 'Failed to parse' }
-      }
-    } catch (error) {
-      // This catch might be redundant if parseBoolean itself returns a ParseResult with the error
-      const errorMessage = error instanceof Error ? error.message : 'Failed to parse expression'
-      // Component can decide to toast if needed
-      return { success: false, expression: null, error: errorMessage }
-    }
-  }, [])
-
-  const formatBoolean = useCallback((expr: BooleanExpression) => toBooleanString(expr), [])
-  const formatLatex = useCallback((expr: BooleanExpression) => toLatexString(expr), [])
-
-  useEffect(() => {
-    setExpression(defaultExpression)
-  }, [defaultExpression])
-
-  // Update previews whenever expression changes
-  const updatePreview = useCallback(
-    (expr: string) => {
-      if (!expr.trim()) return
-
-      // Auto-detect the input format
-      // const detectedFormat = detectInputFormat(expr) // detectedFormat is not strictly needed here anymore for preview logic
-
-      // Parse with silent error handling and auto-format detection
-      const result = parse(expr, {
-        silent: true,
-      })
-
-      if (result.success && result.expression) {
-        // Always show LaTeX in the preview
-        setAlternativePreview(formatLatex(result.expression))
-        setError('')
-      } else if (result.error) {
-        // Only show errors in the UI, don't toast during typing
-        setError(result.error)
-      }
-    },
-    [parse, formatLatex] // formatBoolean removed from dependencies
-  )
-
-  useEffect(() => {
-    if (!debouncedExpression.trim()) {
-      // Use debouncedExpression for preview logic
-      setAlternativePreview('')
-      // Still call onExpressionChange with the immediate expression for other consumers
-      onExpressionChange?.(expression)
-      return
-    }
-
-    // Still call onExpressionChange with the immediate expression
-    onExpressionChange?.(expression)
-    updatePreview(debouncedExpression) // Use debouncedExpression for updating the preview
-  }, [debouncedExpression, expression, onExpressionChange, updatePreview]) // Add expression to dependencies if onExpressionChange needs immediate value
-
+  // Handle expression changes
   const handleExpressionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newExpression = e.target.value
-    setExpression(newExpression)
+    inputActions.setExpression(newExpression)
+    inputActions.resetError()
+    processingActions.clearResult()
+    onExpressionChange?.(newExpression)
   }
 
-  const handleSimplify = () => {
+  // Handle simplification
+  const handleSimplify = async () => {
     onSimplificationStart?.()
-    setError('')
-    setLocalSimplifiedResult('')
-
-    if (!expression.trim()) {
-      setError('Expression cannot be empty.')
-      onResultChange?.(false)
-      return
-    }
-
-    // Let the parser auto-detect format
-    const parseResult = parse(expression, {
-      // No showToasts, silent defaults to false, so errors will be in parseResult.error
-    })
-
-    if (!parseResult.success || !parseResult.expression) {
-      // If parseResult itself indicates failure, set error and return
-      setError(parseResult.error || 'Failed to parse expression for simplification.')
-      onResultChange?.(false)
-      return
-    }
+    inputActions.setIsProcessing(true)
 
     try {
-      // Use the standardized expression format for simplification
-      const standardExpression = formatBoolean(parseResult.expression!)
-      const { finalExpression } = simplifyExpression(standardExpression)
-      setLocalSimplifiedResult(finalExpression)
+      await processingActions.simplify(inputState.expression)
       onResultChange?.(true)
-    } catch (err) {
-      console.error('Error simplifying expression:', err)
-      const errorMessage =
-        err instanceof Error ? err.message : 'Invalid expression or unable to simplify.'
-      setError(errorMessage)
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to simplify'
+      inputActions.setError(errorMessage)
       onResultChange?.(false)
+    } finally {
+      inputActions.setIsProcessing(false)
     }
   }
 
+  // Handle random expression generation
   const handleGenerateRandom = () => {
-    // Use the imported generator with custom options
-    const options = {
-      includeConstants: complexity > 3, // Include constants only in higher complexity levels
-      nestedProbability: 0.3 + complexity * 0.1, // Increase nesting with complexity
-      // Randomly choose between standard and LaTeX format
-      outputFormat: Math.random() < 0.5 ? 'standard' : ('latex' as OutputFormat),
-    }
-
-    // Generate expression with randomly selected format
-    const randomExpr = generateRandomExpression(complexity, options)
-    setExpression(randomExpr)
-    setError('')
+    const randomExpr = processingActions.generateRandom(inputState.complexity)
+    inputActions.setExpression(randomExpr)
+    inputActions.resetError()
+    processingActions.clearResult()
+    onExpressionChange?.(randomExpr)
   }
 
-  // Adjust complexity level
+  // Handle complexity changes
   const handleComplexityChange = (newComplexity: number) => {
-    setComplexity(Math.max(1, Math.min(5, newComplexity)))
+    inputActions.setComplexity(newComplexity)
   }
+
+  // Determine effective processing state
+  const effectiveIsProcessing = inputState.isProcessing || processingState.isSimplifying
+  const effectiveError = inputState.error || processingState.parseError
+  const effectiveResult = processingState.simplifiedResult
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-sm">Auto-detecting input format</div>
-        <div className="flex items-center gap-1">
-          <p className="text-xs text-muted-foreground">Complexity:</p>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2"
-              onClick={() => handleComplexityChange(complexity - 1)}
-              disabled={complexity <= 1}
-            >
-              -
-            </Button>
-            <p className="text-xs font-medium w-4 text-center">{complexity}</p>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2"
-              onClick={() => handleComplexityChange(complexity + 1)}
-              disabled={complexity >= 5}
-            >
-              +
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ExpressionControls
+        expression={inputState.expression}
+        complexity={inputState.complexity}
+        isProcessing={effectiveIsProcessing}
+        onSimplify={handleSimplify}
+        onGenerateRandom={handleGenerateRandom}
+        onComplexityChange={handleComplexityChange}
+      />
 
-      {/* Preview section - positioned above textarea */}
-      <div className="rounded-lg border bg-muted/50 p-3">
-        <div className="mb-2">
-          <h3 className="text-sm font-medium">Preview</h3>
-        </div>
-        <div className="overflow-x-auto max-w-full no-scrollbar">
-          <Suspense fallback={null}>
-            <KatexFormulaComponent
-              formula={alternativePreview || (expression ? booleanToLatex(expression) : '')}
-              block={true}
-              className="py-1"
-            />
-          </Suspense>
-        </div>
-      </div>
+      <ExpressionPreview
+        formula={
+          previewState.latexPreview ||
+          (inputState.expression ? booleanToLatex(inputState.expression) : '')
+        }
+      />
 
       <Textarea
         placeholder="Enter expression using standard (A+B, A*B, !A) or LaTeX (A \lor B, A \land B, \lnot A) notation"
-        value={expression}
+        value={inputState.expression}
         onChange={handleExpressionChange}
-        className="min-h-[100px] font-mono whitespace-pre-wrap overflow-x-auto"
-        disabled={isProcessing}
+        className="min-h-[100px] font-mono whitespace-pre-wrap overflow-x-auto no-scrollbar"
+        disabled={effectiveIsProcessing}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          onClick={handleSimplify}
-          disabled={isProcessing || !expression.trim()}
-          className="min-w-[120px]"
-          variant="default"
+      {effectiveError && !effectiveIsProcessing && (
+        <div
+          className="p-3 border rounded-lg"
+          style={{ borderColor: 'var(--error-border)', backgroundColor: 'var(--error-background)' }}
         >
-          {isProcessing ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Simplifying...
-            </>
-          ) : (
-            'Simplify'
-          )}
-        </Button>
-
-        <Button variant="outline" onClick={handleGenerateRandom} disabled={isProcessing}>
-          <Shuffle className="mr-2 h-4 w-4" />
-          Random Expression
-        </Button>
-      </div>
-
-      {error && !isProcessing && (
-        <div className="p-3 border border-red-200 rounded-lg bg-red-50 dark:bg-red-950/20 dark:border-red-900">
-          <h3 className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">Error</h3>
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <h3 className="text-sm font-medium mb-1" style={{ color: 'var(--error-text-strong)' }}>
+            Error
+          </h3>
+          <p className="text-sm" style={{ color: 'var(--error-text)' }}>
+            {effectiveError}
+          </p>
         </div>
       )}
 
-      {localSimplifiedResult && !hideResult && !isProcessing && (
-        <div className="w-full p-3 border rounded-lg bg-muted mt-4">
-          <h2 className="font-semibold mb-2">Simplified Result:</h2>
-          <div className="flex flex-col gap-2">
-            <div className="font-mono overflow-x-auto whitespace-pre-wrap break-words no-scrollbar">
-              {localSimplifiedResult}
-            </div>
-            <div className="pt-2 border-t">
-              <h3 className="text-sm font-medium mb-1">LaTeX Representation:</h3>
-              <div className="overflow-x-auto max-w-full">
-                <Suspense fallback={null}>
-                  <KatexFormulaComponent
-                    formula={booleanToLatex(localSimplifiedResult)}
-                    block={true}
-                    className="py-2 no-scrollbar"
-                  />
-                </Suspense>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ExpressionResult
+        result={effectiveResult}
+        hideResult={hideResult}
+        isProcessing={effectiveIsProcessing}
+      />
     </div>
   )
 }

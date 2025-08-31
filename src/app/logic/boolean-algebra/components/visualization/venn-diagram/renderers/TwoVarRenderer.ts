@@ -1,6 +1,6 @@
 import * as d3 from 'd3'
 import { VennData2Vars } from '../VennDiagramEngine'
-import { VENN_SET_COLORS, VENN_STROKE_COLORS, LABEL_COLOR } from '../../utils'
+import { VENN_SET_COLORS, VENN_STROKE_COLORS, LABEL_COLOR } from '../../utils/colors'
 
 // Exported 2-Variable Renderer Function
 export function renderD3TwoVarDiagram(

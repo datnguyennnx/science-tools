@@ -6,4 +6,4 @@
  */
 
 // Export the LaTeX converter
-export { latexToBoolean } from './latex-converter'
+export { latexToBoolean } from './latex-format-converter'

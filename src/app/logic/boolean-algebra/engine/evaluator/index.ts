@@ -4,5 +4,5 @@
  * This module exports functions for evaluating boolean expressions and performing derived operations.
  */
 
-export * from './evaluate'
-export * from './derived-ops'
+export * from './evaluator'
+export * from './derived'
