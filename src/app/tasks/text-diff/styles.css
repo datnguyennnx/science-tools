@@ -1,0 +1,208 @@
+/* Text Diff Color System - Harmonized with Global Design System */
+
+:root {
+  --diff-bg-primary: var(--muted);
+  --diff-bg-secondary: var(--background);
+  --diff-bg-tertiary: var(--muted);
+  --diff-bg-quaternary: var(--card);
+
+  --diff-border-light: var(--border);
+  --diff-border-dark: var(--border);
+  --diff-border-transparent: transparent;
+
+  --diff-text-primary: var(--foreground);
+  --diff-text-secondary: var(--muted-foreground);
+  --diff-text-tertiary: var(--muted-foreground);
+  --diff-text-quaternary: var(--muted-foreground);
+  --diff-text-light: var(--foreground);
+
+  --diff-added-border: var(--chart-3);
+  --diff-added-bg-light: oklch(0.95 0.04 145 / 30%);
+  --diff-added-bg-dark: oklch(0.25 0.08 145 / 40%);
+
+  --diff-removed-border: var(--destructive);
+  --diff-removed-bg-light: oklch(0.95 0.04 25 / 25%);
+  --diff-removed-bg-dark: oklch(0.25 0.08 25 / 35%);
+
+  --diff-modified-border: var(--chart-4);
+  --diff-modified-bg-light: oklch(0.95 0.04 85 / 28%);
+  --diff-modified-bg-dark: oklch(0.25 0.08 85 / 38%);
+
+  --diff-status-changes: var(--chart-1);
+  --diff-status-match: var(--chart-3);
+
+  --diff-current-bg-light: oklch(0.92 0.06 264 / 35%);
+  --diff-current-bg-dark: oklch(0.28 0.08 264 / 45%);
+  --diff-current-border-light: oklch(0.75 0.12 264);
+  --diff-current-border-dark: oklch(0.55 0.15 264);
+
+  --diff-hover-bg-light: var(--accent);
+  --diff-hover-bg-dark: var(--accent);
+
+  --diff-separator-light: var(--muted-foreground);
+  --diff-separator-dark: var(--muted-foreground);
+
+  --diff-empty-line-light: var(--muted);
+  --diff-empty-line-dark: var(--muted);
+
+  --diff-header-original: var(--destructive);
+  --diff-header-modified: var(--chart-3);
+  --diff-header-unified: var(--chart-4);
+}
+
+/* Dark Theme Overrides */
+.dark {
+  --diff-added-bg-light: var(--diff-added-bg-dark);
+  --diff-removed-bg-light: var(--diff-removed-bg-dark);
+  --diff-modified-bg-light: var(--diff-modified-bg-dark);
+  --diff-current-bg-light: var(--diff-current-bg-dark);
+  --diff-current-border-light: var(--diff-current-border-dark);
+}
+
+/* Utility Classes */
+.diff-bg-primary {
+  background-color: var(--diff-bg-primary);
+}
+
+.diff-bg-secondary {
+  background-color: var(--diff-bg-secondary);
+}
+
+.diff-text-primary {
+  color: var(--diff-text-primary);
+}
+
+.diff-text-secondary {
+  color: var(--diff-text-secondary);
+}
+
+.diff-text-tertiary {
+  color: var(--diff-text-tertiary);
+}
+
+.diff-text-quaternary {
+  color: var(--diff-text-quaternary);
+}
+
+.diff-border-light {
+  border-color: var(--diff-border-light);
+}
+
+.diff-border-transparent {
+  border-color: var(--diff-border-transparent);
+}
+
+.diff-added-border {
+  border-color: var(--diff-added-border);
+}
+
+.diff-added-bg {
+  background-color: var(--diff-added-bg-light);
+}
+
+.diff-removed-border {
+  border-color: var(--diff-removed-border);
+}
+
+.diff-removed-bg {
+  background-color: var(--diff-removed-bg-light);
+}
+
+.diff-modified-border {
+  border-color: var(--diff-modified-border);
+}
+
+.diff-modified-bg {
+  background-color: var(--diff-modified-bg-light);
+}
+
+.diff-status-changes {
+  color: var(--diff-status-changes);
+}
+
+.diff-status-match {
+  color: var(--diff-status-match);
+}
+
+.diff-current-highlight {
+  background-color: var(--diff-current-bg-light);
+  border-color: var(--diff-current-border-light);
+}
+
+.diff-hover-bg {
+  background-color: var(--diff-hover-bg-light);
+}
+
+.diff-separator {
+  background-color: var(--diff-separator-light);
+}
+
+.diff-empty-line {
+  background-color: var(--diff-empty-line-light);
+}
+
+.diff-header-original {
+  background-color: var(--diff-header-original);
+}
+
+.diff-header-modified {
+  background-color: var(--diff-header-modified);
+}
+
+.diff-header-unified {
+  background-color: var(--diff-header-unified);
+}
+
+/* Component-specific styles */
+.diff-line-added {
+  border-left: 3px solid var(--diff-added-border);
+  background-color: var(--diff-added-bg-light);
+  transition: background-color 0.2s ease;
+}
+
+.diff-line-removed {
+  border-left: 3px solid var(--diff-removed-border);
+  background-color: var(--diff-removed-bg-light);
+  transition: background-color 0.2s ease;
+}
+
+.diff-line-modified {
+  border-left: 3px solid var(--diff-modified-border);
+  background-color: var(--diff-modified-bg-light);
+  transition: background-color 0.2s ease;
+}
+
+.diff-line-unchanged {
+  border-left-color: var(--diff-border-transparent);
+}
+
+.diff-line-current {
+  background-color: var(--diff-current-bg-light);
+  border: 1px solid var(--diff-current-border-light);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.diff-line-hover:hover {
+  background-color: var(--diff-hover-bg-light);
+}
+
+.diff-empty-line-indicator {
+  background-color: var(--diff-empty-line-light);
+  border: 1px dashed var(--diff-border-light);
+}
+
+.diff-stats-added {
+  color: var(--diff-added-border);
+  font-weight: 500;
+}
+
+.diff-stats-removed {
+  color: var(--diff-removed-border);
+  font-weight: 500;
+}
+
+.diff-stats-total {
+  color: var(--diff-text-secondary);
+  font-weight: 400;
+}

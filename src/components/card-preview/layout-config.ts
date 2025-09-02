@@ -1,13 +1,23 @@
+import { ReactNode, ComponentType } from 'react'
 import { BooleanAlgebraCard } from './BooleanAlgebraCard'
 import { JSONFormatterCard } from './JSONFormatterCard'
 import { MarkdownPreviewerCard } from './MarkdownPreviewerCard'
+import { TextDiffCard } from './TextDiffCard'
 import { TypingTestCard } from './TypingTestCard'
 import { PomodoroTimerCard } from './PomodoroTimerCard'
 import { SortVisualizerCard } from './SortVisualizerCard'
 import { UrlPreviewCard } from './UrlPreviewCard'
 
 export interface CardLayout {
-  card: typeof BooleanAlgebraCard
+  card: {
+    name: string
+    description: string
+    href: string
+    cta: string
+    Icon: ComponentType<{ className?: string }>
+    background: ReactNode
+    subFeatures: string[]
+  }
   position: {
     row: number
     colStart: number
@@ -44,7 +54,6 @@ export const layoutConfig: CardLayout[] = [
       colSpan: 1,
     },
   },
-
   {
     card: PomodoroTimerCard,
     position: {
@@ -74,11 +83,19 @@ export const layoutConfig: CardLayout[] = [
 
   // Row 3: Sort visualizer (full width)
   {
-    card: SortVisualizerCard,
+    card: TextDiffCard,
     position: {
       row: 3,
       colStart: 1,
-      colSpan: 3,
+      colSpan: 1,
+    },
+  },
+  {
+    card: SortVisualizerCard,
+    position: {
+      row: 3,
+      colStart: 2,
+      colSpan: 2,
     },
   },
 ]

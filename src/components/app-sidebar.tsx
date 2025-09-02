@@ -1,6 +1,6 @@
 'use client'
 
-import { Binary, Timer, SortAsc, Keyboard, FileText, FileJson, Link } from 'lucide-react'
+import { Binary, Timer, SortAsc, Keyboard, FileText, FileJson, Link, FileDiff } from 'lucide-react'
 
 import {
   Sidebar,
@@ -55,6 +55,11 @@ const tasksItems = [
     title: 'URL Preview',
     url: '/tasks/url-preview',
     icon: Link,
+  },
+  {
+    title: 'Text Diff',
+    url: '/tasks/text-diff',
+    icon: FileDiff,
   },
 ]
 

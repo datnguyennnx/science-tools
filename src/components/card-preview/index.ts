@@ -2,6 +2,7 @@
 export { BooleanAlgebraCard } from './BooleanAlgebraCard'
 export { JSONFormatterCard } from './JSONFormatterCard'
 export { MarkdownPreviewerCard } from './MarkdownPreviewerCard'
+export { TextDiffCard } from './TextDiffCard'
 export { TypingTestCard } from './TypingTestCard'
 export { PomodoroTimerCard } from './PomodoroTimerCard'
 export { SortVisualizerCard } from './SortVisualizerCard'
