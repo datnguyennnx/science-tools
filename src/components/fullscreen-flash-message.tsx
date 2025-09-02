@@ -22,8 +22,8 @@ const DEFAULT_DURATION = 2000
 
 const backdropVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.5, ease: 'easeInOut' } },
-  exit: { opacity: 0, transition: { duration: 0.5, ease: 'easeInOut', delay: 0.3 } },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
 }
 
 const contentVariants = {
@@ -32,13 +32,11 @@ const contentVariants = {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { duration: 0.8, ease: [0.4, 0, 0.2, 1], delay: 0.2 },
   },
   exit: {
     opacity: 0,
     scale: 0.95,
     y: -15,
-    transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
   },
 }
 
@@ -47,7 +45,6 @@ const iconBreatheAnimation = {
   scale: [1, 1.03, 1],
   transition: {
     duration: 3,
-    ease: 'easeInOut',
     repeat: Infinity,
     repeatType: 'loop' as const,
   },

@@ -43,6 +43,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       priority: 0.6,
     },
+    {
+      url: `${BASE_URL}/tasks/url-preview`,
+      lastModified,
+      priority: 0.7,
+    },
   ]
 
   return [...staticRoutes]

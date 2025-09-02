@@ -4,6 +4,7 @@ import { MarkdownPreviewerCard } from './MarkdownPreviewerCard'
 import { TypingTestCard } from './TypingTestCard'
 import { PomodoroTimerCard } from './PomodoroTimerCard'
 import { SortVisualizerCard } from './SortVisualizerCard'
+import { UrlPreviewCard } from './UrlPreviewCard'
 
 export {
   BooleanAlgebraCard,
@@ -12,6 +13,7 @@ export {
   TypingTestCard,
   PomodoroTimerCard,
   SortVisualizerCard,
+  UrlPreviewCard,
 }
 
 export const cardComponents = [
@@ -21,4 +23,5 @@ export const cardComponents = [
   TypingTestCard,
   PomodoroTimerCard,
   SortVisualizerCard,
+  UrlPreviewCard,
 ]
