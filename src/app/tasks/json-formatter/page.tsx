@@ -9,26 +9,12 @@ import { Sparkles } from 'lucide-react'
 
 // Dynamic imports with SSR disabled for better performance and SEO
 const JsonInput = dynamic(() => import('./components/jsonInput'), {
-  loading: () => (
-    <div className="flex-1 w-full border rounded-lg flex items-center justify-center bg-muted/20">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-        <p className="text-muted-foreground">Loading JSON Editor...</p>
-      </div>
-    </div>
-  ),
+  loading: () => null,
   ssr: false,
 })
 
 const JsonPreview = dynamic(() => import('./components/jsonPreview'), {
-  loading: () => (
-    <div className="flex-1 w-full border rounded-lg flex items-center justify-center bg-muted/20">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-        <p className="text-muted-foreground">Loading JSON Preview...</p>
-      </div>
-    </div>
-  ),
+  loading: () => null,
   ssr: false,
 })
 
