@@ -1,6 +1,6 @@
 'use client'
 
-import * as React from 'react'
+import { useState, useEffect } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -10,10 +10,10 @@ import { cn } from '@/lib/utils'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
+  const [mounted, setMounted] = useState(false)
   const { state: sidebarState, isMobile } = useSidebar()
 
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true)
   }, [])
 
@@ -47,12 +47,12 @@ export function ThemeToggle() {
   return (
     <Button
       variant="ghost"
-      size={isCollapsed ? 'icon' : 'default'}
+      size={isCollapsed ? 'icon' : 'sm'}
       onClick={toggleTheme}
       className={cn(isCollapsed ? 'size-8' : 'w-full justify-start')}
       aria-label={`Current theme: ${getCurrentLabel()}. Click to toggle theme.`}
     >
-      <Icon className={cn('size-4', !isCollapsed && 'mr-2')} />
+      <Icon className={cn('w-5 h-5', !isCollapsed && 'mr-2')} />
       {!isCollapsed && getCurrentLabel()}
     </Button>
   )

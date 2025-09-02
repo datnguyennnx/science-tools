@@ -16,6 +16,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { APIKeyManager } from '@/components/api-key-manager'
 
 const logicItems = [
   {
@@ -109,6 +110,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <APIKeyManager />
         <ThemeToggle />
       </SidebarFooter>
     </Sidebar>
