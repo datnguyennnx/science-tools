@@ -31,7 +31,6 @@ export const MarkdownPreviewerCard = {
   cta: 'Try Previewer',
   Icon: FileText,
   background: (<MarkdownPreviewBackground />) as ReactNode,
-  className: 'md:col-span-1',
   subFeatures: [
     'Live Markdown Rendering',
     'KaTeX Math Support',

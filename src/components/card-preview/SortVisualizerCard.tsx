@@ -89,9 +89,9 @@ const SortVisualizerBackground = () => (
         hc: 'bg-[var(--color-sort-highlight)] opacity-50',
         t: 'group-hover:-translate-y-0.5',
       },
-    ].map((bar, index) => (
+    ].map(bar => (
       <div
-        key={`bar-${bar.h}-${index}`}
+        key={`bar-${bar.h}-${bar.c}`}
         className={cn(
           'w-3 sm:w-3.5 rounded-t-sm transition-all duration-500 ease-out',
           bar.c, // Base color and opacity
@@ -113,7 +113,6 @@ export const SortVisualizerCard = {
   cta: 'Visualize Sorts',
   Icon: BarChartHorizontalBig,
   background: (<SortVisualizerBackground />) as ReactNode,
-  className: 'md:col-span-3',
   subFeatures: [
     'Multiple Algorithms (Merge, Quick, etc.)',
     'Step Controls (Play, Pause, Next)',

@@ -19,7 +19,6 @@ export const TypingTestCard = {
   cta: 'Start Typing',
   Icon: KeyboardIcon,
   background: (<TypingTestBackground />) as ReactNode,
-  className: 'md:col-span-1',
   subFeatures: [
     'Words Per Minute (WPM) Tracking',
     'Accuracy Percentage',

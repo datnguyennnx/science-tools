@@ -20,7 +20,6 @@ export const PomodoroTimerCard = {
   cta: 'Start Timer',
   Icon: TimerIcon,
   background: (<PomodoroTimerBackground />) as ReactNode,
-  className: 'md:col-span-2',
   subFeatures: [
     'Customizable Work/Break Durations',
     'Session Counter',

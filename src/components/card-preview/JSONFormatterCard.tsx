@@ -61,7 +61,6 @@ export const JSONFormatterCard = {
   cta: 'Format JSON',
   Icon: Braces,
   background: (<JSONFormatterBackground />) as ReactNode,
-  className: 'md:col-span-1',
   subFeatures: [
     'Real-time JSON Formatting',
     'Syntax Validation & Error Detection',

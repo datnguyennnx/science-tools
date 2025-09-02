@@ -90,7 +90,6 @@ export const BooleanAlgebraCard = {
   href: '/logic/boolean-algebra',
   cta: 'Explore Tool',
   Icon: Calculator,
-  className: 'md:col-span-1',
   background: (<BooleanAlgebraBackground />) as ReactNode,
   subFeatures: [
     'Karnaugh Maps (K-Maps)',

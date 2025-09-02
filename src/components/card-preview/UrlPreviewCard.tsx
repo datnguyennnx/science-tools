@@ -25,7 +25,6 @@ export const UrlPreviewCard = {
   cta: 'Preview URL',
   Icon: Share2,
   background: (<UrlPreviewBackground />) as ReactNode,
-  className: 'md:col-span-3',
   subFeatures: [
     'Facebook, Twitter, LinkedIn Previews',
     'Google Search Result Snippet',
