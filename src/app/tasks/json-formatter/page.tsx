@@ -6,6 +6,7 @@ import { FileUploadButton } from './components/fileUploadButton'
 import { FileDownloadButton } from './components/fileDownloadButton'
 import { Button } from '@/components/ui/button'
 import { Sparkles } from 'lucide-react'
+import './styles.css'
 
 // Dynamic imports with SSR disabled for better performance and SEO
 const JsonInput = dynamic(() => import('./components/jsonInput'), {

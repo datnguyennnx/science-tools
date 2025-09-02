@@ -1,0 +1,27 @@
+/* JSON Formatter Line Number Alignment */
+.json-line-numbers {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.json-line-number {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 24px;
+  line-height: 24px;
+  font-size: 12px;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+  color: hsl(var(--muted-foreground) / 0.7);
+  user-select: none;
+  padding-right: 12px;
+}
+
+.json-textarea {
+  line-height: 24px;
+  font-size: 14px;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+}
