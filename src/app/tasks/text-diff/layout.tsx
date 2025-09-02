@@ -96,7 +96,7 @@ const webPageJsonLd: WithContext<WebPage> = {
   description: metadata.description as string,
   url: pageUrl,
   inLanguage: 'en-US',
-  datePublished: '2024-01-01',
+  datePublished: '2025-09-02',
   dateModified: new Date().toISOString().split('T')[0],
   mainEntity: {
     '@type': 'SoftwareApplication',
@@ -157,7 +157,7 @@ const softwareAppJsonLd: WithContext<SoftwareApplication> = {
     price: '0',
     priceCurrency: 'USD',
     availability: 'https://schema.org/InStock',
-    validFrom: '2024-01-01',
+    validFrom: '2025-09-02',
   },
   aggregateRating: {
     '@type': 'AggregateRating',
