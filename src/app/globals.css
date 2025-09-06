@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Doto&family=Pixelify+Sans&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Doto&family=Pixelify+Sans&family=Space+Mono:wght@400;700&family=SF+Pro+Display:wght@400;500;600;700&family=Source+Sans+Pro:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -8,11 +8,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sf-pro);
   --font-mono: var(--font-geist-mono);
   --font-pixelify: var(--font-pixelify-sans);
   --font-doto: var(--font-doto);
   --font-space-mono: var(--font-space-mono);
+  --font-sf-pro: var(--font-sf-pro-display);
+  --font-source-sans: var(--font-source-sans-pro);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -137,6 +139,8 @@
   --font-pixelify-sans: 'Pixelify Sans', sans-serif;
   --font-doto: 'Doto', sans-serif;
   --font-space-mono: 'Space Mono', monospace;
+  --font-sf-pro-display: 'SF Pro Display', sans-serif;
+  --font-source-sans-pro: 'Source Sans Pro', sans-serif;
   --font-geist-sans: system-ui, sans-serif;
   --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
