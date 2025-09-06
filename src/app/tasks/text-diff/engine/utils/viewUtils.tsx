@@ -76,7 +76,7 @@ export function useSynchronizedScroll() {
 
 export function renderEmptyState(): React.ReactElement {
   return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">
+    <div className="flex items-center justify-center h-full text-muted-foreground p-4">
       <div className="text-center">
         <p className="text-sm">{STATUS_MESSAGES.noDifferences}</p>
         <p className="text-xs mt-1">{STATUS_MESSAGES.enterTextToCompare}</p>

@@ -38,6 +38,11 @@ const tasksItems = [
     icon: Keyboard,
   },
   {
+    title: 'URL Preview',
+    url: '/tasks/url-preview',
+    icon: Link,
+  },
+  {
     title: 'Markdown Preview',
     url: '/tasks/markdown',
     icon: FileText,
@@ -46,11 +51,6 @@ const tasksItems = [
     title: 'JSON Formatter',
     url: '/tasks/json-formatter',
     icon: FileJson,
-  },
-  {
-    title: 'URL Preview',
-    url: '/tasks/url-preview',
-    icon: Link,
   },
   {
     title: 'Text Diff',

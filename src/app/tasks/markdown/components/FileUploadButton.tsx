@@ -1,6 +1,7 @@
 import React, { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { UploadIcon } from 'lucide-react'
+import { toast } from 'sonner'
 import type { FileUploadProps } from '../engine/types'
 
 export const FileUploadButton = React.forwardRef<HTMLInputElement, FileUploadProps>(
@@ -14,6 +15,7 @@ export const FileUploadButton = React.forwardRef<HTMLInputElement, FileUploadPro
           const text = await file.text()
           onFileUpload(text)
         } catch (error) {
+          toast.error('Failed to read file')
           console.error('Failed to read file:', error)
         }
       }

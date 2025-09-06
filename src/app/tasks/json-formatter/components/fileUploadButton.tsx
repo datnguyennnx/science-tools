@@ -46,7 +46,7 @@ export function FileUploadButton({ onFileUpload }: FileUploadButtonProps) {
         toast('Invalid JSON file')
       }
     } catch (error) {
-      toast('Error reading file')
+      toast.error('Error reading file')
       console.error('Error reading file:', error)
     } finally {
       setIsUploading(false)

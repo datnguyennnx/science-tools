@@ -12,8 +12,8 @@ export const DEFAULT_TEXT_2 = `function calculateSum(a, b, c) {
 const result = calculateSum(5, 3, 2);
 console.log("Sum:", result);`
 
-export const PLACEHOLDER_TEXT_1 = 'Paste or type the original text here...'
-export const PLACEHOLDER_TEXT_2 = 'Paste or type the modified text here...'
+export const PLACEHOLDER_TEXT_1 = 'Paste, type, or drag & drop the original text here...'
+export const PLACEHOLDER_TEXT_2 = 'Paste, type, or drag & drop the modified text here...'
 
 export const BUTTON_LABELS = {
   loadSample: 'Load Sample',

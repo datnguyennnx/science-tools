@@ -184,3 +184,20 @@
   font-family:
     ui-monospace, SFMono-Regular, 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
 }
+
+/* Drag and Drop Styles for Markdown Editor */
+.drag-drop-overlay {
+  backdrop-filter: blur(4px);
+  border: 2px dashed hsl(var(--accent));
+  background: hsl(var(--accent) / 0.05);
+}
+
+.drag-drop-text {
+  color: hsl(var(--accent));
+  font-weight: 500;
+}
+
+.drag-drop-subtext {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+}

@@ -43,6 +43,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       priority: 0.7,
     },
+    {
+      url: `${BASE_URL}/tasks/text-diff`,
+      lastModified,
+      priority: 0.7,
+    },
   ]
 
   return [...staticRoutes]
