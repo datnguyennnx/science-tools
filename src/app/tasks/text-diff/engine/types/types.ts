@@ -55,16 +55,11 @@ export interface ModeControlsProps {
 
 export interface UnifiedViewProps {
   diffResults: DiffResult[]
-  showOnlyChanges: boolean
-  currentChangeIndex?: number
-  changedLines?: Array<{ result: DiffResult; index: number }>
 }
 
 export interface SplitViewProps {
   diffResults: DiffResult[]
   showOnlyChanges: boolean
-  currentChangeIndex?: number
-  changedLines?: Array<{ result: DiffResult; index: number }>
 }
 
 // Algorithm types

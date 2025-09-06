@@ -1,10 +1,9 @@
 import React from 'react'
 import { CharHighlightRendererProps } from '../../engine/types'
 
-export function CharHighlightRenderer({ charChanges, fallbackText }: CharHighlightRendererProps) {
-  // Character diffs used by algorithms but not shown in UI for cleaner display
-  void charChanges
-
+export function CharHighlightRenderer({ fallbackText }: CharHighlightRendererProps) {
+  // Simplified: just return the fallback text without complex highlighting
+  // This keeps the UI simple and clean like GitHub
   return <span>{fallbackText}</span>
 }
 

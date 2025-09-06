@@ -1,5 +1,3 @@
-import { CharChange } from '../../types'
-
 export const SIMILARITY_THRESHOLD = 0.8
 
 export function calculateLineSimilarity(line1: string, line2: string): number {
@@ -69,87 +67,7 @@ export function areLinesSimilar(line1: string, line2: string): boolean {
   return calculateLineSimilarity(line1, line2) >= SIMILARITY_THRESHOLD
 }
 
-export function splitIntoWords(line: string): string[] {
-  const parts = line.split(/(\s+)/)
-  return parts.filter(part => part.length > 0)
-}
-
-export function findCommonWordSequence(
-  words1: string[],
-  words2: string[]
-): Array<{ index1: number; index2: number; word: string }> {
-  const common: Array<{ index1: number; index2: number; word: string }> = []
-
-  let i = 0,
-    j = 0
-  while (i < words1.length && j < words2.length) {
-    if (words1[i] === words2[j]) {
-      common.push({ index1: i, index2: j, word: words1[i] })
-      i++
-      j++
-    } else {
-      let found = false
-      for (let k = 1; k <= 3 && !found; k++) {
-        if (i + k < words1.length && words1[i + k] === words2[j]) {
-          for (let m = 0; m < k; m++) {
-            common.push({ index1: i + m, index2: -1, word: words1[i + m] })
-          }
-          i += k
-          found = true
-        } else if (j + k < words2.length && words1[i] === words2[j + k]) {
-          for (let m = 0; m < k; m++) {
-            common.push({ index2: j + m, index1: -1, word: words2[j + m] })
-          }
-          j += k
-          found = true
-        }
-      }
-      if (!found) {
-        common.push({ index1: i, index2: -1, word: words1[i] })
-        if (j < words2.length) {
-          common.push({ index2: j, index1: -1, word: words2[j] })
-        }
-        i++
-        j++
-      }
-    }
-  }
-
-  while (i < words1.length) {
-    common.push({ index1: i, index2: -1, word: words1[i] })
-    i++
-  }
-  while (j < words2.length) {
-    common.push({ index2: j, index1: -1, word: words2[j] })
-    j++
-  }
-
-  return common
-}
-
-export function performWordLevelDiff(oldLine: string, newLine: string): CharChange[] {
-  const words1 = splitIntoWords(oldLine)
-  const words2 = splitIntoWords(newLine)
-
-  if (words1.length === 0 && words2.length === 0) {
-    return [{ type: 'unchanged', text: '' }]
-  }
-
-  const commonWords = findCommonWordSequence(words1, words2)
-  const result: CharChange[] = []
-
-  for (const item of commonWords) {
-    if (item.index1 !== -1 && item.index2 !== -1) {
-      result.push({ type: 'unchanged', text: item.word })
-    } else if (item.index1 !== -1) {
-      result.push({ type: 'removed', text: item.word })
-    } else if (item.index2 !== -1) {
-      result.push({ type: 'added', text: item.word })
-    }
-  }
-
-  return result
-}
+// Simplified similarity functions - keeping only essential ones
 
 export function determineChangeType(
   oldLine: string,

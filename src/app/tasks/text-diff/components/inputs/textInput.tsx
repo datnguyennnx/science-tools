@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 import { generateLineNumbers } from '../../engine/utils'
@@ -21,7 +21,7 @@ export function TextInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [lineCount, setLineCount] = useState(1)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const lines = value.split('\n')
     setLineCount(Math.max(lines.length, 1))
   }, [value])

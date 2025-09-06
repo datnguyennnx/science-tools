@@ -82,50 +82,105 @@ export function processForSplitView(results: DiffResult[]): SplitViewResult {
 }
 
 export function processForUnifiedView(results: DiffResult[]): UnifiedViewResult {
+  // GitHub-style unified view with context lines
   const processedResults: DiffResult[] = []
   const lineNumberMapping: {
     [lineNumber: number]: { type: 'original' | 'modified'; actualLineNumber: number }
   } = {}
 
-  let originalLineNumber = 1
-  let modifiedLineNumber = 1
-  let displayLineNumber = 1
+  const CONTEXT_LINES = 3 // Number of context lines to show before/after changes
 
-  results.forEach(result => {
-    let processedResult: DiffResult
-    let mappingType: 'original' | 'modified'
-    let actualLineNumber: number
+  // Find groups of consecutive changes
+  const changeGroups: Array<{ start: number; end: number }> = []
+  let currentGroup: { start: number; end: number } | null = null
 
-    if (result.type === 'added') {
-      processedResult = {
-        ...result,
-        lineNumber: modifiedLineNumber,
+  results.forEach((result, index) => {
+    if (result.type !== 'unchanged') {
+      if (!currentGroup) {
+        currentGroup = { start: index, end: index }
+      } else {
+        currentGroup.end = index
       }
-      mappingType = 'modified'
-      actualLineNumber = modifiedLineNumber
-      modifiedLineNumber++
-    } else if (result.type === 'removed') {
-      processedResult = {
-        ...result,
-        lineNumber: originalLineNumber,
-      }
-      mappingType = 'original'
-      actualLineNumber = originalLineNumber
-      originalLineNumber++
     } else {
-      processedResult = {
-        ...result,
-        lineNumber: originalLineNumber,
+      if (currentGroup) {
+        changeGroups.push(currentGroup)
+        currentGroup = null
       }
-      mappingType = 'original'
-      actualLineNumber = originalLineNumber
-      originalLineNumber++
-      modifiedLineNumber++
+    }
+  })
+
+  if (currentGroup) {
+    changeGroups.push(currentGroup)
+  }
+
+  let displayLineNumber = 1
+  let lastProcessedIndex = -1
+
+  changeGroups.forEach((group, groupIndex) => {
+    // Add separator between groups (except for the first group)
+    if (groupIndex > 0) {
+      processedResults.push({
+        type: 'unchanged',
+        value: '---',
+        lineNumber: displayLineNumber,
+      })
+      lineNumberMapping[displayLineNumber] = {
+        type: 'original',
+        actualLineNumber: displayLineNumber,
+      }
+      displayLineNumber++
     }
 
-    processedResults.push(processedResult)
-    lineNumberMapping[displayLineNumber] = { type: mappingType, actualLineNumber }
-    displayLineNumber++
+    // Add context lines before the change group (avoid overlap with previous group)
+    const contextStart = Math.max(lastProcessedIndex + 1, group.start - CONTEXT_LINES)
+    for (let i = contextStart; i < group.start; i++) {
+      const originalResult = results[i]
+      if (originalResult.type === 'unchanged') {
+        processedResults.push({
+          ...originalResult,
+          lineNumber: displayLineNumber,
+        })
+        lineNumberMapping[displayLineNumber] = {
+          type: 'original',
+          actualLineNumber: originalResult.lineNumber || displayLineNumber,
+        }
+        displayLineNumber++
+        lastProcessedIndex = i
+      }
+    }
+
+    // Add the change lines
+    for (let i = group.start; i <= group.end; i++) {
+      const originalResult = results[i]
+      processedResults.push({
+        ...originalResult,
+        lineNumber: displayLineNumber,
+      })
+      lineNumberMapping[displayLineNumber] = {
+        type: originalResult.type === 'added' ? 'modified' : 'original',
+        actualLineNumber: originalResult.lineNumber || displayLineNumber,
+      }
+      displayLineNumber++
+      lastProcessedIndex = i
+    }
+
+    // Add context lines after the change group
+    const contextEnd = Math.min(results.length, group.end + 1 + CONTEXT_LINES)
+    for (let i = group.end + 1; i < contextEnd; i++) {
+      const originalResult = results[i]
+      if (originalResult.type === 'unchanged') {
+        processedResults.push({
+          ...originalResult,
+          lineNumber: displayLineNumber,
+        })
+        lineNumberMapping[displayLineNumber] = {
+          type: 'original',
+          actualLineNumber: originalResult.lineNumber || displayLineNumber,
+        }
+        displayLineNumber++
+        lastProcessedIndex = i
+      }
+    }
   })
 
   return {

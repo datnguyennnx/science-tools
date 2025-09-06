@@ -35,40 +35,18 @@ export function computeCharDiff(oldLine: string, newLine: string): CharChange[] 
     }
   }
 
-  while (oldIndex < oldChars.length || newIndex < newChars.length) {
-    if (oldIndex < oldChars.length) {
-      let removed = ''
-      while (oldIndex < oldChars.length) {
-        removed += oldChars[oldIndex]
-        oldIndex++
-        if (
-          oldIndex < oldChars.length &&
-          /[a-zA-Z0-9_]/.test(oldChars[oldIndex]) !==
-            /[a-zA-Z0-9_]/.test(removed[removed.length - 1])
-        ) {
-          break
-        }
-      }
-      if (removed) {
-        result.push({ type: 'removed', text: removed })
-      }
+  // Handle remaining characters
+  if (oldIndex < oldChars.length) {
+    const remaining = oldChars.slice(oldIndex).join('')
+    if (remaining) {
+      result.push({ type: 'removed', text: remaining })
     }
+  }
 
-    if (newIndex < newChars.length) {
-      let added = ''
-      while (newIndex < newChars.length) {
-        added += newChars[newIndex]
-        newIndex++
-        if (
-          newIndex < newChars.length &&
-          /[a-zA-Z0-9_]/.test(newChars[newIndex]) !== /[a-zA-Z0-9_]/.test(added[added.length - 1])
-        ) {
-          break
-        }
-      }
-      if (added) {
-        result.push({ type: 'added', text: added })
-      }
+  if (newIndex < newChars.length) {
+    const remaining = newChars.slice(newIndex).join('')
+    if (remaining) {
+      result.push({ type: 'added', text: remaining })
     }
   }
 

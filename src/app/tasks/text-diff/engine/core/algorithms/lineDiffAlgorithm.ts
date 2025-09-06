@@ -1,17 +1,11 @@
 import { DiffResult } from '../../types'
-import { computeCharDiff } from './charDiffAlgorithm'
-import {
-  calculateLineSimilarity,
-  performWordLevelDiff,
-  SIMILARITY_THRESHOLD,
-} from './lineSimilarity'
 
 export function computeLineDiff(oldText: string, newText: string): DiffResult[] {
   const oldLines = oldText.split('\n')
   const newLines = newText.split('\n')
 
-  const basicDiff = computeMyersDiff(oldLines, newLines)
-  return enhanceWithSimilarity(basicDiff)
+  const operations = computeMyersDiff(oldLines, newLines)
+  return convertToDiffResults(operations)
 }
 
 interface DiffOperation {
@@ -118,143 +112,31 @@ function backtrack(
   return operations
 }
 
-function enhanceWithSimilarity(operations: DiffOperation[]): DiffResult[] {
+function convertToDiffResults(operations: DiffOperation[]): DiffResult[] {
   const results: DiffResult[] = []
   let currentLineNumber = 1
 
-  const grouped = groupOperations(operations)
-
-  for (const group of grouped) {
-    if (group.type === 'keep' && group.operations) {
+  for (const op of operations) {
+    if (op.type === 'keep') {
       results.push({
         type: 'unchanged',
-        value: group.operations[0].line,
+        value: op.line,
         lineNumber: currentLineNumber++,
       })
-    } else if (group.type === 'modification' && group.removed && group.added) {
-      const pairs = findSimilarPairs(group.removed, group.added)
-
-      for (const pair of pairs.similar) {
-        const oldLine = pair.removed.line
-        const newLine = pair.added.line
-        const charChanges = performWordLevelDiff(oldLine, newLine)
-
-        results.push({
-          type: 'modified',
-          value: newLine,
-          originalValue: oldLine,
-          lineNumber: currentLineNumber++,
-          charChanges,
-        })
-      }
-
-      for (const op of pairs.remaining.removed) {
-        const charChanges = computeCharDiff(op.line, '')
-        results.push({
-          type: 'removed',
-          value: op.line,
-          lineNumber: currentLineNumber++,
-          charChanges,
-        })
-      }
-
-      for (const op of pairs.remaining.added) {
-        const charChanges = computeCharDiff('', op.line)
-        results.push({
-          type: 'added',
-          value: op.line,
-          lineNumber: currentLineNumber++,
-          charChanges,
-        })
-      }
+    } else if (op.type === 'remove') {
+      results.push({
+        type: 'removed',
+        value: op.line,
+        lineNumber: currentLineNumber++,
+      })
+    } else if (op.type === 'add') {
+      results.push({
+        type: 'added',
+        value: op.line,
+        lineNumber: currentLineNumber++,
+      })
     }
   }
 
   return results
-}
-
-interface GroupedOperations {
-  type: 'keep' | 'modification'
-  operations?: DiffOperation[]
-  removed?: DiffOperation[]
-  added?: DiffOperation[]
-}
-
-function groupOperations(operations: DiffOperation[]): GroupedOperations[] {
-  const groups: GroupedOperations[] = []
-  let currentGroup: GroupedOperations | null = null
-
-  for (const op of operations) {
-    if (op.type === 'keep') {
-      if (currentGroup) {
-        groups.push(currentGroup)
-        currentGroup = null
-      }
-      groups.push({ type: 'keep', operations: [op] })
-    } else {
-      if (!currentGroup) {
-        currentGroup = { type: 'modification', removed: [], added: [] }
-      }
-
-      if (op.type === 'remove') {
-        currentGroup.removed!.push(op)
-      } else {
-        currentGroup.added!.push(op)
-      }
-    }
-  }
-
-  if (currentGroup) {
-    groups.push(currentGroup)
-  }
-
-  return groups
-}
-
-function findSimilarPairs(
-  removed: DiffOperation[],
-  added: DiffOperation[]
-): {
-  similar: Array<{ removed: DiffOperation; added: DiffOperation }>
-  remaining: { removed: DiffOperation[]; added: DiffOperation[] }
-} {
-  const similar: Array<{ removed: DiffOperation; added: DiffOperation }> = []
-  const usedRemoved = new Set<number>()
-  const usedAdded = new Set<number>()
-
-  const similarities: Array<{
-    removedIdx: number
-    addedIdx: number
-    similarity: number
-  }> = []
-
-  for (let i = 0; i < removed.length; i++) {
-    for (let j = 0; j < added.length; j++) {
-      const similarity = calculateLineSimilarity(removed[i].line, added[j].line)
-      if (similarity >= SIMILARITY_THRESHOLD) {
-        similarities.push({ removedIdx: i, addedIdx: j, similarity })
-      }
-    }
-  }
-
-  similarities
-    .sort((a, b) => b.similarity - a.similarity)
-    .forEach(match => {
-      if (!usedRemoved.has(match.removedIdx) && !usedAdded.has(match.addedIdx)) {
-        similar.push({
-          removed: removed[match.removedIdx],
-          added: added[match.addedIdx],
-        })
-        usedRemoved.add(match.removedIdx)
-        usedAdded.add(match.addedIdx)
-      }
-    })
-
-  const remainingRemoved = removed.filter((_, i) => !usedRemoved.has(i))
-  const remainingAdded = added.filter((_, i) => !usedAdded.has(i))
-
-  return {
-    similar,
-    remaining: { removed: remainingRemoved, added: remainingAdded },
-  }
 }
