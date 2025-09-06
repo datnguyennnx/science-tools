@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useJsonFormatter, FormatOptions } from '../engine/hooks/useJsonFormatter'
 import { useSyntaxHighlight, JsonToken } from '../engine/hooks/useSyntaxHighlight'
@@ -28,9 +28,9 @@ function VirtualizedJsonRenderer({
 }) {
   const [scrollTop, setScrollTop] = useState(0)
 
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     setScrollTop(e.currentTarget.scrollTop)
-  }, [])
+  }
 
   // Calculate visible range
   const startIndex = Math.floor(scrollTop / lineHeight)
@@ -78,24 +78,22 @@ export function JsonPreview({ jsonInput, formatOptions, className }: JsonPreview
   const sizeInfo = getJsonSize(jsonInput)
 
   // Tokenize formatted JSON for syntax highlighting
-  const tokens = useMemo(() => {
-    return formatResult.isValid ? tokenizeJson(formatResult.formatted) : []
-  }, [formatResult.isValid, formatResult.formatted, tokenizeJson])
+  const tokens = formatResult.isValid ? tokenizeJson(formatResult.formatted) : []
 
   // Handle copy to clipboard
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(formatResult.formatted)
       setCopied(true)
-      toast.success('JSON copied to clipboard')
+      toast('JSON copied to clipboard')
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('Failed to copy to clipboard')
+      toast('Failed to copy to clipboard')
     }
   }
 
   // Render syntax highlighted JSON with virtualization for large files
-  const renderHighlightedJson = useCallback(() => {
+  const renderHighlightedJson = () => {
     if (!formatResult.isValid || tokens.length === 0) {
       return null
     }
@@ -170,10 +168,10 @@ export function JsonPreview({ jsonInput, formatOptions, className }: JsonPreview
         ))}
       </div>
     )
-  }, [formatResult, tokens, jsonAnalysis, showLineNumbers, getTokenStyles])
+  }
 
   // Render grouped errors by line with actionable information
-  const renderErrorDisplay = useCallback(() => {
+  const renderErrorDisplay = () => {
     if (!formatResult.isValid) {
       const grouped = groupErrorsByLine(jsonInput)
       const lineNumbers = Object.keys(grouped)
@@ -197,7 +195,7 @@ export function JsonPreview({ jsonInput, formatOptions, className }: JsonPreview
       )
     }
     return null
-  }, [formatResult, jsonInput, groupErrorsByLine])
+  }
 
   return (
     <div

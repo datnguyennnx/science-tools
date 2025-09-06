@@ -1,12 +1,6 @@
-import { EncryptedData, APIKeyManagerConfig } from '../types/api-key'
+import { EncryptedData } from '../types/api-key'
 import { createSecureStorage } from './indexed-db-storage'
-
-const DEFAULT_CONFIG: Required<APIKeyManagerConfig> = {
-  storageKey: 'encrypted_api_keys',
-  deviceIdKey: 'device_id',
-  saltString: 'api_key_salt_2024',
-  iterations: 50000,
-}
+import { ENCRYPTION_CONFIG, type EncryptionConfig } from '../lib/config'
 
 export const generateDeviceId = (): string => {
   const array = new Uint8Array(16)
@@ -18,7 +12,7 @@ export const generateDeviceId = (): string => {
 const secureStorage = createSecureStorage()
 
 // Keep device ID in localStorage for quick access (it's not sensitive)
-export const getOrCreateDeviceId = (config = DEFAULT_CONFIG): string => {
+export const getOrCreateDeviceId = (config: EncryptionConfig = ENCRYPTION_CONFIG): string => {
   const stored = localStorage.getItem(config.deviceIdKey)
   if (stored) return stored
 
@@ -46,7 +40,7 @@ export const clearAllEncryptedData = async (): Promise<void> => {
 
 export const deriveKeyFromString = async (
   keyString: string,
-  config = DEFAULT_CONFIG
+  config: EncryptionConfig = ENCRYPTION_CONFIG
 ): Promise<CryptoKey> => {
   const encoder = new TextEncoder()
 
@@ -74,7 +68,9 @@ export const deriveKeyFromString = async (
   )
 }
 
-export const createEncryptionKey = async (config = DEFAULT_CONFIG): Promise<CryptoKey> => {
+export const createEncryptionKey = async (
+  config: EncryptionConfig = ENCRYPTION_CONFIG
+): Promise<CryptoKey> => {
   const deviceId = getOrCreateDeviceId(config)
   return deriveKeyFromString(deviceId, config)
 }

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Key, Eye, EyeOff } from 'lucide-react'
-import { OpenAI, Anthropic, Google, XAI } from '@lobehub/icons'
+import { Key, Eye, EyeOff, Trash2 } from 'lucide-react'
+import { OpenAI, Anthropic, Google, XAI, OpenRouter } from '@lobehub/icons'
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,15 @@ import { useSidebar } from '@/components/ui/sidebar'
 import { cn } from '@/lib/utils'
 import { useAPIKeyManager } from '../hooks/useApiKeyManager'
 import { APIService, APIProvider } from '../types/api-key'
+import { useAIStore } from '../stores/ai.store'
 
 const API_PROVIDERS: APIProvider[] = [
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    placeholder: 'sk-or-v1-...',
+    icon: OpenRouter,
+  },
   {
     id: 'openai',
     name: 'OpenAI',
@@ -50,11 +57,12 @@ const API_PROVIDERS: APIProvider[] = [
 interface ProviderInputProps {
   provider: APIProvider
   onSubmit: (service: APIService, apiKey: string) => Promise<void>
+  onDelete: (service: APIService) => Promise<void>
   loading: boolean
   isStored: boolean
 }
 
-const ProviderInput = ({ provider, onSubmit, loading, isStored }: ProviderInputProps) => {
+const ProviderInput = ({ provider, onSubmit, onDelete, loading, isStored }: ProviderInputProps) => {
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
 
@@ -111,6 +119,17 @@ const ProviderInput = ({ provider, onSubmit, loading, isStored }: ProviderInputP
         >
           {loading ? '...' : isStored ? 'Update' : 'Save'}
         </Button>
+        {isStored && (
+          <Button
+            type="button"
+            onClick={() => onDelete(provider.id)}
+            disabled={loading}
+            variant="destructive"
+            size="sm"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -118,10 +137,12 @@ const ProviderInput = ({ provider, onSubmit, loading, isStored }: ProviderInputP
 
 const APIKeyForm = ({
   onSubmit,
+  onDelete,
   loading,
   refreshTrigger,
 }: {
   onSubmit: (service: APIService, apiKey: string) => Promise<void>
+  onDelete: (service: APIService) => Promise<void>
   loading: boolean
   refreshTrigger: number
 }) => {
@@ -145,6 +166,7 @@ const APIKeyForm = ({
           key={provider.id}
           provider={provider}
           onSubmit={onSubmit}
+          onDelete={onDelete}
           loading={loading}
           isStored={storedServices.includes(provider.id)}
         />
@@ -176,8 +198,25 @@ export const APIKeyManager = ({ trigger }: APIKeyManagerProps) => {
     if (result.success) {
       showMessage('success', `API key for ${service} stored successfully`)
       setRefreshTrigger(prev => prev + 1)
+
+      // Refresh AI models to include newly configured provider
+      useAIStore.getState().refreshModels()
     } else {
       showMessage('error', result.error || 'Failed to store API key')
+    }
+  }
+
+  const handleDeleteKey = async (service: APIService) => {
+    const result = await apiKeyManagerRef.current.deleteAPIKey(service)
+
+    if (result.success) {
+      showMessage('success', `API key for ${service} deleted successfully`)
+      setRefreshTrigger(prev => prev + 1)
+
+      // Refresh AI models to remove deleted provider
+      useAIStore.getState().refreshModels()
+    } else {
+      showMessage('error', result.error || 'Failed to delete API key')
     }
   }
 
@@ -229,6 +268,7 @@ export const APIKeyManager = ({ trigger }: APIKeyManagerProps) => {
 
           <APIKeyForm
             onSubmit={handleStoreKey}
+            onDelete={handleDeleteKey}
             loading={apiKeyManagerRef.current.loading}
             refreshTrigger={refreshTrigger}
           />

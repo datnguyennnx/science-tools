@@ -6,6 +6,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { CommandProvider } from '@/app/_command-manager/CommandProvider'
 import { GlobalClientEffects } from '@/components/global-client-effects'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 const websiteUrl = 'https://data-science.hallucinationguys.com'
@@ -396,6 +397,7 @@ export default function RootLayout({
               <AppSidebar />
               <main className="p-2 w-full min-h-screen">
                 <div>{children}</div>
+                <Toaster />
               </main>
             </SidebarProvider>
             <GlobalClientEffects />

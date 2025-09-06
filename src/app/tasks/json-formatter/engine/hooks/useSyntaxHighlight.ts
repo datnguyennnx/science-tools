@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import React from 'react'
 import { useTheme } from 'next-themes'
 
 export interface JsonToken {
@@ -56,7 +56,7 @@ export const useSyntaxHighlight = () => {
   const currentThemeColors = THEMES[currentTheme || 'light'] || THEMES.light
 
   // Tokenize JSON string into tokens
-  const tokenizeJson = useCallback((input: string): JsonToken[] => {
+  const tokenizeJson = (input: string): JsonToken[] => {
     const tokens: JsonToken[] = []
     let currentIndex = 0
     let currentLine = 1
@@ -181,7 +181,7 @@ export const useSyntaxHighlight = () => {
     }
 
     return tokens
-  }, [])
+  }
 
   // Get CSS styles for a token type (pure function, no need for useCallback)
   const getTokenStyles = (tokenType: JsonToken['type']): React.CSSProperties => {
@@ -208,22 +208,19 @@ export const useSyntaxHighlight = () => {
   }
 
   // Highlight a specific line with error
-  const getErrorLineStyles = useCallback(
-    (lineNumber: number, currentLine: number): React.CSSProperties => {
-      if (lineNumber === currentLine) {
-        return {
-          backgroundColor: currentThemeColors.error + '20',
-          borderLeft: `3px solid ${currentThemeColors.error}`,
-          paddingLeft: '8px',
-        }
+  const getErrorLineStyles = (lineNumber: number, currentLine: number): React.CSSProperties => {
+    if (lineNumber === currentLine) {
+      return {
+        backgroundColor: currentThemeColors.error + '20',
+        borderLeft: `3px solid ${currentThemeColors.error}`,
+        paddingLeft: '8px',
       }
-      return {}
-    },
-    [currentThemeColors]
-  )
+    }
+    return {}
+  }
 
   // Get line number styles
-  const getLineNumberStyles = useCallback((): React.CSSProperties => {
+  const getLineNumberStyles = (): React.CSSProperties => {
     return {
       color: currentThemeColors.lineNumber,
       backgroundColor: currentThemeColors.background,
@@ -236,7 +233,7 @@ export const useSyntaxHighlight = () => {
       lineHeight: '24px',
       height: '24px',
     }
-  }, [currentThemeColors])
+  }
 
   return {
     tokenizeJson,

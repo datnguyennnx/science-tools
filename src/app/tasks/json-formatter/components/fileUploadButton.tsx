@@ -25,13 +25,13 @@ export function FileUploadButton({ onFileUpload }: FileUploadButtonProps) {
 
       // Validate file type
       if (!file.name.endsWith('.json') && !file.name.endsWith('.txt')) {
-        toast.error('Please select a .json or .txt file')
+        toast('Please select a .json or .txt file')
         return
       }
 
       // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('File size must be less than 10MB')
+        toast('File size must be less than 10MB')
         return
       }
 
@@ -41,12 +41,12 @@ export function FileUploadButton({ onFileUpload }: FileUploadButtonProps) {
       try {
         JSON.parse(text)
         onFileUpload(text)
-        toast.success(`Loaded ${file.name}`)
+        toast(`Loaded ${file.name}`)
       } catch {
-        toast.error('Invalid JSON file')
+        toast('Invalid JSON file')
       }
     } catch (error) {
-      toast.error('Error reading file')
+      toast('Error reading file')
       console.error('Error reading file:', error)
     } finally {
       setIsUploading(false)

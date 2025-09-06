@@ -16,7 +16,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { ThemeToggle } from '@/components/theme-toggle'
-import { APIKeyManager } from '@/components/api-key-manager'
+import { APIKeyManager } from '@/components/apiKeyManager'
 
 const logicItems = [
   {

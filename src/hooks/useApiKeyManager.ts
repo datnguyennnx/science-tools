@@ -1,26 +1,11 @@
 import { useState } from 'react'
-import {
-  APIKeyStore,
-  APIService,
-  APIKeyManagerResult,
-  APIKeyManagerConfig,
-  EncryptedData,
-} from '../types/api-key'
-import {
-  createEncryptionKey,
-  encryptText,
-  decryptData,
-  storeEncryptedData,
-  retrieveEncryptedData,
-  clearAllEncryptedData,
-} from '../utils/crypto'
+import { APIKeyStore, APIService, APIKeyManagerResult, APIKeyManagerConfig } from '../types/api-key'
+import { EncryptionService, withEncryptionErrorHandling } from '../lib/services/encryptionService'
+import { ENCRYPTION_CONFIG, type EncryptionConfig } from '../lib/config'
+import { clearAllEncryptedData } from '../utils/crypto'
 
-const DEFAULT_CONFIG: Required<APIKeyManagerConfig> = {
-  storageKey: 'encrypted_api_keys',
-  deviceIdKey: 'device_id',
-  saltString: 'api_key_salt_2024',
-  iterations: 50000,
-}
+// Use centralized encryption configuration
+const DEFAULT_CONFIG: EncryptionConfig = ENCRYPTION_CONFIG
 
 export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
   const [loading, setLoading] = useState(false)
@@ -30,48 +15,29 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
     ...config,
   }
 
-  // Pure function to get stored encrypted data
-  const getStoredData = async (): Promise<EncryptedData | null> => {
-    try {
-      return await retrieveEncryptedData(finalConfig.storageKey)
-    } catch {
-      return null
-    }
+  // Pure function to retrieve and decrypt API keys using unified service
+  const getStoredKeys = async (): Promise<APIKeyStore> => {
+    const result = await withEncryptionErrorHandling(() =>
+      EncryptionService.retrieveAndDecrypt(finalConfig)
+    )
+
+    return result.success && result.data ? result.data : {}
   }
 
-  // Pure function to decrypt and parse API keys
-  const decryptAPIKeys = async (encryptedData: EncryptedData): Promise<APIKeyStore> => {
-    try {
-      const key = await createEncryptionKey(finalConfig)
-      const decrypted = await decryptData(encryptedData, key)
-      return JSON.parse(decrypted)
-    } catch {
-      return {}
-    }
+  // Pure function to encrypt and store API keys using unified service
+  const storeKeys = async (apiKeys: APIKeyStore): Promise<boolean> => {
+    const result = await withEncryptionErrorHandling(() =>
+      EncryptionService.encryptAndStore(apiKeys, finalConfig)
+    )
+
+    return result.success
   }
 
-  // Pure function to encrypt and store API keys
-  const encryptAndStore = async (apiKeys: APIKeyStore): Promise<boolean> => {
-    try {
-      const key = await createEncryptionKey(finalConfig)
-      const encrypted = await encryptText(JSON.stringify(apiKeys), key)
-      await storeEncryptedData(finalConfig.storageKey, encrypted)
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  // Get all API keys
+  // Get all API keys using unified service
   const getAllKeys = async (): Promise<APIKeyManagerResult<APIKeyStore>> => {
     setLoading(true)
     try {
-      const stored = await getStoredData()
-      if (!stored) {
-        return { success: true, data: {} }
-      }
-
-      const keys = await decryptAPIKeys(stored)
+      const keys = await getStoredKeys()
       return { success: true, data: keys }
     } catch (error) {
       return {
@@ -83,7 +49,7 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
     }
   }
 
-  // Store API key
+  // Store API key using unified service
   const storeAPIKey = async (
     service: APIService,
     apiKey: string
@@ -93,7 +59,7 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
       const { data: existingKeys = {} } = await getAllKeys()
       const updatedKeys = { ...existingKeys, [service]: apiKey }
 
-      const success = await encryptAndStore(updatedKeys)
+      const success = await storeKeys(updatedKeys)
 
       return success ? { success: true } : { success: false, error: 'Failed to store API key' }
     } catch (error) {
@@ -106,16 +72,11 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
     }
   }
 
-  // Get specific API key
+  // Get specific API key using unified service
   const getAPIKey = async (service: APIService): Promise<APIKeyManagerResult<string>> => {
     try {
-      const { data: keys, success } = await getAllKeys()
+      const apiKey = await EncryptionService.getAPIKey(service, finalConfig)
 
-      if (!success || !keys) {
-        return { success: false, error: 'Failed to retrieve keys' }
-      }
-
-      const apiKey = keys[service]
       return apiKey
         ? { success: true, data: apiKey }
         : { success: false, error: 'API key not found' }
@@ -127,7 +88,7 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
     }
   }
 
-  // Delete API key
+  // Delete API key using unified service
   const deleteAPIKey = async (service: APIService): Promise<APIKeyManagerResult<void>> => {
     setLoading(true)
     try {
@@ -135,7 +96,7 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
       const remainingKeys = { ...existingKeys }
       delete remainingKeys[service]
 
-      const success = await encryptAndStore(remainingKeys)
+      const success = await storeKeys(remainingKeys)
 
       return success ? { success: true } : { success: false, error: 'Failed to delete API key' }
     } catch (error) {
@@ -182,10 +143,13 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
   // Export encrypted data for backup
   const exportKeys = async (): Promise<APIKeyManagerResult<string>> => {
     try {
-      const stored = await retrieveEncryptedData(finalConfig.storageKey)
-      return stored
-        ? { success: true, data: JSON.stringify(stored) }
-        : { success: false, error: 'No data to export' }
+      const keys = await getStoredKeys()
+      if (Object.keys(keys).length === 0) {
+        return { success: false, error: 'No data to export' }
+      }
+
+      const encrypted = await EncryptionService.encrypt(JSON.stringify(keys), finalConfig)
+      return { success: true, data: JSON.stringify(encrypted) }
     } catch (error) {
       return {
         success: false,
@@ -197,14 +161,15 @@ export const useAPIKeyManager = (config?: APIKeyManagerConfig) => {
   // Import encrypted data from backup
   const importKeys = async (encryptedData: string): Promise<APIKeyManagerResult<void>> => {
     try {
-      // Parse and store the encrypted data
-      const parsed: EncryptedData = JSON.parse(encryptedData)
-      await storeEncryptedData(finalConfig.storageKey, parsed)
+      // Parse the encrypted data and decrypt it
+      const parsed: any = JSON.parse(encryptedData)
+      const decrypted = await EncryptionService.decrypt(parsed, finalConfig)
+      const keys: APIKeyStore = JSON.parse(decrypted)
 
-      // Verify we can decrypt the imported data
-      await decryptAPIKeys(parsed)
+      // Store the decrypted keys
+      const success = await storeKeys(keys)
 
-      return { success: true }
+      return success ? { success: true } : { success: false, error: 'Failed to import keys' }
     } catch (error) {
       return {
         success: false,

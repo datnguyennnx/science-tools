@@ -33,6 +33,7 @@ const eslintConfig = [
       // Performance-related rules
       'react/no-array-index-key': 'warn', // Avoid using array indexes as keys
       'react/jsx-no-constructed-context-values': 'warn', // Prevent inline objects in context providers
+      '@typescript-eslint/no-explicit-any': 'off',
     },
     settings: {
       react: {

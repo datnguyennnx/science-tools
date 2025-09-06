@@ -14,7 +14,7 @@ export interface APIKeyManagerConfig {
   iterations?: number
 }
 
-export type APIService = 'openai' | 'anthropic' | 'google' | 'x-grok' | string
+export type APIService = 'openai' | 'anthropic' | 'google' | 'x-grok' | 'openrouter' | string
 
 export interface APIKeyManagerResult<T> {
   success: boolean

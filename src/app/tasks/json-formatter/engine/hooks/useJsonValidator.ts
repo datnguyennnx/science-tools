@@ -1,5 +1,3 @@
-import { useCallback } from 'react'
-
 export interface ValidationError {
   message: string
   line: number
@@ -309,35 +307,33 @@ const validateJsonInput = (input: string): ValidationResult => {
 
 export const useJsonValidator = () => {
   // Quick validation check
-  const isValidJson = useCallback((input: string): boolean => {
+  const isValidJson = (input: string): boolean => {
     try {
       JSON.parse(input.trim())
       return true
     } catch {
       return false
     }
-  }, [])
+  }
 
   // Get specific error at a given line
-  const getErrorAtLine = useCallback(
-    (input: string, lineNumber: number): ValidationError | null => {
-      const result = validateJsonInput(input)
-      return result.errors.find(error => error.line === lineNumber) || null
-    },
-    []
-  )
+  const getErrorAtLine = (input: string, lineNumber: number): ValidationError | null => {
+    const result = validateJsonInput(input)
+    return result.errors.find(error => error.line === lineNumber) || null
+  }
 
   // Get all errors for a specific line range
-  const getErrorsInRange = useCallback(
-    (input: string, startLine: number, endLine: number): ValidationError[] => {
-      const result = validateJsonInput(input)
-      return result.errors.filter(error => error.line >= startLine && error.line <= endLine)
-    },
-    []
-  )
+  const getErrorsInRange = (
+    input: string,
+    startLine: number,
+    endLine: number
+  ): ValidationError[] => {
+    const result = validateJsonInput(input)
+    return result.errors.filter(error => error.line >= startLine && error.line <= endLine)
+  }
 
   // Auto-fix specific error if possible
-  const autoFixError = useCallback((input: string, error: ValidationError): string => {
+  const autoFixError = (input: string, error: ValidationError): string => {
     if (!error.fixable || !error.autoFix) {
       return input
     }
@@ -352,17 +348,17 @@ export const useJsonValidator = () => {
     }
 
     return input
-  }, [])
+  }
 
   // Group errors by line number for UI rendering
-  const groupErrorsByLine = useCallback((input: string): Record<number, ValidationError[]> => {
+  const groupErrorsByLine = (input: string): Record<number, ValidationError[]> => {
     const result = validateJsonInput(input)
     return result.errors.reduce<Record<number, ValidationError[]>>((acc, err) => {
       if (!acc[err.line]) acc[err.line] = []
       acc[err.line].push(err)
       return acc
     }, {})
-  }, [])
+  }
 
   return {
     validateJson: validateJsonInput,

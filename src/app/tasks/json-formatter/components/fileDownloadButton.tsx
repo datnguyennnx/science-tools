@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { DownloadIcon, CheckCircle2 } from 'lucide-react'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 interface FileDownloadButtonProps {
@@ -18,7 +17,6 @@ export function FileDownloadButton({
 
   const handleDownload = async () => {
     if (!jsonContent.trim()) {
-      toast.error('No content to download')
       return
     }
 
@@ -41,7 +39,6 @@ export function FileDownloadButton({
 
       // Show success feedback
       setDownloadSuccess(true)
-      toast.success('JSON downloaded')
 
       // Reset success state after 2 seconds
       setTimeout(() => setDownloadSuccess(false), 2000)
@@ -58,8 +55,6 @@ export function FileDownloadButton({
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-
-      toast.warning('Downloaded as text file')
     } finally {
       setIsDownloading(false)
     }
