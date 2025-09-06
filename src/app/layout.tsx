@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     default: 'Science Tools - Interactive Learning for Math, Logic & Programming',
   },
   description:
-    'Free interactive tools for STEM education. Visualize sorting algorithms, simplify boolean algebra, format JSON, compare text files, and boost productivity. Perfect for students, developers, and educators. Features include real-time visualizations, step-by-step tutorials, and hands-on learning experiences.',
+    'Free interactive tools for STEM education. Simplify boolean algebra, format JSON, compare text files, and boost productivity. Perfect for students, developers, and educators. Features include real-time visualizations, step-by-step tutorials, and hands-on learning experiences.',
   keywords: [
     'science tools',
     'interactive learning',
@@ -27,12 +27,10 @@ export const metadata: Metadata = {
     'math tools',
     'logic solver',
     'pomodoro technique',
-    'algorithm visualization',
     'boolean algebra simplifier',
     'Karnaugh map',
     'truth table',
     'venn diagram',
-    'sorting algorithms',
     'JSON formatter',
     'text diff tool',
     'markdown editor',
@@ -40,8 +38,6 @@ export const metadata: Metadata = {
     'URL previewer',
     'computer science education',
     'programming tools',
-    'data structures',
-    'algorithms',
     'educational software',
     'learning platform',
     'interactive tutorials',
@@ -68,7 +64,7 @@ export const metadata: Metadata = {
     siteName: 'Science Tools',
     title: 'Science Tools: Interactive Learning for Math, Logic & Programming',
     description:
-      'Discover free interactive tools for STEM education. Visualize algorithms, simplify boolean expressions, format code, and enhance productivity with hands-on learning experiences.',
+      'Discover free interactive tools for STEM education. Simplify boolean expressions, format code, and enhance productivity with hands-on learning experiences.',
     images: [
       {
         url: '/hero-images.png',
@@ -82,7 +78,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Science Tools: Interactive Learning for Math, Logic & Programming',
     description:
-      'Free interactive tools for STEM education. Visualize algorithms, format code, and learn computer science concepts.',
+      'Free interactive tools for STEM education. Format code, and learn computer science concepts.',
     images: ['/hero-images.png'],
     creator: '@ScienceTools',
     site: '@ScienceTools',
@@ -126,7 +122,6 @@ const organizationJsonLd = {
   foundingDate: '2025',
   knowsAbout: [
     'Computer Science',
-    'Algorithm Visualization',
     'Boolean Algebra',
     'Data Structures',
     'Programming Tools',
@@ -142,43 +137,6 @@ const organizationJsonLd = {
 }
 
 // Enhanced WebSite JSON-LD data with educational focus
-const webSiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'Science Tools - Interactive STEM Learning Platform',
-  url: websiteUrl,
-  description:
-    'Free interactive tools for computer science education, algorithm visualization, and developer productivity',
-  inLanguage: 'en-US',
-  datePublished: '2025-09-02',
-  dateModified: new Date().toISOString().split('T')[0],
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: `${websiteUrl}/search?q={search_term_string}`,
-    'query-input': 'required name=search_term_string',
-  },
-  publisher: {
-    '@type': 'Organization',
-    name: 'Science Tools',
-    url: websiteUrl,
-  },
-  about: {
-    '@type': 'Thing',
-    name: 'Computer Science Education',
-    description:
-      'Interactive learning tools for algorithms, data structures, and programming concepts',
-  },
-  audience: {
-    '@type': 'EducationalAudience',
-    educationalRole: 'student',
-    audienceType: ['students', 'developers', 'educators', 'researchers'],
-    educationalLevel: ['secondary school', 'university', 'professional development'],
-  },
-  educationalUse: ['learning', 'teaching', 'assessment', 'practice'],
-  interactivityType: 'mixed',
-  learningResourceType: ['interactive simulation', 'educational software', 'practice tool'],
-}
-
 // Course schema for AI agents to understand educational offerings
 const courseJsonLd = {
   '@context': 'https://schema.org',
@@ -193,7 +151,6 @@ const courseJsonLd = {
   },
   educationalLevel: ['intermediate', 'advanced'],
   teaches: [
-    'Algorithm Analysis and Visualization',
     'Boolean Algebra and Logic Simplification',
     'Data Structure Operations',
     'Programming Productivity Techniques',
@@ -214,14 +171,6 @@ const courseJsonLd = {
     },
   },
   educationalAlignment: [
-    {
-      '@type': 'AlignmentObject',
-      alignmentType: 'teaches',
-      educationalFramework: 'Computer Science Curriculum',
-      targetName: 'Algorithm Analysis',
-      targetDescription: 'Understanding algorithmic complexity and performance analysis',
-      targetUrl: 'https://en.wikipedia.org/wiki/Algorithm_analysis',
-    },
     {
       '@type': 'AlignmentObject',
       alignmentType: 'teaches',
@@ -251,7 +200,6 @@ const learningResourceJsonLd = {
   typicalAgeRange: '14-',
   educationalLevel: ['secondary', 'higher education', 'professional'],
   teaches: [
-    'Sorting Algorithms',
     'Boolean Logic',
     'Data Formatting',
     'Text Processing',
@@ -260,22 +208,6 @@ const learningResourceJsonLd = {
     'Algorithm Visualization',
   ],
   competencyRequired: 'Basic computer operation skills',
-  educationalAlignment: [
-    {
-      '@type': 'AlignmentObject',
-      alignmentType: 'teaches',
-      educationalFramework: 'Computer Science Standards',
-      targetName: 'Algorithm Analysis',
-      targetDescription: 'Computational thinking and algorithm design',
-    },
-    {
-      '@type': 'AlignmentObject',
-      alignmentType: 'teaches',
-      educationalFramework: 'Computer Science Standards',
-      targetName: 'Data Structures',
-      targetDescription: 'Understanding fundamental data organization',
-    },
-  ],
   provider: {
     '@type': 'Organization',
     name: 'Science Tools',
@@ -312,11 +244,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
           key="organization-jsonld"
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd) }}
-          key="website-jsonld"
         />
         <script
           type="application/ld+json"
@@ -367,14 +294,6 @@ export default function RootLayout({
                   acceptedAnswer: {
                     '@type': 'Answer',
                     text: 'Learn algorithm analysis and visualization, boolean algebra and logic simplification, data structures, programming productivity techniques, code formatting, technical writing with markdown, and time management skills.',
-                  },
-                },
-                {
-                  '@type': 'Question',
-                  name: 'How do the interactive visualizations help learning?',
-                  acceptedAnswer: {
-                    '@type': 'Answer',
-                    text: 'Our interactive visualizations show algorithms in action, step-by-step. You can see how sorting algorithms work, how boolean expressions are simplified, and how data structures operate, making complex concepts easier to understand.',
                   },
                 },
               ],

@@ -19,11 +19,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: `${BASE_URL}/logic/sort`,
-      lastModified,
-      priority: 0.8,
-    },
-    {
       url: `${BASE_URL}/tasks/pomodoro`,
       lastModified,
       priority: 0.8,

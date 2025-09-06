@@ -1,6 +1,6 @@
 'use client'
 
-import { Binary, Timer, SortAsc, Keyboard, FileText, FileJson, Link, FileDiff } from 'lucide-react'
+import { Binary, Timer, Keyboard, FileText, FileJson, Link, FileDiff } from 'lucide-react'
 
 import {
   Sidebar,
@@ -23,11 +23,6 @@ const logicItems = [
     title: 'Boolean Algebra',
     url: '/logic/boolean-algebra',
     icon: Binary,
-  },
-  {
-    title: 'Sorting Algorithms',
-    url: '/logic/sort',
-    icon: SortAsc,
   },
 ]
 

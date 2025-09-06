@@ -24,7 +24,6 @@
   "dependencies": {
     "@ai-sdk/openai": "^2.0.24",
     "@ai-sdk/react": "^2.0.33",
-    "@builder.io/partytown": "^0.10.3",
     "@hookform/resolvers": "^5.2.1",
     "@icons-pack/react-simple-icons": "^13.7.0",
     "@lobehub/icons": "^2.31.0",

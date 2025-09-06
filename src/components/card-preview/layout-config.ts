@@ -5,7 +5,6 @@ import { MarkdownPreviewerCard } from './MarkdownPreviewerCard'
 import { TextDiffCard } from './TextDiffCard'
 import { TypingTestCard } from './TypingTestCard'
 import { PomodoroTimerCard } from './PomodoroTimerCard'
-import { SortVisualizerCard } from './SortVisualizerCard'
 import { UrlPreviewCard } from './UrlPreviewCard'
 
 export interface CardLayout {
@@ -88,14 +87,6 @@ export const layoutConfig: CardLayout[] = [
       row: 3,
       colStart: 1,
       colSpan: 1,
-    },
-  },
-  {
-    card: SortVisualizerCard,
-    position: {
-      row: 3,
-      colStart: 2,
-      colSpan: 2,
     },
   },
 ]
