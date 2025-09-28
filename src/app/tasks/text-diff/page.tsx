@@ -20,6 +20,7 @@ import {
 export default function TextDiffPage() {
   const [text1, setText1] = useState(DEFAULT_TEXT_1)
   const [text2, setText2] = useState(DEFAULT_TEXT_2)
+  const [showInputs, setShowInputs] = useState(true)
   const { compareTexts, getDiffStats, hasDifferences } = useTextDiff()
 
   const diffResults = compareTexts(text1, text2)
@@ -73,6 +74,16 @@ export default function TextDiffPage() {
           >
             {BUTTON_LABELS.clearAll}
           </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-3"
+            onClick={() => setShowInputs(!showInputs)}
+            aria-label={showInputs ? 'Hide input panels' : 'Show input panels'}
+          >
+            {showInputs ? 'Hide Inputs' : 'Show Inputs'}
+          </Button>
         </nav>
 
         {/* Status indicator */}
@@ -88,43 +99,45 @@ export default function TextDiffPage() {
       </header>
 
       {/* Main content - Two column layout */}
-      <div
-        className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 pt-3 min-h-0"
-        role="region"
-        aria-label="Text Comparison Workspace"
-      >
-        {/* Left input panel */}
-        <section className="flex flex-col h-full min-h-0" aria-labelledby="left-input-heading">
-          <h2 id="left-input-heading" className="sr-only">
-            {ARIA_LABELS.originalTextInput}
-          </h2>
-          <div className="flex-1 min-h-0">
-            <TextInput
-              value={text1}
-              onChange={setText1}
-              label={SECTION_LABELS.originalText}
-              placeholder={PLACEHOLDER_TEXT_1}
-              className="h-full w-full"
-            />
-          </div>
-        </section>
+      {showInputs && (
+        <div
+          className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 pt-3 min-h-0"
+          role="region"
+          aria-label="Text Comparison Workspace"
+        >
+          {/* Left input panel */}
+          <section className="flex flex-col h-full min-h-0" aria-labelledby="left-input-heading">
+            <h2 id="left-input-heading" className="sr-only">
+              {ARIA_LABELS.originalTextInput}
+            </h2>
+            <div className="flex-1 min-h-0">
+              <TextInput
+                value={text1}
+                onChange={setText1}
+                label={SECTION_LABELS.originalText}
+                placeholder={PLACEHOLDER_TEXT_1}
+                className="h-full w-full"
+              />
+            </div>
+          </section>
 
-        {/* Right input panel */}
-        <section className="flex flex-col h-full min-h-0" aria-labelledby="right-input-heading">
-          <h2 id="right-input-heading" className="sr-only">
-            {ARIA_LABELS.modifiedTextInput}
-          </h2>
-          <div className="flex-1 min-h-0">
-            <TextInput
-              value={text2}
-              onChange={setText2}
-              label={SECTION_LABELS.modifiedText}
-              placeholder={PLACEHOLDER_TEXT_2}
-              className="h-full w-full"
-            />
-          </div>
-        </section>
-      </div>
+          {/* Right input panel */}
+          <section className="flex flex-col h-full min-h-0" aria-labelledby="right-input-heading">
+            <h2 id="right-input-heading" className="sr-only">
+              {ARIA_LABELS.modifiedTextInput}
+            </h2>
+            <div className="flex-1 min-h-0">
+              <TextInput
+                value={text2}
+                onChange={setText2}
+                label={SECTION_LABELS.modifiedText}
+                placeholder={PLACEHOLDER_TEXT_2}
+                className="h-full w-full"
+              />
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Diff results panel - Full width below */}
       <div className="flex-1 p-4 pt-0 min-h-0" role="region" aria-labelledby="diff-results-heading">
