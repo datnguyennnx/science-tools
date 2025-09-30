@@ -27,4 +27,5 @@ package.json
 
 # UI components that shouldn't be formatted
 src/components/ui/
-src/components/magicui/ 
+src/components/magicui/
+src/components/shadcn-io/

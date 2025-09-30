@@ -17,27 +17,30 @@ const eslintConfig = [
     extends: ['prettier'],
   }),
   {
-    ignores: ['/src/components/ui/*.tsx', '.next', 'node_modules', 'public'],
+    ignores: [
+      '**/src/components/ui/**',
+      '**/src/components/magicui/**',
+      '**/src/components/shadcn-io/**',
+      '**/.next/**',
+      '**/node_modules/**',
+      '**/public/**',
+    ],
   },
-  // Add custom rules for React 19 optimizations
   {
     name: 'react-19-optimizations',
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
-      // React 19 specific optimizations
-      'react/react-in-jsx-scope': 'off', // React 19 doesn't require React import for JSX
-      'react/jsx-uses-react': 'off', // Optimize for the new JSX transform
-      'react/prop-types': 'off', // Use TypeScript instead of PropTypes
-      // Add modern React rules to encourage best practices
-      'react-hooks/exhaustive-deps': 'warn', // Prevent stale closures in hooks
-      // Performance-related rules
-      'react/no-array-index-key': 'warn', // Avoid using array indexes as keys
-      'react/jsx-no-constructed-context-values': 'warn', // Prevent inline objects in context providers
+      'react/react-in-jsx-scope': 'off',
+      'react/jsx-uses-react': 'off',
+      'react/prop-types': 'off',
+      'react-hooks/exhaustive-deps': 'warn',
+      'react/no-array-index-key': 'warn',
+      'react/jsx-no-constructed-context-values': 'warn',
       '@typescript-eslint/no-explicit-any': 'off',
     },
     settings: {
       react: {
-        version: '19.0.0', // Set React version to 19
+        version: '19.0.0',
       },
     },
   },
