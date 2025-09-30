@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { MarkdownInput } from './MarkdownInput'
 import { MarkdownPreview } from './MarkdownPreview'
 import { FileUploadButton } from './FileUploadButton'
 import { FileDownloadButton } from './FileDownloadButton'
+import { FocusPreviewButton } from './FocusPreviewButton'
 import type { MarkdownEditorProps } from '../engine/types'
 
 const DEFAULT_MARKDOWN = `# Markdown Editor
@@ -72,6 +73,7 @@ console.log(greet("world"));
 export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorProps>(
   ({ initialValue = DEFAULT_MARKDOWN, onChange, className, ...props }, ref) => {
     const [markdown, setMarkdown] = useState(initialValue)
+    const [isFocusMode, setIsFocusMode] = useState(false)
 
     const handleMarkdownChange = (value: string) => {
       setMarkdown(value)
@@ -82,12 +84,25 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
       handleMarkdownChange(fileContent)
     }
 
+    useEffect(() => {
+      if (isFocusMode) {
+        const handleEsc = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            setIsFocusMode(false)
+          }
+        }
+        document.addEventListener('keydown', handleEsc)
+        return () => document.removeEventListener('keydown', handleEsc)
+      }
+    }, [isFocusMode])
+
     return (
       <div ref={ref} className={className} {...props}>
         <div className="flex h-[calc(100vh-8rem)] flex-col space-y-4">
           <div className="flex items-center gap-2">
             <FileUploadButton onFileUpload={handleFileUpload} />
             <FileDownloadButton content={markdown} />
+            <FocusPreviewButton onClick={() => setIsFocusMode(true)} />
           </div>
 
           <div className="grid flex-grow grid-cols-1 xl:grid-cols-2 gap-4 w-full">
@@ -108,6 +123,20 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
             </div>
           </div>
         </div>
+
+        {isFocusMode && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsFocusMode(false)}
+          >
+            <div
+              className="relative max-w-6xl max-h-[90vh] w-full h-full overflow-auto rounded-lg border bg-background"
+              onClick={e => e.stopPropagation()}
+            >
+              <MarkdownPreview content={markdown} className="h-full w-full p-4" />
+            </div>
+          </div>
+        )}
       </div>
     )
   }
