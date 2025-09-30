@@ -4,6 +4,13 @@ import { MarkdownPreview } from './MarkdownPreview'
 import { FileUploadButton } from './FileUploadButton'
 import { FileDownloadButton } from './FileDownloadButton'
 import { FocusPreviewButton } from './FocusPreviewButton'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { MarkdownEditorProps } from '../engine/types'
 
 const DEFAULT_MARKDOWN = `# Markdown Editor
@@ -74,6 +81,7 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
   ({ initialValue = DEFAULT_MARKDOWN, onChange, className, ...props }, ref) => {
     const [markdown, setMarkdown] = useState(initialValue)
     const [isFocusMode, setIsFocusMode] = useState(false)
+    const [fontSize, setFontSize] = useState('16px')
 
     const handleMarkdownChange = (value: string) => {
       setMarkdown(value)
@@ -82,6 +90,10 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
 
     const handleFileUpload = (fileContent: string) => {
       handleMarkdownChange(fileContent)
+    }
+
+    const handleFontSizeChange = (value: string) => {
+      setFontSize(value)
     }
 
     useEffect(() => {
@@ -116,7 +128,7 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
               </React.Suspense>
             </div>
 
-            <div className="flex w-full h-full flex-col">
+            <div className="flex w-full h-full flex-col overflow-hidden">
               <React.Suspense fallback={null}>
                 <MarkdownPreview content={markdown} className="h-full w-full border-2" />
               </React.Suspense>
@@ -130,10 +142,38 @@ export const MarkdownEditor = React.forwardRef<HTMLDivElement, MarkdownEditorPro
             onClick={() => setIsFocusMode(false)}
           >
             <div
-              className="relative max-w-6xl max-h-[90vh] w-full h-full overflow-auto rounded-lg border bg-background"
+              className="relative max-w-[50%] max-h-[90vh] w-full h-full overflow-hidden rounded-lg border bg-background flex flex-col"
               onClick={e => e.stopPropagation()}
             >
-              <MarkdownPreview content={markdown} className="h-full w-full p-4" />
+              <div className="flex gap-2 p-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div className="self-center font-medium">Font Size</div>
+                <Select value={fontSize} onValueChange={handleFontSizeChange}>
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="12px">12px</SelectItem>
+                    <SelectItem value="14px">14px</SelectItem>
+                    <SelectItem value="16px">16px</SelectItem>
+                    <SelectItem value="18px">18px</SelectItem>
+                    <SelectItem value="20px">20px</SelectItem>
+                    <SelectItem value="22px">22px</SelectItem>
+                    <SelectItem value="24px">24px</SelectItem>
+                    <SelectItem value="28px">28px</SelectItem>
+                    <SelectItem value="32px">32px</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Markdown Preview */}
+              <div className="flex-1 overflow-auto focus-mode-scroll">
+                <MarkdownPreview
+                  content={markdown}
+                  fontSize={fontSize}
+                  noOverflow={true}
+                  className="h-full w-full p-4"
+                />
+              </div>
             </div>
           </div>
         )}

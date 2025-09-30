@@ -9,6 +9,8 @@ export interface MarkdownEditorProps {
 export interface MarkdownPreviewProps {
   content: string
   className?: string
+  fontSize?: string
+  noOverflow?: boolean
 }
 
 export interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {

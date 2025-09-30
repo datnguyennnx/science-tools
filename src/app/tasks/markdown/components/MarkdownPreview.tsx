@@ -13,7 +13,7 @@ const UiwMarkdownPreview = React.lazy(() =>
 )
 
 export const MarkdownPreview = React.forwardRef<HTMLDivElement, MarkdownPreviewProps>(
-  ({ content, className, ...props }, ref) => {
+  ({ content, className, fontSize, noOverflow, ...props }, ref) => {
     const { theme, systemTheme } = useTheme()
     const currentTheme = theme === 'system' ? systemTheme : theme
     const [themeState, setThemeState] = useState(currentTheme)
@@ -71,7 +71,11 @@ export const MarkdownPreview = React.forwardRef<HTMLDivElement, MarkdownPreviewP
     return (
       <div
         ref={ref}
-        className={cn('h-full w-full overflow-auto rounded-md border p-4', className)}
+        className={cn(
+          'h-full w-full rounded-md border p-4',
+          noOverflow ? 'overflow-visible' : 'overflow-auto',
+          className
+        )}
         {...props}
       >
         <div key={`markdown-preview-${themeState}`} suppressHydrationWarning>
@@ -87,6 +91,7 @@ export const MarkdownPreview = React.forwardRef<HTMLDivElement, MarkdownPreviewP
                 backgroundColor: 'hsl(var(--background))',
                 color: 'hsl(var(--foreground))',
                 fontFamily: 'var(--font-sans)',
+                fontSize: fontSize || '16px',
                 lineHeight: '1.6',
                 padding: '1rem',
                 margin: 0,

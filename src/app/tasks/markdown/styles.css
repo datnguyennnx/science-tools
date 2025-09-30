@@ -201,3 +201,13 @@
   color: hsl(var(--muted-foreground));
   font-size: 12px;
 }
+
+/* Focus mode scrollbar hiding */
+.focus-mode-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.focus-mode-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
